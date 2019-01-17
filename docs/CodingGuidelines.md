@@ -14,7 +14,7 @@ The repo can be found at https://github.com/Elive2/OriginalBeat.git
 
 - Thou shalt always maintain a stable master branch.
 - Thou shalt commit early and often
-- Thou shalt not commit data files or node_modules.
+- Thou shalt not commit data files or node_modules or their virtual environment
 - Thou shalt use detailed commit messages, explaining exactly what was done
 
 # Files:
@@ -69,6 +69,7 @@ Anytime there is something important to note in the code, go ahead and write NOT
 us to quickly scan files for notes. In a simlar way write TODO: anytime there is a task you 
 left unfinished. Finally a FIXME: is used to indicate a known bug. I find a todolist at the top of
 a file to be useful such as:
+
 [X] - Send midifile to backend
 [ ] - Parse Midifile from Frontend
 
@@ -78,7 +79,8 @@ a file to be useful such as:
 
 Anytime you add a new package, or change versions be sure to update requirements.txt.
 This document is sacred and should always be up to date. I reccomend using a virtual env
-so that you can follow the steps below to simply save and install requirements.
+so that you can follow the steps below to simply save and install requirements. Please call your
+virtual enviornment 'venv', so it can be git ignored.
 
 pip freeze > requirements.txt
 pip install -r requirements.txt
