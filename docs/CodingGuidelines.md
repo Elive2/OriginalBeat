@@ -1,4 +1,4 @@
-'''
+```
 """
 File: CodingGuidelines.py
 
@@ -7,12 +7,13 @@ Description: This file outlines the general coding guidelines we
 
 Author: Eli Yale
 """
-'''
+```
 
 # Github:
 The repo can be found at https://github.com/Elive2/OriginalBeat.git
 
 - Thou shalt always maintain a stable master branch.
+- Thou shalt commit early and often
 - Thou shalt not commit data files or node_modules.
 - Thou shalt use detailed commit messages, explaining exactly what was done
 
@@ -29,7 +30,7 @@ The repo can be found at https://github.com/Elive2/OriginalBeat.git
  The docs can then be accessed with help();
  ie for a class:
 
-'''
+```
 class generateMusic():
 	"""
 		Class: generateMusic
@@ -42,7 +43,7 @@ class generateMusic():
 		Author:
 			Eli Yale
 	"""
-'''
+```
 
 
 
@@ -50,7 +51,7 @@ class generateMusic():
 Include the name of the function, a short description, and any other parts of the codebase
 it modifies or effects. Describe each parameter and what the function returns. Remember
 Loose Coupling and High Cohesion! see below for an example
-'''
+```
 def fooBar():
 	"""
 	Function: fooBar()
@@ -60,7 +61,7 @@ def fooBar():
 	Params: 
 	"""
 	print(fooBar)
-'''
+```
 
 
 # NOTE: and TODO: and FIXME:
