@@ -1,4 +1,5 @@
 mido==1.2.9
+music21==5.5.0
 numpy==1.16.0
 pretty-midi==0.2.8
 six==1.12.0

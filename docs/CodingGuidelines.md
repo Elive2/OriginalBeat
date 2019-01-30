@@ -73,6 +73,19 @@ a file to be useful such as:
 [X] - Send midifile to backend
 [ ] - Parse Midifile from Frontend
 
+# Paths in Python:
+Do not do hardcode as strings any filepaths used in code.
+Instead use os.path.join() or even better, use the pathlib Path object. For example:
+```
+	from pathlib import Path
+
+	data_folder = Path("source_data/text_files/")
+
+	file_to_open = data_folder / "raw_data.txt"
+
+	f = open(file_to_open)
+```
+
 
 
 # Packages:
