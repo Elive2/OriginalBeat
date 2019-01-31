@@ -10,7 +10,12 @@
 
 """
 
-import midi
+import os
+from pathlib import Path
+
+from utils import *
+
+midifiles_directory = Path("../data/midifiles/")
 
 class Markov():
     """
@@ -33,14 +38,24 @@ class Markov():
                         The beat_instance must have:
         """
 
-        pass
+        print("building chain")
+        #self._build_chain()
 
         #not sure what needs to be done on initalization yet
         #gotta build the chain first
 
+    def _build_corpus(self):
+        for filename in os.listdir(str(midifiles_directory)):
+            if filename.endswith(".mid"): 
+                print(midifiles_directory / filename)
+
+                continue
+            else:
+                continue
+
 
     def _build_chain(self):
+        
         pass
-
-        #build the chain here
+        #build the chain heregi
         
