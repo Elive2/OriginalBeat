@@ -28,6 +28,7 @@
 """
 
 import mido
+from Crude import Crude
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -83,6 +84,9 @@ class BeatEngine():
         self._beat.key = self._findKey(midi_upload_file_path)
 
         self._beat.notes_chords_rests = self._get_notes_chords_rests(midi_upload_file_path)
+
+        #test the crude class
+        crudeObj = Crude(self._beat)
         
 
 
@@ -100,9 +104,9 @@ class BeatEngine():
         mid = mido.MidiFile(filename)
 
         #first check if there is a meta message with the key signature
-        # for msg in mid:
-        #     if msg.type == 'key_signature':
-        #         return msg.key
+        for msg in mid:
+            if msg.type == 'key_signature':
+                return msg.key
 
         mf = music21.midi.MidiFile()
         mf.open(filename)
