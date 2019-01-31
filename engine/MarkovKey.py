@@ -17,7 +17,7 @@ from utils import *
 
 midifiles_directory = Path("../data/midifiles/")
 
-class Markov():
+class MarkovKey():
     """
     class: Markov()
 

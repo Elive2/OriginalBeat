@@ -28,7 +28,7 @@
 """
 
 import mido
-from Markov import Markov
+from MarkovKey import MarkovKey
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -86,7 +86,7 @@ class BeatEngine():
 
         self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
-        model = Markov(self._beat)
+        model = MarkovKey(self._beat)
 
 
     #saving this for later
