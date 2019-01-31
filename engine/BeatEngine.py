@@ -84,9 +84,6 @@ class BeatEngine():
         self._beat.key = self._findKey(midi_upload_file_path)
 
         self._beat.notes_chords_rests = self._get_notes_chords_rests(midi_upload_file_path)
-
-        #test the crude class
-        crudeObj = Crude(self._beat)
         
 
 
@@ -156,7 +153,7 @@ class BeatEngine():
                                 note_list.append('.'.join(str(n) for n in entry.normalOrder))
                             elif isinstance(entry, music21.note.Rest):
                                 note_list.append('Rest')
-            #print(note_list)
+            print(note_list)
             return note_list
 
         except Exception as e:
