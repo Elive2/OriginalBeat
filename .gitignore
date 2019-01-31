@@ -6,3 +6,5 @@ venv/
 
 #
 data/lmd_matched/
+
+.DS_Store
