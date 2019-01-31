@@ -4,5 +4,5 @@ __pycache__/
 #virtual environment
 venv/
 
-#Data files
-data/
+#
+data/lmd_matched/
