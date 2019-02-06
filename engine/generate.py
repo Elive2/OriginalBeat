@@ -47,3 +47,8 @@ def get_midi_path(msd_id, midi_md5, kind):
     kind should be one of 'matched' or 'aligned'. """
     return os.path.join(RESULTS_PATH, 'lmd_{}'.format(kind),
                         msd_id_to_dirs(msd_id), midi_md5 + '.mid')
+
+
+
+
+    
