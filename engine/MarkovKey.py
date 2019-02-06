@@ -8,6 +8,11 @@
 
     Date Created: January 31, 2019
 
+    TODO:
+
+    [ ] - context injection, maybe take jump aound with the state
+    a bit, instead of doing a random walk
+
 """
 
 import os
@@ -43,15 +48,20 @@ class MarkovKey():
                         The beat_instance must have:
         """
 
+        self._beat = beat_instance
+        self._state_size = 3
         print("building corpus")
-        self._build_corpus()
-        self._build_chain()
-        notes_chords_rests_to_midi(self._output)
+        self._build_corpus_basic()
+        self._build_input_chain()
+        self._build_model_chain()
 
-        #not sure what needs to be done on initalization yet
-        #gotta build the chain first
+    def _build_input_chain(self):
+        self._input_corpus = [[]]
 
-    def _build_corpus(self):
+        self._input_corpus[0] = get_notes_chords_rests(self._beat._midi_upload_file_path)
+        self._input_chain = Chain(self._input_corpus, self._state_size)
+
+    def _build_corpus_basic(self):
         """
             Function: _build_corpus_basic
 
@@ -74,9 +84,8 @@ class MarkovKey():
         print(len(self._corpus))
 
 
-    def _build_chain(self):
-        self._chainerator = Chain(self._corpus, 2)
+    def _build_model_chain(self):
+        self._chainerator = Chain(self._corpus, self._state_size)
         self._output = self._chainerator.walk()
         print(self._output)
-        #build the chain heregi
         

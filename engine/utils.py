@@ -82,13 +82,14 @@ def notes_chords_rests_to_midi(song_data):
         if (' ' in note):
             event = music21.chord.Chord(note.split(' '))
         elif ('R' in note):
+            continue
             event = music21.note.Rest()
             event.duration.quarterLength = float(Fraction(note.replace('R','')))
         else:
             event = music21.note.Note(note)
 
         s.append(event)
-        
+
     mf = music21.midi.translate.streamToMidiFile(s)
     mf.open('../data/output/output1.mid', 'wb')
     mf.write()
