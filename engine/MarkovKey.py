@@ -49,6 +49,7 @@ class MarkovKey():
         """
 
         self._beat = beat_instance
+
         self._state_size = 3
         print("building corpus")
         self._build_corpus_basic()
@@ -60,6 +61,7 @@ class MarkovKey():
 
         self._input_corpus[0] = get_notes_chords_rests(self._beat._midi_upload_file_path)
         self._input_chain = Chain(self._input_corpus, self._state_size)
+        output = self._input_chain.walk()
 
     def _build_corpus_basic(self):
         """

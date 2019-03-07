@@ -3,6 +3,8 @@ import music21
 import mingus
 from fractions import Fraction
 
+#NOTE: IT may be faster to parse the midifile once then pass
+#the stream object to these functions
 
 def findKey(filename):
     """
@@ -37,6 +39,65 @@ def findKey(filename):
     #print(dir(key))
 
     return key.tonicPitchNameWithCase
+
+def get_chords(path):
+    """
+        Function: get_chords
+
+        Description: Extrcact into a list all the chords in a song, if there is
+        no chord with Note-ons associated with an melody note, the chord is None.
+        This function uses the chordify method from music 21 to make everything
+        in the song into chords. This helps with songs that are sparsely chorded.
+        This function also elimates duplicate notes from chords as there
+        would be way too many
+
+        Parameters:
+            path -- (string) absolute file path to a midifile
+
+        Returns:  (list) of a all chord events
+
+        //this method parses all the notes together into chords, could be useful
+        s = midi.chordify()
+
+    """
+    midi = music21.converter.parse(path)
+    midi_chords = midi.chordify()
+
+    chord_list = []
+    for element_by_offset in music21.stream.iterator.OffsetIterator(midi_chords):
+        for entry in element_by_offset:
+            if isinstance(entry, music21.chord.Chord):
+                chord = [str(e) for e in set(entry.pitchClasses)]
+                if(len(chord) > 1):
+                    chord_list.append(','.join(chord))
+
+    return chord_list
+
+def get_notes(path):
+    """
+        Function: get_notes
+
+        Desription: Extract into a list all the notes in a song.
+
+        Return: (list) of all note events as strings
+    """
+    try:
+        midi = music21.converter.parse(path)
+        parts = music21.instrument.partitionByInstrument(midi)
+        #parts.show('text')
+        note_list = []
+        for music_instrument in range(len(parts)):
+            for element_by_offset in music21.stream.iterator.OffsetIterator(parts[music_instrument]):
+                for entry in element_by_offset:
+                    if isinstance(entry, music21.note.Note):
+                        note_list.append(str(entry.pitch))
+
+        return note_list
+
+    except Exception as e:
+        print("failed on ", path, "with exception: ", e)
+        pass
+
 
 def get_notes_chords_rests(path):
     """
@@ -75,6 +136,47 @@ def get_notes_chords_rests(path):
     except Exception as e:
         print("failed on ", path, "with exception: ", e)
         pass
+
+def get_simul_chords_and_notes(path):
+    """
+        Function: get_simul_chords_and_notes
+
+        Desription: Extract into all melody notes that play at the same time
+        as a chord
+
+        Return: (list) of all simulatenous notes and chord events as strings
+        There may be more than one note associated with the chord, in that case
+        they would be space sepearted
+        of the format: 'note, chord' ie 'c4, 0 1 5' or 'c4 c5, 0 1 5'
+    """
+    midi = music21.converter.parse(path)
+    parts = music21.instrument.partitionByInstrument(midi)
+    chord_and_note_list = []
+    part = parts[1] if len(parts) > 1 else parts[0]
+    try:
+        for element_by_offset in music21.stream.iterator.OffsetIterator(part):
+            #print(element_by_offset)
+            for entry in element_by_offset:
+                #print(entry)
+                if isinstance(entry, music21.chord.Chord):
+                    chord = [str(e) for e in entry.pitchClasses]
+
+                    #the below line works ok, but I think It includes all sounds that are still echoing??
+                    melodyNotes = parts[0].allPlayingWhileSounding(entry, part).notes
+                    note_list = []
+                    for note in melodyNotes:
+                        if(isinstance(note , music21.note.Note)):
+                            note_list.append(str(note.name))
+
+                    if(len(chord) > 1 and len(note_list) > 0):
+                        chord_and_note_list.append((list(set(note_list)), chord))
+                        #chord_and_note_list.append(' '.join(note_list) + ', ' +' '.join(chord))
+    except Exception as e:
+        print(e)
+        return []
+
+    return chord_and_note_list
+
 
 def notes_chords_rests_to_midi(song_data):
     s = music21.stream.Stream()

@@ -29,6 +29,7 @@
 
 import mido
 from MarkovKey import MarkovKey
+from BayesNet import BayesNet
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -86,7 +87,7 @@ class BeatEngine():
 
         self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
-        model = MarkovKey(self._beat)
+        model = BayesNet(self._beat)
 
 
     #saving this for later
@@ -98,7 +99,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/midifiles/HappyBirthday.mid', None)
+    engine = BeatEngine('../data/midifiles/Vindicta.mid', None)
 
 if __name__ == '__main__':
     main()
