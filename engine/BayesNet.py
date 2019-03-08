@@ -48,11 +48,12 @@ class BayesNet:
         self._m1_model = self._build_m1_model()
 
         self._beat = beat_instance
-        #self._build_cond_table_c0()
-        #self._build_cond_table_c1()
-        #self._build_cond_table_v0()
-        #self._build_cond_table_v1()
+        self._build_cond_table_c0()
+        self._build_cond_table_c1()
+        self._build_cond_table_v0()
+        self._build_cond_table_v1()
         self._build_cond_table_m1()
+        self._build_net()
 
 
     def _build_chord_chain(self):
@@ -128,10 +129,18 @@ class BayesNet:
     def _build_cond_table_c0(self):
         cond_list = {}
         length = len(self._chord_chain.model.keys())
-        for chord in self._chord_chain.model:
+
+        for chord, next_chords in self._chord_chain.model.items():
+            print(chord)
+            input()
+            if(chord == BEGIN or chord == END or chord == (BEGIN)):
+                continue
             cond_list[chord[0]] = 1 / length
 
         self._cond_table_c0 = DiscreteDistribution(cond_list)
+
+        print(cond_list)
+        input()
 
     def _build_cond_table_c1(self):
         cond_list = []
@@ -144,13 +153,21 @@ class BayesNet:
 
         self._cond_table_c1 = ConditionalProbabilityTable(cond_list, ['c0'])
 
+        print(cond_list)
+        input()
+
+
     def _build_cond_table_v0(self):
-        cond_list = {}
+        cond_list = []
         length = len(self._note_chain.model.keys())
         for note in self._note_chain.model:
+            #cond_list.append([note, 1 / length])
             cond_list[note[0]] = 1 / length
 
         self._cond_table_v0 = DiscreteDistribution(cond_list)
+
+        print(cond_list)
+        input()
 
     def _build_cond_table_v1(self):
         """
@@ -172,9 +189,10 @@ class BayesNet:
                 probability = next_note[1] / total;
                 cond_list.append([note[0], next_note[0], probability])
 
-        self._cond_table_c1 = ConditionalProbabilityTable(cond_list, ['v0'])
-
         print(cond_list)
+        input()
+
+        self._cond_table_c1 = ConditionalProbabilityTable(cond_list, ['v0'])
 
     def _build_cond_table_m1(self):
         """
@@ -184,17 +202,36 @@ class BayesNet:
             the node m1.
         """
         cond_list = []
-        total = sum(self._m1.model.values())
+        total = sum(self._m1_model.values())
         for note_chord in self._m1_model:
-            note = note_chord.split(',')[0]
-            chord = ','.join(note_chord.split(',')[1])
-            probability = note_chord() #HEHEHEHEHEHEHERERERERE
-            cond_list.append([chord, note, ])
+            note = note_chord.split(', ')[0]
+            chord = ','.join(note_chord.split(', ')[1].split(' '))
+            probability = self._m1_model[note_chord] / total
+            cond_list.append([chord, note, probability])
+
+        print(cond_list)
+        input()
+
+        self._build_cond_table_m1 = ConditionalProbabilityTable(cond_list, ['c1'])
+
+    def _build_net(self):
+        v0 = Node(self._cond_table_v0, name="v0")
+        v1 = Node(self._cond_table_v1, name="v1")
+        c0 = Node(self._cond_table_c0, name="c0")
+        c1 = Node(self._cond_table_c1, name="c1")
+        m1 = Node(self._cond_table_m1, name="m1")
+
+        self._bayes_model = BayesianNetwork("Generator")
+        self._bayes_model.add_nodes(v0, c0, m1, v1, c1)
+        self._bayes_model.add_edge(c0, c1)
+        self._bayes_model.add_edge(v0, v1)
+        self._bayes_model.add_edge(c1, m1)
+
+        self._bayes_model.bake()
+
+        print(self._bayes_model.predict(['B-', '5,10,2', 'F', None, None]))
 
 
-
-        print(self._m1_model)
-        print("hello")
 
 
 

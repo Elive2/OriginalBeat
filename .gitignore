@@ -4,7 +4,10 @@ __pycache__/
 #virtual environment
 venv/
 
-#
+#MSD dataset
 data/lmd_matched/
+
+#node_modules
+web/node_modules/
 
 .DS_Store

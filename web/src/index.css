@@ -1,0 +1,37 @@
+header {
+	background-color: rgb(179, 8 ,56);
+	padding: 20px 10px;
+}
+
+.logo {
+	height: 65px;
+	width: 65px;
+	float: left;
+}
+
+.name {
+	color: white;
+}
+
+#profile {
+	position: absolute;
+	right: 100px;
+}
+
+#reportBug {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+#draggableBug {
+	z-index: 100;
+}
+
+
+.historyReportModal {
+    width: 90%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+
+}
