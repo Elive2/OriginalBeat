@@ -5,7 +5,7 @@ module.exports = env => {
     entry: {
       //upload: './src/upload.js',
       //project: './src/project.js',
-      index: './src/index.js'
+      index: './src/index.jsx'
     },
     module: {
       rules: [
