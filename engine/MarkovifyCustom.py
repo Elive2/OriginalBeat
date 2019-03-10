@@ -42,7 +42,7 @@ class Chain(object):
         """
         self.state_size = state_size
         self.model = model or self.build(corpus, self.state_size)
-        self.precompute_begin_state()
+        #self.precompute_begin_state()
 
     def build(self, corpus, state_size):
         """
@@ -58,8 +58,8 @@ class Chain(object):
         model = {}
 
         for run in corpus:
-            items = ([ BEGIN ] * state_size) + run + [ END ]
-            for i in range(len(run) + 1):
+            items = run
+            for i in range(len(run) - state_size):
                 state = tuple(items[i:i+state_size])
                 follow = items[i+state_size]
                 if state not in model:
