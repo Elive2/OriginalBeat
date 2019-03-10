@@ -4,8 +4,8 @@ module.exports = env => {
   return {
     entry: {
       //upload: './src/upload.js',
-      //project: './src/project.js',
-      index: './src/index.jsx'
+      projectPage: './src/projectPage.jsx',
+      indexPage: './src/indexPage.jsx'
     },
     module: {
       rules: [

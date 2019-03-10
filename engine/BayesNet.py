@@ -8,6 +8,8 @@
             with a one pass algorithm. I.E for each event scanned, determine which
             table it applies too, then add it to that tables running cond list and 
             increase the count of that event.
+    [ ] - functions to fill in missing probabilities
+    [ ] - rework schema - see notes
 
 """
 

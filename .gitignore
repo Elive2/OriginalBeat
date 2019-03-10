@@ -10,4 +10,7 @@ data/lmd_matched/
 #node_modules
 web/node_modules/
 
+#piano roll node modules
+web/src/pianoroll/node_modules/
+
 .DS_Store
