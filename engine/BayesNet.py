@@ -11,6 +11,20 @@
     [ ] - functions to fill in missing probabilities
     [ ] - rework schema - see notes
 
+    Problem: the chords from in the m1_model come from the get_simul_chords_and_notes
+    method which extracs chords from the second "part" of the midi file while the chords
+    model uses get chords which extracts chords with the chordify method. This leads to
+    two different chord sets found in the song data, and thus key errors in the probability
+    tables, I need one unified method to find the chords, melody and voicing, data from the
+    songs, then build the appropriate models from this, and then compute prob tables from
+    the models.
+
+    Solution 1: Simply one get_song_data method which extracts chords, notes and voicings
+    into one uniform data structure
+    Problem: There isn't enough chords in our dataset to get meaningful results. This is why
+    using chordify was helpful, it gave me way more chords. maybe I can chodify into one track
+    and sync it with the melody, this would be nice.
+
 """
 
 import os
@@ -20,6 +34,7 @@ from utils import *
 import json
 from itertools import accumulate
 from pomegranate import *
+import numpy as np
 
 BEGIN = "___BEGIN__"
 END = "___END__"
@@ -138,9 +153,10 @@ class BayesNet:
             cond_list[chord[0]] = 1 / length
 
         self._cond_table_c0 = DiscreteDistribution(cond_list)
+        self._all_possible_chords = cond_list.keys()
 
-        print(cond_list)
-        input()
+        # print(cond_list)
+        # input()
 
     def _build_cond_table_c1(self):
         cond_list = []
@@ -151,10 +167,13 @@ class BayesNet:
                 probability = next_chord[1] / total;
                 cond_list.append([chord[0], next_chord[0], probability])
 
+        #populate all combos that haven't been found with probability 0, pomgranate requires this
+        self._fill_in_missing_chord_probabilites(cond_list)
+
         self._cond_table_c1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c0])
 
-        print(cond_list)
-        input()
+        # print(cond_list)
+        # input()
 
 
     def _build_cond_table_v0(self):
@@ -165,9 +184,10 @@ class BayesNet:
             cond_list[note[0]] = 1 / length
 
         self._cond_table_v0 = DiscreteDistribution(cond_list)
+        self._all_possible_notes = cond_list.keys()
 
-        print(cond_list)
-        input()
+        # print(cond_list)
+        # input()
 
     def _build_cond_table_v1(self):
         """
@@ -189,10 +209,11 @@ class BayesNet:
                 probability = next_note[1] / total;
                 cond_list.append([note[0], next_note[0], probability])
 
-        print(cond_list)
-        input()
-
+        # print(cond_list)
+        # input()
+        self._fill_in_missing_voicing_probabilities(cond_list)
         self._cond_table_v1 = ConditionalProbabilityTable(cond_list, [self._cond_table_v0])
+
 
     def _build_cond_table_m1(self):
         """
@@ -209,12 +230,74 @@ class BayesNet:
             probability = self._m1_model[note_chord] / total
             cond_list.append([chord, note, probability])
 
-        print(cond_list)
-        input()
-        print(self._cond_table_c1)
-        input()
+        # print(cond_list)
+        # input()
+        # print(self._cond_table_c1)
+        # input()
 
+        self._fill_in_missing_chord_and_note_probabilites(cond_list)
         self._cond_table_m1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c1])
+
+    def _fill_in_missing_chord_probabilites(self, cond_list):
+        data = np.array(cond_list)
+        for chord1 in self._all_possible_chords:
+            for chord2 in self._all_possible_chords:
+                if([chord1, chord2] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([chord1, chord2, 0.0])
+
+    def _fill_in_missing_voicing_probabilities(self, cond_list):
+        data = np.array(cond_list)
+        for note1 in self._all_possible_notes:
+            for note2 in self._all_possible_notes:
+                if([note1, note2] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([note1, note2, 0.0])
+
+    def _fill_in_missing_chord_and_note_probabilites(self, cond_list):
+        data = np.array(cond_list)
+        for chord1 in self._all_possible_chords:
+            for note1 in self._all_possible_notes:
+                if([chord1, note1] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([chord1, note1, 0.0])
+
+        for note_chord1 in self._m1_model:
+            for note_chord2 in self._m1_model:
+                print(note_chord1)
+                print(note_chord2)
+                note1 = note_chord1.split(', ')[0]
+                chord1 = ','.join(note_chord1.split(', ')[1].split(' '))
+                note2 = note_chord2.split(', ')[0]
+                chord2 = ','.join(note_chord2.split(', ')[1].split(' '))
+                print(note1)
+                print(note2)
+                print(chord1)
+                print(chord2)
+                input()
+                if([chord1, note1] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([chord1, note1, 0.0])
+                if([chord1, note2] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([chord1, note2, 0.0])
+                if([chord2, note1] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([chord2, note1, 0.0])
+                if([chord2, note2] in data[:,:2]):
+                    continue
+                else:
+                    cond_list.append([chord2, note2, 0.0])
+
+
+
+
 
     def _build_net(self):
         v0 = Node(self._cond_table_v0, name="v0")

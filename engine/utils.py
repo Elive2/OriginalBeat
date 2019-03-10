@@ -90,7 +90,7 @@ def get_notes(path):
             for element_by_offset in music21.stream.iterator.OffsetIterator(parts[music_instrument]):
                 for entry in element_by_offset:
                     if isinstance(entry, music21.note.Note):
-                        note_list.append(str(entry.pitch))
+                        note_list.append(str(entry.pitch.pitchClass))
 
         return note_list
 
@@ -166,7 +166,7 @@ def get_simul_chords_and_notes(path):
                     note_list = []
                     for note in melodyNotes:
                         if(isinstance(note , music21.note.Note)):
-                            note_list.append(str(note.name))
+                            note_list.append(str(note.pitch.pitchClass))
 
                     if(len(chord) > 1 and len(note_list) > 0):
                         chord_and_note_list.append((list(set(note_list)), chord))
@@ -176,6 +176,24 @@ def get_simul_chords_and_notes(path):
         return []
 
     return chord_and_note_list
+
+def get_song_data(patH):
+    """
+        Function: get_song_data
+    
+        Description: Get all song event and categorize by offset. The returned data
+        structure has format:
+
+        {
+            offset1: [melody_note, voicing_note, chord]
+            offset2: [melody_note, voicing_note, chord]
+            offset3: [melody_note, voicing_note, chord]
+        }
+
+        if any of the note or chords are not found at the offset, they have value None
+    """
+
+    pass
 
 
 def notes_chords_rests_to_midi(song_data):
