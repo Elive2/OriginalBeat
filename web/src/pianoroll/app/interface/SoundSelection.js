@@ -36,12 +36,12 @@ define(["style/interface.scss"], function (interfaceStyle) {
 		this._synth.addEventListener("click", this._clicked.bind(this, "synth"));
 		this._buttons.appendChild(this._synth);
 
-		this.microphone = document.createElement("DIV");
-		this.microphone.id = "Sampler";
-		this.microphone.classList.add("Button");
-		this.microphone.classList.add("icon-svg_record");
-		this.microphone.addEventListener("click", this._clicked.bind(this, "sampler"));
-		this._buttons.appendChild(this.microphone);
+		// this.microphone = document.createElement("DIV");
+		// this.microphone.id = "Sampler";
+		// this.microphone.classList.add("Button");
+		// this.microphone.classList.add("icon-svg_record");
+		// this.microphone.addEventListener("click", this._clicked.bind(this, "sampler"));
+		// this._buttons.appendChild(this.microphone);
 
 		//the currently active element
 		this._currentInstrument = "synth";
@@ -57,13 +57,13 @@ define(["style/interface.scss"], function (interfaceStyle) {
 		this.setInstrument(which);
 	};
 
-	SoundSelection.prototype.recording = function(isRec){
-		if (isRec){
-			this._buttons.classList.add("Recording");
-		} else {
-			this._buttons.classList.remove("Recording");
-		}
-	};
+	// SoundSelection.prototype.recording = function(isRec){
+	// 	if (isRec){
+	// 		this._buttons.classList.add("Recording");
+	// 	} else {
+	// 		this._buttons.classList.remove("Recording");
+	// 	}
+	// };
 
 	//return to the previously selected button
 	SoundSelection.prototype.previous = function(){
@@ -86,9 +86,6 @@ define(["style/interface.scss"], function (interfaceStyle) {
 				break;
 			case "piano" :
 				this._piano.classList.add("Active");
-				break;
-			case "sampler" :
-				this.microphone.classList.add("Active");
 				break;
 		}
 	};

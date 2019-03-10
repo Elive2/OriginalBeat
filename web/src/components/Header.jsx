@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from './logo.png';
+import logo from '../static/logo.png';
 import '../index.css';
 import { Container, Row, Col, Dropdown, DropdownToggle, DropdownMenu, DropdownItem} from 'reactstrap';
 

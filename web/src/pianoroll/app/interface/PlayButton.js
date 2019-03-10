@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+ /*
+	Modifications:
+
+	Removes the prev and next buttons
+ */
+
 define(["style/interface.scss", "data/Scores", "Tone/core/Transport", "interface/Loader"], 
 	function (interfaceStyle, Scores, Transport, Loader) {
 

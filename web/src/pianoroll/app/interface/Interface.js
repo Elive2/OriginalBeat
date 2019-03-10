@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-define(["style/interface.scss", "./SoundSelection", "./PlayButton", "mic/Microphone"], 
-function (interfaceStyle, SoundSelection, PlayButton, Microphone) {
+ /*
+	Modifiactions:
+
+	Removes Microphone
+ */
+
+define(["style/interface.scss", "./SoundSelection", "./PlayButton"], 
+function (interfaceStyle, SoundSelection, PlayButton) {
 
 	var Interface = function(container){
 
@@ -27,13 +33,13 @@ function (interfaceStyle, SoundSelection, PlayButton, Microphone) {
 
 		this._playButton = new PlayButton(this._interface);
 
-		this._microphone = new Microphone(this._interface, this._soundButtons.microphone);
+		// this._microphone = new Microphone(this._interface, this._soundButtons.microphone);
 
-		this._microphone.onstart = this._startRec.bind(this);
-		this._microphone.onstop = this._stopRec.bind(this);
-		this._microphone.oncancel = this._recCanceled.bind(this);
+		// this._microphone.onstart = this._startRec.bind(this);
+		// this._microphone.onstop = this._stopRec.bind(this);
+		// this._microphone.oncancel = this._recCanceled.bind(this);
 
-		this._onRec = function(){};
+		// this._onRec = function(){};
 	};
 
 	Interface.prototype.onPlay = function(cb){
@@ -48,29 +54,29 @@ function (interfaceStyle, SoundSelection, PlayButton, Microphone) {
 		this._playButton.onScore = cb;
 	};
 
-	Interface.prototype.onRecord = function(cb){
-		this._onRec = cb;
-	};
+	// Interface.prototype.onRecord = function(cb){
+	// 	this._onRec = cb;
+	// };
 
-	Interface.prototype.onBuffer = function(cb){
-		this._microphone.onbuffer = cb;
-	};
+	// Interface.prototype.onBuffer = function(cb){
+	// 	this._microphone.onbuffer = cb;
+	// };
 
-	Interface.prototype._startRec = function(){
-		this._soundButtons.recording(true);
-		this._onRec(true);
-	};
+	// Interface.prototype._startRec = function(){
+	// 	this._soundButtons.recording(true);
+	// 	this._onRec(true);
+	// };
 
-	Interface.prototype._stopRec = function(){
-		this._soundButtons.recording(false);
-		this._onRec(false);
-	};
+	// Interface.prototype._stopRec = function(){
+	// 	this._soundButtons.recording(false);
+	// 	this._onRec(false);
+	// };
 
-	Interface.prototype._recCanceled = function(){
-		this._soundButtons.recording(false);
-		this._soundButtons.previous();
-		this._onRec(false);
-	};
+	// Interface.prototype._recCanceled = function(){
+	// 	this._soundButtons.recording(false);
+	// 	this._soundButtons.previous();
+	// 	this._onRec(false);
+	// };
 
 	//force it to a stop
 	Interface.prototype.stop = function(){

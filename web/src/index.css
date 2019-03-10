@@ -25,15 +25,6 @@ footer {
 	right: 100px;
 }
 
-#reportBug {
-	margin-top: 20px;
-	margin-bottom: 20px;
-}
-
-#draggableBug {
-	z-index: 100;
-}
-
 
 .historyReportModal {
     width: 90%;
@@ -53,4 +44,10 @@ footer {
     -o-transform-origin: 0 0;
     -webkit-transform: scale(0.25);
     -webkit-transform-origin: 0 0;
+}
+
+.github {
+	width: 30px;
+	height: 30px;
+	margin: 10px;
 }

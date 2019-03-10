@@ -47,6 +47,7 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
             });
             interface.onPlay(function (playing) {
                 if (playing) {
+                    Tone.context.resume();
                     roll.start();
                 } else {
                     roll.stop();
@@ -57,21 +58,21 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
                 roll.setScore(json);
             });
 
-            var wasPlaying = false;
-            interface.onRecord(function (recording) {
-                if (recording) {
-                    wasPlaying = Transport.state === "started";
-                    roll.stop();
-                } else {
-                    if (wasPlaying) {
-                        wasPlaying = false;
-                        roll.start();
-                    }
-                }
-            });
-            interface.onBuffer(function (buffer, duration, onset) {
-                player.setBuffer(buffer, duration, onset);
-            });
+            // var wasPlaying = false;
+            // interface.onRecord(function (recording) {
+            //     if (recording) {
+            //         wasPlaying = Transport.state === "started";
+            //         roll.stop();
+            //     } else {
+            //         if (wasPlaying) {
+            //             wasPlaying = false;
+            //             roll.start();
+            //         }
+            //     }
+            // });
+            // interface.onBuffer(function (buffer, duration, onset) {
+            //     player.setBuffer(buffer, duration, onset);
+            // });
 
 
             roll.onnote = function (note, duration, time, velocity) {
