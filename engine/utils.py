@@ -177,7 +177,7 @@ def get_simul_chords_and_notes(path):
 
     return chord_and_note_list
 
-def get_song_data(patH):
+def get_song_data(path):
     """
         Function: get_song_data
     
@@ -193,7 +193,54 @@ def get_song_data(patH):
         if any of the note or chords are not found at the offset, they have value None
     """
 
-    pass
+    midi = music21.converter.parse(path)
+    parts = music21.instrument.partitionByInstrument(midi)
+    song_data = {}
+
+    chord_part = parts[1] if len(parts) > 1 else parts[0]
+    melody_part = parts[0]
+    voicing_part = melody_part
+
+    try:
+        #loop through elements in the melody part
+        for elements_by_offset in music21.stream.iterator.OffsetIterator(melody_part):
+            melody_note = None
+            voicing_note = None
+            chord = None
+            for entry in elements_by_offset:
+                offset = entry.offset
+
+                if isinstance(entry, music21.chord.Chord):
+                    #if its a chord, (unlikely) add it as a chord
+                    if(len(entry.pitchClasses) > 1):
+                        chord = str(entry.pitchClasses)
+                    else:
+                        voicing_note = str(entry.pitch.pitchClass)
+                elif isinstance(entry, music21.note.Note):
+                    #if it is a melody note, add the melody note to the data
+                    melody_note = str(entry.pitch.pitchClass)
+
+                    #find all chords or voicings that are sounding at the same time in the chord/voicing part
+                    sounding = chord_part.allPlayingWhileSounding(entry, melody_part)
+                    for sounding_note in sounding:
+                        if isinstance(sounding_note, music21.chord.Chord):
+                            chord = ' '.join([str(e) for e in sounding_note.pitchClasses])
+                        elif isinstance(sounding_note, music21.note.Note):
+                            voicing_note = str(sounding_note.pitch.pitchClass)
+
+                        #can't handle the case if there are multiple chords sounding
+
+
+                else:
+                    continue
+
+                song_data[offset] = [melody_note, voicing_note, chord]
+
+    except Exception as e:
+        print(e)
+        return {}
+        
+    return song_data
 
 
 def notes_chords_rests_to_midi(song_data):

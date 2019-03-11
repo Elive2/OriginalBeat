@@ -45,8 +45,8 @@ midifiles_directory = Path("../data/midifiles/")
 
 class BayesNet:
     def __init__(self, beat_instance):
-        self._note_corpus = []
-        self._chord_corpus = []
+
+        self._beat = beat_instance
 
         self._cond_table_c0 = []
         self._cond_table_c1 = []
@@ -54,17 +54,8 @@ class BayesNet:
         self._cond_table_v1 = []
         self._cond_table_m1 = []
 
-        with open(chord_chain_location, 'r') as infile:
-            self._chord_chain = Chain.from_json(json.load(infile))
+        self._m1_model = self._build_alpha_model()
 
-        with open(note_chain_location, 'r') as infile:
-            self._note_chain = Chain.from_json(json.load(infile))
-
-        # self._chord_chain = self._build_chord_chain()
-        # self._note_chain = self._build_note_chain()
-        self._m1_model = self._build_m1_model()
-
-        self._beat = beat_instance
         self._build_cond_table_c0()
         self._build_cond_table_c1()
         self._build_cond_table_v0()
@@ -73,54 +64,11 @@ class BayesNet:
         self._build_net()
 
 
-    def _build_chord_chain(self):
-        for filename in os.listdir(str(midifiles_directory)):
-            if filename.endswith(".mid"): 
-                path = midifiles_directory / filename
-                song_data = get_chords(path)
-                self._chord_corpus.append(song_data)
-                continue
-            else:
-                continue
-
-        #build a markov chain of the chord, state size one
-        #this will help compute the probability table
-        the_chain = Chain(self._chord_corpus, 1)
-
-        with open(chord_chain_location, 'w') as outfile:
-            json.dump(the_chain.to_json(), outfile)
-
-        return the_chain
-
-    def _build_note_chain(self):
-        for filename in os.listdir(str(midifiles_directory)):
-            if filename.endswith(".mid"): 
-                path = midifiles_directory / filename
-                song_data = get_notes(path)
-                self._note_corpus.append(song_data)
-                continue
-            else:
-                continue
-
-        #build a markov chain of the notes, state size one
-        #this will help compute the probability table
-        the_chain = Chain(self._note_corpus, 1)
-
-        with open(note_chain_location, 'w') as outfile:
-            json.dump(the_chain.to_json(), outfile)
-
-        return the_chain
-
-    def _build_m1_model(self):
+    def _build_alpha_model(self):
         """
-            Function: _build_m1_model
+            Function: _build_alpha_model
 
-            Description: we can't use a markov model for simultaneous
-            notes and chords because it is not a discrete time
-            markov process. So instead just build a custom model. It 
-            is simply a dictionary where the keys are the possible
-            note-chord combonations and the value is the count of occurnces
-            in the data. Its might look something like this 
+            Description: get song data from every song and build the model
 
             {
                 "C4, 0 3 5":12
@@ -132,14 +80,9 @@ class BayesNet:
         for filename in os.listdir(str(midifiles_directory)):
             if filename.endswith(".mid"):
                 path = midifiles_directory / filename
-                song_data = get_simul_chords_and_notes(path)
-                for pair in song_data:
-                    for possible_note in pair[0]:
-                        data_string = possible_note + ', ' + ' '.join(pair[1])
-                    if(data_string not in model):
-                        model[data_string] = 1;
-                    else:
-                        model[data_string] += 1;
+                song_data = get_song_data(path)
+                print(song_data)
+                input()
 
         return model
 
