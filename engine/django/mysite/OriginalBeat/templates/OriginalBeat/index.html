@@ -1,0 +1,9 @@
+{% if latestSongList %}
+    <ul>
+    {% for song in latestSongList %}
+        <li><a href="{% url 'OriginalBeat:detail' songName.id %}">{{ songName.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No songs are available.</p>
+{% endif %}

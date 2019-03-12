@@ -1,0 +1,150 @@
+[33mcommit 62e91a04e5f324cee2d8f263d7d1677a1d6ca7e0[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Sun Mar 10 16:55:49 2019 -0700
+
+    pre branch commit
+
+[33mcommit 6dc378f6f7cd7984cd8a31e2ee6c5a8481f6362a[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Sun Mar 10 15:07:17 2019 -0700
+
+    removes the microphone from frontend, bayes net progress, but still have key errors
+
+[33mcommit 667bc6c3bcad19e9b14c34c450908fbdc1a71429[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Sun Mar 10 01:09:32 2019 -0800
+
+    adds preliminary piano roll, thank you google
+
+[33mcommit 2146b1369fb4250624c7f580faec48ef4f43db0f[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Sat Mar 9 21:19:01 2019 -0800
+
+    fixed error with m1 being a list
+
+[33mcommit 2b5d552a4fdc3e99ce62ea592f052974c74d9116[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Fri Mar 8 16:13:16 2019 -0800
+
+    update requirements.txt
+
+[33mcommit 7ee3710b391685458f1c1ab9530250956d7259e2[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Fri Mar 8 12:49:51 2019 -0800
+
+    frontend setup
+
+[33mcommit 0a956beaef761b7ec915653ac964e4945138714d[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Mar 6 18:47:15 2019 -0800
+
+    bayes net progress, almost done building all prob tables, need to finish c1
+
+[33mcommit f9dd43aeed43d64846dc608add2580a3ad206f5b[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Feb 6 12:56:13 2019 -0800
+
+    adds a chain for the user input, need to find a way to merge this context with the data chain during generation
+
+[33mcommit 7bf46eef9e314445625c229e90df4b0d95674c79[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Tue Feb 5 22:21:24 2019 -0800
+
+    super naieve markov chain, just notes chords rests
+
+[33mcommit 510d8ef57054ca8618f58aade299699c57e05869[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Thu Jan 31 12:38:08 2019 -0800
+
+    changes name to MarkovKey
+
+[33mcommit 5e34a3e5810534a8d0512551860e9e31e5d73122[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Thu Jan 31 12:32:57 2019 -0800
+
+    adds utils file and markov modifications
+
+[33mcommit bb645e0b4334fd98dc882e21e14fd7e02396fc06[m
+Merge: 708f0d2 210b0f5
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Thu Jan 31 11:53:49 2019 -0800
+
+    Merge branch 'master' of https://github.com/Elive2/OriginalBeat
+
+[33mcommit 210b0f56d451cfcefab76e323c75bc1c6142b682[m
+Author: Christian Quintero <cquintero@scu.edu>
+Date:   Thu Jan 31 11:52:32 2019 -0800
+
+    deleted DS_Store
+
+[33mcommit ad4e5af1d020a29ee10a116a64866d006d6f7ec1[m
+Author: Christian Quintero <cquintero@scu.edu>
+Date:   Thu Jan 31 11:44:26 2019 -0800
+
+    DS Store
+
+[33mcommit 708f0d2e5cde7f1238214cb25644dc95f4638ecd[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Thu Jan 31 11:40:01 2019 -0800
+
+    adds the file for markov model
+
+[33mcommit 4697908160ba2c2881a52c145b80383fd8493b9d[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Thu Jan 31 11:19:30 2019 -0800
+
+    mild changes to crude, leaving it unfinished for now
+
+[33mcommit e1f2bb05a7468f718f065d746c72d0aaa54784c3[m
+Author: Christian Quintero <cquintero@scu.edu>
+Date:   Thu Jan 31 10:26:07 2019 -0800
+
+    Added midi files to midi folder
+
+[33mcommit d1a715ca8853194dcd84b1a36fdcf9d70a9528f1[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 30 18:04:40 2019 -0800
+
+    adds data folder
+
+[33mcommit b970f0b28df776c66ee3720807eb505615530b39[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 30 15:46:16 2019 -0800
+
+    big changes, new engine, new beats
+
+[33mcommit 02139838156e10e533c9185d14150904136bc888[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 16 18:16:16 2019 -0800
+
+    adds requiremnts and engine directory
+
+[33mcommit 3efe2eb8ec995e80d7112c212c12fcf0de01bba1[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 16 17:38:31 2019 -0800
+
+    changes gitignore to ignore venv and data
+
+[33mcommit 7446090ef7986d2d6c849b95a729c8e10aa5ff0c[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 16 17:05:35 2019 -0800
+
+    improves block highlighting
+
+[33mcommit 9e43b8d56df046d19cd158886e694ac51e4debc4[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 16 17:02:17 2019 -0800
+
+    makes coding guidelines more legible
+
+[33mcommit b9b5aa8c5e4004798a041f3eaee11b0c91638f85[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 16 16:59:20 2019 -0800
+
+    adds coding guidelines in docs folder
+
+[33mcommit 51fe63f2aa473879935a44765f3c5b2c21f33ea7[m
+Author: Eli Yale <elivyale@gmail.com>
+Date:   Wed Jan 16 16:10:58 2019 -0800
+
+    Initial commit

@@ -1,0 +1,6 @@
+<h1>{{ songName.name }}</h1>
+<ul>
+{% for choice in songName.choice_set.all %}
+    <li>{{ choice.choice_text }}</li>
+{% endfor %}
+</ul>
