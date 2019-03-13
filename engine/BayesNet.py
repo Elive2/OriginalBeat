@@ -54,7 +54,20 @@ class BayesNet:
         self._cond_table_v1 = []
         self._cond_table_m1 = []
 
-        self._m1_model = self._build_alpha_model()
+        self._chord_model = {}
+        self._melody_note_model = {}
+        self._voicing_note_model = {}
+        self._note_and_chord_model = {}
+        self._build_alpha_model()
+
+        print(self._chord_model)
+        input()
+        print(self._melody_note_model)
+        input()
+        print(self._voicing_note_model)
+        input()
+        print(self._note_and_chord_model)
+        input()
 
         self._build_cond_table_c0()
         self._build_cond_table_c1()
@@ -70,21 +83,66 @@ class BayesNet:
 
             Description: get song data from every song and build the model
 
-            {
-                "C4, 0 3 5":12
-                "C#4, 1 4":9
+            Consolidated all the model building to this one function,
+            so if we want to add a new network node, we can just edit this
+            function
 
-            }
+            NOTE: there could be a key error with the len(keys)-state_size, ie
+            the last chord/note may not appear in the keys of the model,
+            beware of this
         """
         model = {}
+        state_size = 1
         for filename in os.listdir(str(midifiles_directory)):
             if filename.endswith(".mid"):
                 path = midifiles_directory / filename
                 song_data = get_song_data(path)
-                print(song_data)
-                input()
+                keys = list(song_data.keys())
+                for i in range(len(keys) - state_size):
+                    offset = keys[i]
+                    item1 = song_data[keys[i]]
+                    item2 = song_data[keys[i+state_size]]
+                    state = (item1,item2)
 
-        return model
+                    melody_note = state[0][0]
+                    voicing_note = state[0][1]
+                    chord = state[0][2]
+                    next_melody_note = state[1][0]
+                    next_voicing_note = state[1][1]
+                    next_chord = state[1][2]
+
+                    if chord is not None and next_chord is not None:
+                        if(chord not in self._chord_model):
+                            self._chord_model[chord] = {}
+                        if(next_chord not in self._chord_model[chord]):
+                            self._chord_model[chord][next_chord] = 1
+                        else:
+                            self._chord_model[chord][next_chord] += 1
+
+                    if melody_note is not None and next_melody_note is not None:
+                        if(melody_note not in self._melody_note_model):
+                            self._melody_note_model[melody_note] = {}
+                        if(next_melody_note not in self._melody_note_model[melody_note]):
+                            self._melody_note_model[melody_note][next_melody_note] = 1
+                        else:
+                            self._melody_note_model[melody_note][next_melody_note] +=1
+
+                    if voicing_note is not None and next_voicing_note is not None:
+                        if(voicing_note not in self._voicing_note_model):
+                            self._voicing_note_model[voicing_note] = {}
+                        if(next_voicing_note not in self._voicing_note_model[voicing_note]):
+                            self._voicing_note_model[voicing_note][next_voicing_note] = 1
+                        else:
+                            self._voicing_note_model[voicing_note][next_voicing_note] += 1
+
+                    if melody_note is not None and chord is not None and next_melody_note is not None \
+                    and next_chord is not None:
+                        melody_and_chord = melody_note + ',' + chord
+                        if(melody_and_chord not in self._note_and_chord_model):
+                            self._note_and_chord_model[melody_and_chord] = 1
+                        else:
+                            self._note_and_chord_model[melody_and_chord] += 1
+
 
     def _build_cond_table_c0(self):
         cond_list = {}

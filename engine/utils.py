@@ -213,7 +213,7 @@ def get_song_data(path):
                 if isinstance(entry, music21.chord.Chord):
                     #if its a chord, (unlikely) add it as a chord
                     if(len(entry.pitchClasses) > 1):
-                        chord = str(entry.pitchClasses)
+                        chord = ' '.join([str(e) for e in entry.pitchClasses])
                     else:
                         voicing_note = str(entry.pitch.pitchClass)
                 elif isinstance(entry, music21.note.Note):
@@ -239,7 +239,7 @@ def get_song_data(path):
     except Exception as e:
         print(e)
         return {}
-        
+
     return song_data
 
 
