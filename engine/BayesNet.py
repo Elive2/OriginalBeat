@@ -25,6 +25,24 @@
     using chordify was helpful, it gave me way more chords. maybe I can chodify into one track
     and sync it with the melody, this would be nice.
 
+    Imporvements:
+
+    1. Would be nice to automate the process of adding a node/parameter to the newtwork. Right now
+    If you wanted to say add a base note, you would need to:
+        1. add a self._cond_table_b0
+        2. add the model to _load_from_disk
+        3. add to build_alpha_model
+        4. add function to build_cond_table_b0
+        5. change get_song_data to have a base note parameter
+
+    would be awesome to abstract this all away and just specify the network structure and have 
+    the functions automatically gather the necessary song_data, then automatically generate the models
+    and probability tables. But this would be A LOT of work
+
+    2. Should Maybe have made seperate classes for each chord_model, note_model, note_chord_model
+        ahh this is a good idea, then maybe if you want to add a new node, you just make a new
+        class, or subclass, and the class handles the probability table generation
+
 """
 
 import os
@@ -35,16 +53,28 @@ import json
 from itertools import accumulate
 from pomegranate import *
 import numpy as np
+from Beat import Beat
 
 BEGIN = "___BEGIN__"
 END = "___END__"
+CHORD = "CHORD"
+MELODYNOTE = "MELODYNOTE"
+VOICINGNOTE = "VOICINGNOTE"
+NOTECHORD = "NOTECHORD"
 
-chord_chain_location = Path('./Models/Chord_Chain.txt')
-note_chain_location = Path('./Models/Note_Chain.txt')
+
+chord_model_location = Path('./Models/Chord_Model.txt')
+melody_note_model_location = Path('./Models/Melody_Note_Model.txt')
+voicing_note_model_location = Path('./Models/Voicing_Note_Model.txt')
+note_chord_model_location = Path('./Models/Note_Chord_Model.txt')
 midifiles_directory = Path("../data/midifiles/")
 
 class BayesNet:
     def __init__(self, beat_instance):
+
+
+        #boolean to control wether or not to read from disk
+        self._load_from_disk = True
 
         self._beat = beat_instance
 
@@ -54,20 +84,34 @@ class BayesNet:
         self._cond_table_v1 = []
         self._cond_table_m1 = []
 
-        self._chord_model = {}
-        self._melody_note_model = {}
-        self._voicing_note_model = {}
-        self._note_and_chord_model = {}
-        self._build_alpha_model()
+        if(self._load_from_disk):
+            with open(chord_model_location, 'r') as infile:
+                self._chord_model = self._model_from_json(json.load(infile), CHORD)
 
-        print(self._chord_model)
-        input()
-        print(self._melody_note_model)
-        input()
-        print(self._voicing_note_model)
-        input()
-        print(self._note_and_chord_model)
-        input()
+            with open(melody_note_model_location, 'r') as infile:
+                self._note_model = self._model_from_json(json.load(infile), MELODYNOTE)
+
+            with open(note_chord_model_location, 'r') as infile:
+                self._note_chord_model = self._model_from_json(json.load(infile), NOTECHORD)
+
+            with open(voicing_note_model_location, 'r') as infile:
+                self._voicing_note_model = self._model_from_json(json.load(infile), VOICINGNOTE)
+
+        else:
+            self._chord_model = {}
+            self._melody_note_model = {}
+            self._voicing_note_model = {}
+            self._note_chord_model = {}
+            self._build_alpha_model()
+
+            print(self._chord_model)
+            input()
+            print(self._melody_note_model)
+            input()
+            print(self._voicing_note_model)
+            input()
+            print(self._note_chord_model)
+            input()
 
         self._build_cond_table_c0()
         self._build_cond_table_c1()
@@ -81,11 +125,11 @@ class BayesNet:
         """
             Function: _build_alpha_model
 
-            Description: get song data from every song and build the model
+            Description: get song data from every song and build all the models
 
             Consolidated all the model building to this one function,
             so if we want to add a new network node, we can just edit this
-            function
+            function, and add probability table generation functions
 
             NOTE: there could be a key error with the len(keys)-state_size, ie
             the last chord/note may not appear in the keys of the model,
@@ -95,8 +139,8 @@ class BayesNet:
         state_size = 1
         for filename in os.listdir(str(midifiles_directory)):
             if filename.endswith(".mid"):
-                path = midifiles_directory / filename
-                song_data = get_song_data(path)
+                beat = Beat(midifiles_directory / filename)
+                song_data = get_song_data(beat.midi_file_path, beat.key)
                 keys = list(song_data.keys())
                 for i in range(len(keys) - state_size):
                     offset = keys[i]
@@ -138,39 +182,59 @@ class BayesNet:
                     if melody_note is not None and chord is not None and next_melody_note is not None \
                     and next_chord is not None:
                         melody_and_chord = melody_note + ',' + chord
-                        if(melody_and_chord not in self._note_and_chord_model):
-                            self._note_and_chord_model[melody_and_chord] = 1
+                        if(melody_and_chord not in self._note_chord_model):
+                            self._note_chord_model[melody_and_chord] = 1
                         else:
-                            self._note_and_chord_model[melody_and_chord] += 1
+                            self._note_chord_model[melody_and_chord] += 1
+
+        #write all models to disk
+
+        with open(chord_model_location, 'w') as outfile:
+            json.dump(self._model_to_json(self._chord_model), outfile)
+
+        with open(melody_note_model_location, 'w') as outfile:
+            json.dump(self._model_to_json(self._melody_note_model), outfile)
+
+        with open(note_chord_model_location, 'w') as outfile:
+            json.dump(self._model_to_json(self._note_chord_model), outfile)
+
+        with open(voicing_note_model_location, 'w') as outfile:
+            json.dump(self._model_to_json(self._voicing_note_model), outfile)
 
 
     def _build_cond_table_c0(self):
         cond_list = {}
-        length = len(self._chord_chain.model.keys())
+        length = len(self._chord_model.keys())
 
-        for chord, next_chords in self._chord_chain.model.items():
-            if(chord == BEGIN or chord == END or chord == (BEGIN)):
-                continue
-            cond_list[chord[0]] = 1 / length
+        for chord, next_chords in self._chord_model.items():
+            cond_list[chord] = 1 / length
+
+
+        print(cond_list)
+        input()
+        self._cond_table_c0 = DiscreteDistribution(cond_list)
+
+        self._all_possible_chords = cond_list.keys()
 
         self._cond_table_c0 = DiscreteDistribution(cond_list)
-        self._all_possible_chords = cond_list.keys()
 
         # print(cond_list)
         # input()
 
     def _build_cond_table_c1(self):
         cond_list = []
-        for chord in self._chord_chain.model:
-            choices, weights = zip(*self._chord_chain.model[chord].items())
+        for chord in self._chord_model:
+            choices, weights = zip(*self._chord_model[chord].items())
             total = sum(list(accumulate(weights)))
-            for next_chord in self._chord_chain.model[chord].items():
-                probability = next_chord[1] / total;
-                cond_list.append([chord[0], next_chord[0], probability])
+            for next_chord, count in self._chord_model[chord].items():
+                probability = count / total;
+                cond_list.append([chord, next_chord, probability])
 
         #populate all combos that haven't been found with probability 0, pomgranate requires this
-        self._fill_in_missing_chord_probabilites(cond_list)
+        #self._fill_in_missing_chord_probabilites(cond_list)
 
+        print(cond_list)
+        input()
         self._cond_table_c1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c0])
 
         # print(cond_list)
@@ -297,6 +361,31 @@ class BayesNet:
                     cond_list.append([chord2, note2, 0.0])
 
 
+    def _model_to_json(self, model):
+        """
+        Dump the chord, note or chord note model as a JSON object, for loading later.
+        """
+        return json.dumps(list(model.items()))
+
+    def _model_from_json(self, json_thing, kind):
+        """
+        Given a JSON object or JSON string that was created by `self.to_json`,
+        return the corresponding markovify.Chain.
+        """
+
+        if isinstance(json_thing, basestring):
+            obj = json.loads(json_thing)
+        else:
+            obj = json_thing
+
+        if isinstance(obj, list):
+            rehydrated = dict((tuple(item[0]), item[1]) for item in obj)
+        elif isinstance(obj, dict):
+            rehydrated = obj
+        else:
+            raise ValueError("Object should be dict or list")
+
+        return obj
 
 
 

@@ -177,7 +177,7 @@ def get_simul_chords_and_notes(path):
 
     return chord_and_note_list
 
-def get_song_data(path):
+def get_song_data(path, given_key):
     """
         Function: get_song_data
     
@@ -191,6 +191,8 @@ def get_song_data(path):
         }
 
         if any of the note or chords are not found at the offset, they have value None
+
+        should everything be transposed to c? including melody?
     """
 
     midi = music21.converter.parse(path)
@@ -201,46 +203,44 @@ def get_song_data(path):
     melody_part = parts[0]
     voicing_part = melody_part
 
-    try:
-        #loop through elements in the melody part
-        for elements_by_offset in music21.stream.iterator.OffsetIterator(melody_part):
-            melody_note = None
-            voicing_note = None
-            chord = None
-            for entry in elements_by_offset:
-                offset = entry.offset
+    #loop through elements in the melody part
+    for elements_by_offset in music21.stream.iterator.OffsetIterator(melody_part):
+        melody_note = None
+        voicing_note = None
+        chord = None
+        for entry in elements_by_offset:
+            offset = entry.offset
 
-                if isinstance(entry, music21.chord.Chord):
-                    #if its a chord, (unlikely) add it as a chord
-                    if(len(entry.pitchClasses) > 1):
-                        chord = ' '.join([str(e) for e in entry.pitchClasses])
-                    else:
-                        voicing_note = str(entry.pitch.pitchClass)
-                elif isinstance(entry, music21.note.Note):
-                    #if it is a melody note, add the melody note to the data
-                    melody_note = str(entry.pitch.pitchClass)
-
-                    #find all chords or voicings that are sounding at the same time in the chord/voicing part
-                    sounding = chord_part.allPlayingWhileSounding(entry, melody_part)
-                    for sounding_note in sounding:
-                        if isinstance(sounding_note, music21.chord.Chord):
-                            chord = ' '.join([str(e) for e in sounding_note.pitchClasses])
-                        elif isinstance(sounding_note, music21.note.Note):
-                            voicing_note = str(sounding_note.pitch.pitchClass)
-
-                        #can't handle the case if there are multiple chords sounding
-
-
+            if isinstance(entry, music21.chord.Chord):
+                #if its a chord, (unlikely) add it as a chord
+                if(len(entry.pitchClasses) > 1):
+                    #chord_notes = ' '.join([str(e) for e in entry.name])
+                    chord = music21.roman.romanNumeralFromChord(entry, music21.key.Key(given_key)).romanNumeralAlone
                 else:
-                    continue
+                    voicing_note = str(entry.pitch.pitchClass)
+            elif isinstance(entry, music21.note.Note):
+                #if it is a melody note, add the melody note to the data
+                melody_note = str(entry.pitch.pitchClass)
 
-                song_data[offset] = [melody_note, voicing_note, chord]
+                #find all chords or voicings that are sounding at the same time in the chord/voicing part
+                sounding = chord_part.allPlayingWhileSounding(entry, melody_part)
+                for sounding_note in sounding:
+                    if isinstance(sounding_note, music21.chord.Chord):
+                            chord = music21.roman.romanNumeralFromChord(sounding_note, music21.key.Key(given_key)).romanNumeralAlone
+                    elif isinstance(sounding_note, music21.note.Note):
+                        voicing_note = str(sounding_note.pitch.pitchClass)
 
-    except Exception as e:
-        print(e)
-        return {}
+                    #can't handle the case if there are multiple chords sounding
+            else:
+                continue
+
+            song_data[offset] = [melody_note, voicing_note, chord]
 
     return song_data
+
+def transpose(part, from_key, to_key):
+    i = interval.Interval(from_key.tonic, pitch.Pitch(to_key))
+    return part.transpose(i)
 
 
 def notes_chords_rests_to_midi(song_data):

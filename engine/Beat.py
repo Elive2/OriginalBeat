@@ -8,6 +8,8 @@
 
 """
 
+from utils import *
+
 class Beat():
 	"""
 	Class: Beat.py
@@ -26,8 +28,11 @@ class Beat():
 	by the models and project details
 	"""
 
-	def __init__(self, midi_upload_file_path):
-		self._midi_upload_file_path = midi_upload_file_path
+	def __init__(self, midi_file_path):
+		self._midi_file_path = midi_file_path
+		self._key = findKey(midi_file_path)
+		self._temp = 120
+		self._bars = 12
 
 	#getters:
 
@@ -46,6 +51,13 @@ class Beat():
 	@property
 	def notes_chords_rests(self):
 		return self._notes_chords_rests
+
+	@property
+	def midi_file_path(self):
+		return self._midi_file_path
+	
+
+
 	
 
 	#setters:
@@ -67,6 +79,10 @@ class Beat():
 	@notes_chords_rests.setter
 	def notes_chords_rests(self, data_list):
 		self._notes_chords_rests = data_list
+
+	@midi_file_path.setter
+	def midi_file_path(self, path):
+		self._midi_file_path = path
 
 
 
