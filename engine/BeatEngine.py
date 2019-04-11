@@ -30,6 +30,7 @@
 import mido
 from MarkovKey import MarkovKey
 from BayesNet import BayesNet
+from KeyChord import KeyChord
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -77,7 +78,7 @@ class BeatEngine():
 
         #NOTE: Will eventually set this to a countBeats() method for variable
         #length midis, for now it is hardocded as 8
-        #self._beat.bars = 8
+        #self._beat.bars = 8å
 
         #NOTE: this will eventually be a call to findTempo(), but for now
         #it is hardocded to 120 bpm
@@ -87,7 +88,7 @@ class BeatEngine():
 
         self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
-        model = BayesNet(self._beat)
+        model = KeyChord(self._beat)
 
 
     #saving this for later
@@ -99,7 +100,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/midifiles/Vindicta.mid', None)
+    engine = BeatEngine('../data/midifiles/Nymeria.mid', None)
 
 if __name__ == '__main__':
     main()
