@@ -24,8 +24,8 @@ module.exports = {
 		"PianoRoll": "app/Main",
 	},
 	output: {
-		filename: "../../dist/[name].js",
-		chunkFilename: "../../dist/[id].js",
+		filename: "../../../static/[name].js",
+		chunkFilename: "../../../static/[id].js",
 		sourceMapFilename : "[file].map",
 	},
 	resolve: {

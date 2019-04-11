@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from '../static/logo.png';
 import '../index.css';
 import { Container, Row, Col, Dropdown, DropdownToggle, DropdownMenu, DropdownItem} from 'reactstrap';
 
@@ -23,7 +22,7 @@ class Header extends React.Component{
 			<header>
 				<Row>
 					<Col>
-						<img className="logo" src={logo}/>
+						<img className="logo" src={"/static/logo.png"}/>
 						<h2 className="name">Original<br/>Beat </h2>
 					</Col>
 					<Col xs="6">

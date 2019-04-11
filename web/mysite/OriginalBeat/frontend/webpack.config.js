@@ -1,11 +1,15 @@
 const webpack = require('webpack');
+var BundleTracker = require('webpack-bundle-tracker');
+var path = require("path");
+
 
 module.exports = env => {
   return {
     entry: {
       //upload: './src/upload.js',
       projectPage: './src/projectPage.jsx',
-      indexPage: './src/indexPage.jsx'
+      indexPage: './src/indexPage.jsx',
+      //profilePage: './src/profilePage.jsx'
     },
     module: {
       rules: [
@@ -43,8 +47,8 @@ module.exports = env => {
       extensions: ['*', '.js', '.jsx']
     },
     output: {
-      path: __dirname + '/dist',
-      publicPath: '/dist',
+      path: path.resolve('../static/bundles/'),
+      publicPath: '../static/bundles/',
       filename: '[name].bundle.js'
     },
     plugins: [
@@ -53,7 +57,8 @@ module.exports = env => {
         'process.env': {
           API_URL: JSON.stringify(env.API_URL)
         }
-      })
+      }),
+      new BundleTracker({filename: '../../webpack-stats.json'}),
       // new webpack.DefinePlugin({
       //   API_URL: JSON.stringify(process.env.API_URL)
       // })

@@ -1,3 +1,4 @@
+{% load render_bundle from webpack_loader %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -23,7 +24,7 @@
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
-    <div id="index"></div>
-    <script src="./indexPage.bundle.js"></script>
+    <div id="root"></div>
+    <script type="text/javascript" src='/static/bundles/projectPage.bundle.js'></script>
   </body>
 </html>
