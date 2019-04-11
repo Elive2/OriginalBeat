@@ -21,17 +21,16 @@ class KeyChord():
         print(self._beat._midi_upload_file_path)
         midi = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        for el in midi.recurse():
-            print(el)
-        print("len parts", len(midi.parts))
-
         midi.parts[0].makeMeasures(inPlace=True)
-        print(len(midi.getElementsByClass('Measure')))
-
         ms = midi.parts[0].measures(0,None)
 
-        for element in ms:
-            print(element)
+        for measure in ms:
+            measureNotes = []
+            for note in measure:
+                if isinstance(note, music21.note.Note):
+                    measureNotes.append(note.pitch.pitchClass)
+
+            print(measureNotes)
 
 
 

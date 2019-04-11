@@ -100,7 +100,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/midifiles/Nymeria.mid', None)
+    engine = BeatEngine('../data/midifiles/Test3.mid', None)
 
 if __name__ == '__main__':
     main()
