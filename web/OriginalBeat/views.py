@@ -16,7 +16,8 @@ def index(request):
 
 def project(request):
 	return render(request, 'OriginalBeat/project.html')
-# def detail(request, song_id):
-#     song = get_object_or_404(songName, pk = song_id)
-#     return render(request, 'OriginalBeat/index.html', {'song':song})
+	
+def detail(request, song_id):
+    song = get_object_or_404(songName, pk = song_id)
+    return render(request, 'OriginalBeat/index.html', {'song':song})
 
