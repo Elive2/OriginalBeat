@@ -22,7 +22,9 @@ The repo can be found at https://github.com/Elive2/OriginalBeat.git
  All files are commited to git.
 
 # Project Structure:
- The project structure will eveolve over time.
+ The project structure will eveolve over time. For now, the main generation engine is housed in
+ the /engine directory while all frontend and backend code for the web app are housed under the
+ /web directory.
 
 # Documentation:
  We should try and use the pydoc module whenever possible to automate the documentation of our modules.
