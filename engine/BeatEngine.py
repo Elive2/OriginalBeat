@@ -85,6 +85,7 @@ class BeatEngine():
         self._beat.tempo = 120
 
         self._beat.key = findKey(midi_upload_file_path)
+        print(self._beat.key)
 
         self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
@@ -100,7 +101,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/midifiles/Test3.mid', None)
+    engine = BeatEngine('../data/midifiles/Aminor.mid', None)
 
 if __name__ == '__main__':
     main()
