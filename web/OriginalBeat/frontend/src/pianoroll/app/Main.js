@@ -20,6 +20,8 @@
     changes container of roll, interface, and overlay
  */
 
+var server = "http://127.0.0.1:8000/midi/";
+
 require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/core/Transport",
         "midi/preludeInC.json", "StartAudioContext", "style/main.scss", "Tone/core/Tone", "interface/Orientation", "interface/Overlay"],
     function (domReady, Roll, Player, Interface, Transport, preludeInC,
@@ -37,7 +39,16 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
             var overlay = new Overlay(document.body, roll, interface);
 
             //set the first score
-            roll.setScore(preludeInC);
+
+            fetch(server)
+              .then(function(response) {
+                return response.json();
+              })
+              .then(function(myJson) {
+                roll.setScore(myJson);
+              });
+
+            // roll.setScore(preludeInC);
 
             /**
              * EVENTS

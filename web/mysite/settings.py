@@ -126,6 +126,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
-
+# this url is RELATIVE to BASE_DIR/OriginalBeat
 STATIC_URL = '/static/'
+
+# this URL is ABSOLUTE, will need to change in production mode
 MEDIA_ROOT = '/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat/web/OriginalBeat/userfiles/'
