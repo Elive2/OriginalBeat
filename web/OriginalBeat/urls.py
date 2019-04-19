@@ -7,4 +7,5 @@ urlpatterns = [
     path('project/', views.project, name = 'project'),
     path('<int:name_id>/', views.detail, name='detail'),
     path('midi/', views.midi, name='midi'),
+    path('download/', views.download, name='download')
 ]

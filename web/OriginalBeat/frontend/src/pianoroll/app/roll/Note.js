@@ -29,6 +29,8 @@ define(["Tone/core/Transport", "data/Colors"], function (Transport, Colors){
 		this.noteOff = this.noteOn + this.duration;
 
 		//parse the name from the octave, and add it as a class
+		console.log("note description");
+		console.log(noteDescription);
 		var noteName = noteDescription.note.match(/^([a-g]{1}[b|#]{0,1})[0-9]+$/i)[1];
 
 		/**

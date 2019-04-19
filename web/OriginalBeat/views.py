@@ -7,6 +7,9 @@ from OriginalBeat.models import songName
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.files.storage import FileSystemStorage
 from django.http import JsonResponse
+from django.views.static import serve
+from django.http import FileResponse
+import os
 import json
 
 @ensure_csrf_cookie
@@ -33,7 +36,13 @@ def midi(request):
         uploaded_file_url = fs.url(filename)
         return render(request, 'OriginalBeat/project.html')
     else:
-        with open('OriginalBeat/userfiles/beethoven5.json') as json_midi:
-            midi = json.load(json_midi)
-            return JsonResponse(midi)
+        midi_path = 'OriginalBeat/static/userfiles/Aminor.mid'
+        return FileResponse(open(midi_path, 'rb'))
+
+def download(request):
+    midi_path = 'OriginalBeat/static/userfiles/Aminor.mid'
+    return serve(request, os.path.basename(midi_path), os.path.dirname(midi_path))
+
+
+
 

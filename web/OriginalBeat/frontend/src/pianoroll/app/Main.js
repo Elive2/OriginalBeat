@@ -22,10 +22,27 @@
 
 var server = "http://127.0.0.1:8000/midi/";
 
+function formatMidi(midi_json) {
+    console.log("formating the midi file for pianoroll");
+
+    var formattedHeader = {tempo: 64, timeSignature: [4,4]};
+    var formattedNotes = [];
+
+    for(var i = 0; i < midi_json['tracks'][0]['notes'].length; i++) {
+        newNote = midi_json['tracks'][0]['notes'][i]
+        newNote['velocity'] = 1;
+        newNote['noteOffVelocity'] = 1;
+        formattedNotes.push(newNote);
+    }
+    var formattedMidi = {header: formattedHeader, notes: formattedNotes};
+
+    return formattedMidi;
+}
+
 require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/core/Transport",
-        "midi/preludeInC.json", "StartAudioContext", "style/main.scss", "Tone/core/Tone", "interface/Orientation", "interface/Overlay"],
+        "midi/preludeInC.json", "StartAudioContext", "style/main.scss", "Tone/core/Tone", "interface/Orientation", "interface/Overlay", "@tonejs/midi"],
     function (domReady, Roll, Player, Interface, Transport, preludeInC,
-              StartAudioContext, mainStyle, Tone, Orientation, Overlay) {
+              StartAudioContext, mainStyle, Tone, Orientation, Overlay, Midi) {
 
         domReady(function () {
 
@@ -39,16 +56,24 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
             var overlay = new Overlay(document.body, roll, interface);
 
             //set the first score
+            const midi = Midi.fromUrl(server).then(function (data) {
+                console.log("MIDI NAME");
+                final_mid = formatMidi(data);
+                console.log("FORMATTED MIDI");
+                console.log(final_mid);
+                roll.setScore(final_mid);
+            })
+            console.log(preludeInC);
 
-            fetch(server)
-              .then(function(response) {
-                return response.json();
-              })
-              .then(function(myJson) {
-                roll.setScore(myJson);
-              });
+            // fetch(server)
+            //   .then(function(response) {
+            //     return response.json();
+            //   })
+            //   .then(function(myJson) {
+            //     roll.setScore(myJson);
+            //   });
 
-            // roll.setScore(preludeInC);
+            //roll.setScore(preludeInC);
 
             /**
              * EVENTS
