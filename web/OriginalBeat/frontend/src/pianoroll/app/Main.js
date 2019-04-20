@@ -22,6 +22,32 @@
 
 var server = "http://127.0.0.1:8000/midi/";
 
+var CHROMATIC = [ 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B' ]
+
+/**
+ * Get the note name (in scientific notation) of the given midi number
+ *
+ * It uses MIDI's [Tuning Standard](https://en.wikipedia.org/wiki/MIDI_Tuning_Standard)
+ * where A4 is 69
+ *
+ * This method doesn't take into account diatonic spelling. Always the same
+ * pitch class is given for the same midi number.
+ *
+ * @name fromMidi
+ * @function
+ * @param {Integer} midi - the midi number
+ * @return {String} the pitch
+ *
+ * @example
+ * fromMidi(69) // => 'A4'
+ */
+function noteFromMidi(midiNumber) {
+  if (isNaN(midiNumber) || midiNumber < 0 || midiNumber > 127) return null;
+  var name = CHROMATIC[midiNumber % 12];
+  var oct = Math.floor(midiNumber / 12) - 1;
+  return name + oct;
+}
+
 function formatMidi(midi_json) {
     console.log("formating the midi file for pianoroll");
 
@@ -29,9 +55,13 @@ function formatMidi(midi_json) {
     var formattedNotes = [];
 
     for(var i = 0; i < midi_json['tracks'][0]['notes'].length; i++) {
-        newNote = midi_json['tracks'][0]['notes'][i]
-        newNote['velocity'] = 1;
-        newNote['noteOffVelocity'] = 1;
+        oldNote = midi_json['tracks'][0]['notes'][i]
+        newNote = {'time': oldNote['ticks'].toString() + 'i',
+                    'midiNote': oldNote['midi'],
+                    'note': noteFromMidi(oldNote['midi']),
+                    'velocity': 1,
+                    'duration': oldNote['durationTicks'].toString() + 'i',
+                };
         formattedNotes.push(newNote);
     }
     var formattedMidi = {header: formattedHeader, notes: formattedNotes};
