@@ -51,16 +51,16 @@ function noteFromMidi(midiNumber) {
 function formatMidi(midi_json) {
     console.log("formating the midi file for pianoroll");
 
-    var formattedHeader = {tempo: 64, timeSignature: [4,4]};
+    var formattedHeader = {tempo: 120, timeSignature: [4,4]};
     var formattedNotes = [];
 
     for(var i = 0; i < midi_json['tracks'][0]['notes'].length; i++) {
         oldNote = midi_json['tracks'][0]['notes'][i]
-        newNote = {'time': oldNote['ticks'].toString() + 'i',
+        newNote = {'time': (Math.floor(oldNote['ticks'] / 12)).toString() + 'i',
                     'midiNote': oldNote['midi'],
                     'note': noteFromMidi(oldNote['midi']),
                     'velocity': 1,
-                    'duration': oldNote['durationTicks'].toString() + 'i',
+                    'duration': (Math.floor(oldNote['durationTicks'] / 12)).toString() + 'i',
                 };
         formattedNotes.push(newNote);
     }
