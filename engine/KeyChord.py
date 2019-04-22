@@ -50,15 +50,15 @@ class KeyChord():
         midi.append(new_part)
 
         mf = music21.midi.translate.streamToMidiFile(midi)
-        mf.open('../data/output/output1.mid', 'wb')
+        mf.open('/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat/web/OriginalBeat/static/userfiles/output.mid', 'wb')
         mf.write()
         mf.close()
 
         key = music21.key.Key('a')
-        print(key.getChord(music21.pitch.Pitch(0), music21.pitch.Pitch(12)).pitches)
+        #print(key.getChord(music21.pitch.Pitch(0), music21.pitch.Pitch(12)).pitches)
 
 
-        print("DONE")
+        #print("DONE")
 
 
 

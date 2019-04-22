@@ -26,10 +26,13 @@
             b- = B flat minor
 
 """
-
 import mido
-from MarkovKey import MarkovKey
-from BayesNet import BayesNet
+#from MarkovKey import MarkovKey
+#from BayesNet import BayesNet
+import sys
+
+#TODO: this shouldn't be hardcoded
+sys.path.append('/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat/engine/')
 from KeyChord import KeyChord
 import music21
 import os
@@ -100,9 +103,9 @@ class BeatEngine():
             print(msg.note);
 
 
-def main():
-    engine = BeatEngine('../data/midifiles/Aminor.mid', None)
+# def main():
+#     engine = BeatEngine('../data/midifiles/Aminor.mid', None)
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 

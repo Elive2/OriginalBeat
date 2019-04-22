@@ -9,8 +9,12 @@ from django.core.files.storage import FileSystemStorage
 from django.http import JsonResponse
 from django.views.static import serve
 from django.http import FileResponse
-import os
+import os, sys
 import json
+
+# TODO: This Shouldn't be hard coded
+sys.path.append('/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat')
+from engine import BeatEngine
 
 @ensure_csrf_cookie
 def index(request):
@@ -34,13 +38,15 @@ def midi(request):
         fs = FileSystemStorage()
         filename = fs.save(myfile.name, myfile)
         uploaded_file_url = fs.url(filename)
+        engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, None)
+
         return render(request, 'OriginalBeat/project.html')
     else:
-        midi_path = 'OriginalBeat/static/userfiles/Aminor.mid'
+        midi_path = 'OriginalBeat/static/userfiles/output.mid'
         return FileResponse(open(midi_path, 'rb'))
 
 def download(request):
-    midi_path = 'OriginalBeat/static/userfiles/Aminor.mid'
+    midi_path = 'OriginalBeat/static/userfiles/output.mid'
     return serve(request, os.path.basename(midi_path), os.path.dirname(midi_path))
 
 
