@@ -18,32 +18,41 @@ from engine import BeatEngine
 
 @ensure_csrf_cookie
 def index(request):
-    latestSongList = songName.objects.order_by('-pub_date')[:5]
-    #template = loader.get_template('OriginalBeat/index.html')
-    context = { 'latestSongList': latestSongList}
-    # output = ', '.join([s.name for s in latestSongList])
-    #return HttpResponse(template.render(context, request))
-    return render(request, 'OriginalBeat/index.html', context)
+    if request.user.is_authenticated:
+        latestSongList = songName.objects.order_by('-pub_date')[:5]
+        #template = loader.get_template('OriginalBeat/index.html')
+        context = { 'latestSongList': latestSongList}
+        # output = ', '.join([s.name for s in latestSongList])
+        #return HttpResponse(template.render(context, request))
+        return render(request, 'OriginalBeat/upload.html', context)
+    else:
+        return render(request, 'OriginalBeat/index.html')
 
 def project(request):
-	return render(request, 'OriginalBeat/project.html')
+    if request.user.is_authenticated:
+        return render(request, 'OriginalBeat/project.html')
+    else:
+        return render(render, 'OriginalBeat/login.html')
 	
 def detail(request, song_id):
     song = get_object_or_404(songName, pk = song_id)
     return render(request, 'OriginalBeat/index.html', {'song':song})
 
 def midi(request):
-    if request.method == 'POST' and request.FILES['Midi']:
-        myfile = request.FILES['Midi']
-        fs = FileSystemStorage()
-        filename = fs.save(myfile.name, myfile)
-        uploaded_file_url = fs.url(filename)
-        engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, None)
+    if request.user.is_authenticated:
+        if request.method == 'POST' and request.FILES['Midi']:
+            myfile = request.FILES['Midi']
+            fs = FileSystemStorage()
+            filename = fs.save(myfile.name, myfile)
+            uploaded_file_url = fs.url(filename)
+            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, None)
 
-        return render(request, 'OriginalBeat/project.html')
+            return render(request, 'OriginalBeat/project.html')
+        else:
+            midi_path = 'OriginalBeat/static/userfiles/output.mid'
+            return FileResponse(open(midi_path, 'rb'))
     else:
-        midi_path = 'OriginalBeat/static/userfiles/output.mid'
-        return FileResponse(open(midi_path, 'rb'))
+        return render(render, 'OriginalBeat/login.html')
 
 def download(request):
     midi_path = 'OriginalBeat/static/userfiles/output.mid'

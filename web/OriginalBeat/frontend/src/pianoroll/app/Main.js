@@ -55,12 +55,22 @@ function formatMidi(midi_json) {
     var formattedNotes = [];
 
     for(var i = 0; i < midi_json['tracks'][0]['notes'].length; i++) {
-        oldNote = midi_json['tracks'][0]['notes'][i]
-        newNote = {'time': (Math.floor(oldNote['ticks'] / 12)).toString() + 'i',
+        var oldNote = midi_json['tracks'][0]['notes'][i]
+        var newNote = {'time': (Math.floor(oldNote['ticks'] / 20)).toString() + 'i',
                     'midiNote': oldNote['midi'],
                     'note': noteFromMidi(oldNote['midi']),
                     'velocity': 1,
-                    'duration': (Math.floor(oldNote['durationTicks'] / 12)).toString() + 'i',
+                    'duration': (Math.floor(oldNote['durationTicks'] / 20)).toString() + 'i',
+                };
+        formattedNotes.push(newNote);
+    }
+    for(var i = 0; i < midi_json['tracks'][1]['notes'].length; i++) {
+        var oldNote = midi_json['tracks'][1]['notes'][i]
+        var newNote = {'time': (Math.floor(oldNote['ticks'] / 20)).toString() + 'i',
+                    'midiNote': oldNote['midi'],
+                    'note': noteFromMidi(oldNote['midi']),
+                    'velocity': 1,
+                    'duration': (Math.floor(oldNote['durationTicks'] / 20)).toString() + 'i',
                 };
         formattedNotes.push(newNote);
     }

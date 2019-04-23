@@ -51,3 +51,12 @@ footer {
 	height: 30px;
 	margin: 10px;
 }
+
+.login {
+	background-color: rgb(97, 149, 181);
+	text-align: center;
+}
+
+.loginForm {
+	margin: 20px;
+}

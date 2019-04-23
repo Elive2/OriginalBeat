@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'accounts.apps.AccountsConfig',
     'webpack_loader',
 ]
 
@@ -64,7 +65,7 @@ ROOT_URLCONF = 'mysite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -131,3 +132,6 @@ STATIC_URL = '/static/'
 
 # this URL is ABSOLUTE, will need to change in production mode
 MEDIA_ROOT = '/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat/web/OriginalBeat/userfiles/'
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

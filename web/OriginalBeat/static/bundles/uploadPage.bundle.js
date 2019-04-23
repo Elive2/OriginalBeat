@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/projectPage.jsx");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/uploadPage.jsx");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -460,6 +460,18 @@ eval("var g;\n\n// This works in non-strict mode\ng = (function() {\n\treturn th
 
 /***/ }),
 
+/***/ "./src/components/CSRFToken.jsx":
+/*!**************************************!*\
+  !*** ./src/components/CSRFToken.jsx ***!
+  \**************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"./node_modules/react/index.js\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n\n\nclass CSRFToken extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Component {\n  constructor(props) {\n    super(props);\n  }\n\n  getCookie(name) {\n    var cookieValue = null;\n\n    if (document.cookie && document.cookie !== '') {\n      var cookies = document.cookie.split(';');\n\n      for (var i = 0; i < cookies.length; i++) {\n        var cookie = jQuery.trim(cookies[i]);\n\n        if (cookie.substring(0, name.length + 1) === name + '=') {\n          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));\n          break;\n        }\n      }\n    }\n\n    console.log(\"COOKIE VALUE:\");\n    console.log(cookieValue);\n    return cookieValue;\n  }\n\n  render() {\n    var csrfCookie = this.getCookie('csrftoken');\n    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(\"input\", {\n      type: \"hidden\",\n      name: \"csrfmiddlewaretoken\",\n      value: csrfCookie\n    });\n  }\n\n}\n\n/* harmony default export */ __webpack_exports__[\"default\"] = (CSRFToken);\n\n//# sourceURL=webpack:///./src/components/CSRFToken.jsx?");
+
+/***/ }),
+
 /***/ "./src/components/Footer.jsx":
 /*!***********************************!*\
   !*** ./src/components/Footer.jsx ***!
@@ -484,27 +496,15 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var reac
 
 /***/ }),
 
-/***/ "./src/components/PianoRoll.jsx":
-/*!**************************************!*\
-  !*** ./src/components/PianoRoll.jsx ***!
-  \**************************************/
+/***/ "./src/components/Upload.jsx":
+/*!***********************************!*\
+  !*** ./src/components/Upload.jsx ***!
+  \***********************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"./node_modules/react/index.js\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../index.css */ \"./src/index.css\");\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_css__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var reactstrap__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! reactstrap */ \"./node_modules/reactstrap/dist/reactstrap.es.js\");\n\n\n\n\nclass PianoRoll extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Component {\n  constructor(props) {\n    super(props);\n  }\n\n  render() {\n    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(\"div\", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Row\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Col\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(\"iframe\", {\n      src: '/static/pianoRoll.html',\n      height: \"400\",\n      width: \"100%\"\n    }))));\n  }\n\n}\n\n/* harmony default export */ __webpack_exports__[\"default\"] = (PianoRoll);\n\n//# sourceURL=webpack:///./src/components/PianoRoll.jsx?");
-
-/***/ }),
-
-/***/ "./src/components/Project.jsx":
-/*!************************************!*\
-  !*** ./src/components/Project.jsx ***!
-  \************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"./node_modules/react/index.js\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../index.css */ \"./src/index.css\");\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_css__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var reactstrap__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! reactstrap */ \"./node_modules/reactstrap/dist/reactstrap.es.js\");\n/* harmony import */ var _Header__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Header */ \"./src/components/Header.jsx\");\n/* harmony import */ var _Footer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Footer */ \"./src/components/Footer.jsx\");\n/* harmony import */ var _PianoRoll__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./PianoRoll */ \"./src/components/PianoRoll.jsx\");\n\n\n\n\n\n\n\nclass Project extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Component {\n  constructor(props) {\n    super(props);\n  }\n\n  render() {\n    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(\"div\", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_Header__WEBPACK_IMPORTED_MODULE_3__[\"default\"], null), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Row\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Col\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_PianoRoll__WEBPACK_IMPORTED_MODULE_5__[\"default\"], null))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_Footer__WEBPACK_IMPORTED_MODULE_4__[\"default\"], null));\n  }\n\n}\n\n/* harmony default export */ __webpack_exports__[\"default\"] = (Project);\n\n//# sourceURL=webpack:///./src/components/Project.jsx?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"./node_modules/react/index.js\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../index.css */ \"./src/index.css\");\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_index_css__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var reactstrap__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! reactstrap */ \"./node_modules/reactstrap/dist/reactstrap.es.js\");\n/* harmony import */ var _Header__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Header */ \"./src/components/Header.jsx\");\n/* harmony import */ var _Footer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Footer */ \"./src/components/Footer.jsx\");\n/* harmony import */ var _CSRFToken__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./CSRFToken */ \"./src/components/CSRFToken.jsx\");\n\n\n\n\n\n\nvar server = \"http://127.0.0.1:8000/midi/\";\n\nclass Upload extends react__WEBPACK_IMPORTED_MODULE_0___default.a.Component {\n  constructor(props) {\n    super(props);\n  }\n  /*handleSubmit(event) {\n   \tconsole.log(\"HANDLING SUBMIT\");\n   \t//this.toggle()\n   \t//prevents the default action=\"\" from begin called, instead we handle \n   \t//the submit in this custom method\n   \tevent.preventDefault();\n    \t//create an obect which contains all the form data\n   \tconst formData = new FormData(event.target)\n   \tvar formObject = {};\n  \tformData.forEach(function(value, key){\n  \t    formObject[key] = value;\n  \t});\n    \t//post the FormData object to our backend\n   \tfetch(server, {\n   \t\tmethod: 'POST',\n   \t\theaders: {\n   \t\t\t\"Content-Type\" : \"application/x-www-form-urlencoded\",\n   \t\t},\n   \t\tbody: formObject,\n   \t}).then(response => response.json())\n       .then(data => {\n       \tconsole.log(\"UPLOAD SUCCESS\")\n       });\n   }*/\n\n\n  render() {\n    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(\"div\", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_Header__WEBPACK_IMPORTED_MODULE_3__[\"default\"], null), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Row\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Col\"], {\n      sm: \"12\",\n      md: {\n        size: 6,\n        offset: 3\n      }\n    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Jumbotron\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Form\"], {\n      encType: \"multipart/form-data\",\n      action: \"/midi/\",\n      method: \"post\"\n    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_CSRFToken__WEBPACK_IMPORTED_MODULE_5__[\"default\"], null), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Row\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Col\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"FormGroup\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Label\"], {\n      for: \"midiFile\"\n    }, \"Midi File\"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Input\"], {\n      type: \"file\",\n      name: \"Midi\",\n      id: \"midiFile\",\n      accept: \".mid\"\n    }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"FormText\"], {\n      color: \"muted\"\n    }, \"Please select an 9 bar midifile to upload\")))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Row\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Col\"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_2__[\"Button\"], {\n      type: \"submit\"\n    }, \"Submit\"))))))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_Footer__WEBPACK_IMPORTED_MODULE_4__[\"default\"], null));\n  }\n\n}\n\n/* harmony default export */ __webpack_exports__[\"default\"] = (Upload);\n\n//# sourceURL=webpack:///./src/components/Upload.jsx?");
 
 /***/ }),
 
@@ -519,15 +519,15 @@ eval("\nvar content = __webpack_require__(/*! !../node_modules/css-loader!./inde
 
 /***/ }),
 
-/***/ "./src/projectPage.jsx":
-/*!*****************************!*\
-  !*** ./src/projectPage.jsx ***!
-  \*****************************/
+/***/ "./src/uploadPage.jsx":
+/*!****************************!*\
+  !*** ./src/uploadPage.jsx ***!
+  \****************************/
 /*! no exports provided */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"./node_modules/react/index.js\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom */ \"./node_modules/react-dom/index.js\");\n/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.css */ \"./src/index.css\");\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_index_css__WEBPACK_IMPORTED_MODULE_2__);\n/* harmony import */ var _components_Project__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/Project */ \"./src/components/Project.jsx\");\n\n\n //import {BrowserRouter} from 'react-router-dom';\n//import App from './components/App';\n\n //when client.js is served, the below render method is called\n//which selects the root element from client.php\n\ndocument.addEventListener(\"DOMContentLoaded\", function (event) {\n  react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render(react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_components_Project__WEBPACK_IMPORTED_MODULE_3__[\"default\"], null), document.getElementById('root')); //ReactDOM.render(<DevDash />, document.getElementById('root'));\n});\n\n//# sourceURL=webpack:///./src/projectPage.jsx?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ \"./node_modules/react/index.js\");\n/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-dom */ \"./node_modules/react-dom/index.js\");\n/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.css */ \"./src/index.css\");\n/* harmony import */ var _index_css__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_index_css__WEBPACK_IMPORTED_MODULE_2__);\n/* harmony import */ var _components_Upload__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./components/Upload */ \"./src/components/Upload.jsx\");\n\n\n //import {BrowserRouter} from 'react-router-dom';\n//import App from './components/App';\n\n //when client.js is served, the below render method is called\n//which selects the root element from client.php\n\ndocument.addEventListener(\"DOMContentLoaded\", function (event) {\n  react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render(react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_components_Upload__WEBPACK_IMPORTED_MODULE_3__[\"default\"], null), document.getElementById('index')); //ReactDOM.render(<DevDash />, document.getElementById('root'));\n});\n\n//# sourceURL=webpack:///./src/uploadPage.jsx?");
 
 /***/ })
 

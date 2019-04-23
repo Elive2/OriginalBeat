@@ -9,8 +9,13 @@ class PianoRoll extends React.Component{
 	render() {
 		return (
 			<div>
-				<iframe src={'/static/pianoRoll.html'} height="400" width="100%"></iframe>
+				<Row>
+					<Col>
+						<iframe src={'/static/pianoRoll.html'} height="400" width="100%"></iframe>
+					</Col>
+				</Row>
 			</div>
+
 		)
 	}
 }
