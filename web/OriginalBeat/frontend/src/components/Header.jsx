@@ -30,7 +30,7 @@ class Header extends React.Component{
 				<Row>
 					<Col>
 						<img className="logo" src={"/static/logo.png"}/>
-						<h2 className="name">Original<br/>Beat </h2>
+						<h4 className="name">Original<br/>Beat </h4>
 					</Col>
 					<Col>
 						<Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} id="profile">

@@ -18,7 +18,7 @@ class Project extends React.Component{
 						<Col xs="4" sm="2" ></Col>
 				    	<Col xs="8" sm="8" >
 
-								<h1>Original Melody</h1>
+								<h3>Original Melody</h3>
 								<PianoRoll/>
 								<p>
 						          <Button color="primary">Download</Button>

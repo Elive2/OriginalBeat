@@ -46,7 +46,7 @@ class Upload extends React.Component{
 				<Header/>
 					<Row>
 						<div class = "title">
-							<h2 class = "font-effect-anaglyph"> Original Beat</h2>
+							<h4 class = "font-effect-anaglyph"> Original Beat</h4>
 						</div>
 					</Row>
 					<Row>
