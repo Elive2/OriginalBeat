@@ -13,11 +13,25 @@ class Project extends React.Component{
 		return (
 			<div>
 				<Header/>
+				<div class = "title">
 					<Row>
-						<Col>
+						<Col xs="4" sm="2" ></Col>
+				    	<Col xs="8" sm="8" >
+
+								<h1>Original Melody</h1>
 								<PianoRoll/>
+								<p>
+						          <Button color="primary">Download</Button>
+						        </p>
+
 						</Col>
+				  		<Col sm="2"></Col>
+
 					</Row>
+					<Row>
+
+					</Row>
+				</div>
 				<Footer/>
 			</div>
 		)

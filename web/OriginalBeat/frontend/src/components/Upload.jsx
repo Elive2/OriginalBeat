@@ -16,7 +16,7 @@ class Upload extends React.Component{
 	/*handleSubmit(event) {
   	console.log("HANDLING SUBMIT");
   	//this.toggle()
-  	//prevents the default action="" from begin called, instead we handle 
+  	//prevents the default action="" from begin called, instead we handle
   	//the submit in this custom method
   	event.preventDefault();
 
@@ -45,14 +45,21 @@ class Upload extends React.Component{
 			<div>
 				<Header/>
 					<Row>
-						<Col sm="12" md={{ size: 6, offset: 3 }}>
+						<div class = "title">
+							<h2 class = "font-effect-anaglyph"> Original Beat</h2>
+						</div>
+					</Row>
+					<Row>
+					<div class = "title">
+						<Col sm="12" md={{ size: 12}}>
+
 							<Jumbotron>
 								<Form encType="multipart/form-data" action='/midi/' method="post">
 								<CSRFToken />
 								<Row>
 									<Col>
 										<FormGroup>
-											<Label for="midiFile">Midi File</Label>
+											<Label for="midiFile">To begin please upload a midi file below</Label>
 											<Input type="file" name="Midi" id="midiFile" accept=".mid"/>
 											<FormText color="muted">
 												Please select an 9 bar midifile to upload
@@ -68,6 +75,7 @@ class Upload extends React.Component{
 							</Form>
 							</Jumbotron>
 						</Col>
+						</div>
 					</Row>
 				<Footer/>
 			</div>

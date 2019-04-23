@@ -11,7 +11,7 @@ class PianoRoll extends React.Component{
 			<div>
 				<Row>
 					<Col>
-						<iframe src={'/static/pianoRoll.html'} height="400" width="100%"></iframe>
+						<iframe src={'/static/pianoRoll.html'} height="300" width="100%"></iframe>
 					</Col>
 				</Row>
 			</div>
