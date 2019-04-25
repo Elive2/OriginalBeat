@@ -22,6 +22,7 @@ from django.http import FileResponse
 import os, sys
 import json
 from django.conf import settings
+from django.shortcuts import HttpResponseRedirect
 
 
 # TODO: This Shouldn't be hard coded
@@ -45,7 +46,7 @@ def project(request):
     if request.user.is_authenticated:
         return render(request, 'OriginalBeat/project.html')
     else:
-        return render(render, 'OriginalBeat/login.html')
+        return HttpResponseRedirect('/accounts/login/')
 	
 def detail(request, song_id):
     song = get_object_or_404(songName, pk = song_id)
@@ -70,7 +71,7 @@ def midi(request):
             output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
             return FileResponse(open(output_location, 'rb'))
     else:
-        return render(render, 'OriginalBeat/login.html')
+        return HttpResponseRedirect('/accounts/login/')
 
 def download(request):
     midi_path = 'OriginalBeat/static/userfiles/output.mid'
