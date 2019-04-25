@@ -25,6 +25,10 @@
             B- = B flat major
             b- = B flat minor
 
+    TODO: 
+
+    [ ] - figure out why it says "failed on path"
+
 """
 import mido
 #from MarkovKey import MarkovKey
@@ -66,7 +70,7 @@ class BeatEngine():
         playsong
 
     """
-    def __init__(self, midi_upload_file_path, model_type):
+    def __init__(self, midi_upload_file_path, midi_file_output_path, model_type):
         """
             function: __init__
 
@@ -77,7 +81,7 @@ class BeatEngine():
                 model_type -- (string) name of model ie 'markov'
         """
 
-        self._beat = Beat(midi_upload_file_path)
+        self._beat = Beat(midi_upload_file_path, midi_file_output_path)
 
         #NOTE: Will eventually set this to a countBeats() method for variable
         #length midis, for now it is hardocded as 8
@@ -88,11 +92,23 @@ class BeatEngine():
         self._beat.tempo = 120
 
         self._beat.key = findKey(midi_upload_file_path)
-        print(self._beat.key)
+        #print(self._beat.key)
 
         self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
+        #read and parse the midifile
+        self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
+
         model = KeyChord(self._beat)
+        #generate the output in place on self._beat
+        model.generate()
+
+
+        #write the output
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
+        mf.open(midi_file_output_path, 'wb')
+        mf.write()
+        mf.close()
 
 
     #saving this for later
@@ -103,9 +119,9 @@ class BeatEngine():
             print(msg.note);
 
 
-# def main():
-#     engine = BeatEngine('../data/midifiles/Aminor.mid', None)
+def main():
+    engine = BeatEngine('../data/midifiles/Aminor.mid', '../data/output/output.mid', None)
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
 

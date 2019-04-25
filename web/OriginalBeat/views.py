@@ -1,3 +1,13 @@
+"""
+    File: views.py
+
+    Description:
+
+    TODO:
+
+    [ ] - projects
+"""
+
 from django.shortcuts import render
 from django.http import HttpResponse, Http404
 from django.template import loader
@@ -11,9 +21,12 @@ from django.views.static import serve
 from django.http import FileResponse
 import os, sys
 import json
+from django.conf import settings
+
 
 # TODO: This Shouldn't be hard coded
 sys.path.append('/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat')
+USR_FILE_PATH = os.path.join(os.path.join(settings.BASE_DIR , 'OriginalBeat'),'userfiles')
 from engine import BeatEngine
 
 @ensure_csrf_cookie
@@ -43,14 +56,19 @@ def midi(request):
         if request.method == 'POST' and request.FILES['Midi']:
             myfile = request.FILES['Midi']
             fs = FileSystemStorage()
-            filename = fs.save(myfile.name, myfile)
+            #handle projects here, for now just delete the file if it exists
+            if(fs.exists(request.user.username + '_' + myfile.name)):
+                fs.delete(request.user.username + '_' + myfile.name)
+
+            filename = fs.save(request.user.username + '_' + myfile.name, myfile)
             uploaded_file_url = fs.url(filename)
-            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, None)
+            output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
+            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, output_location, None)
 
             return render(request, 'OriginalBeat/project.html')
         else:
-            midi_path = 'OriginalBeat/static/userfiles/output.mid'
-            return FileResponse(open(midi_path, 'rb'))
+            output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
+            return FileResponse(open(output_location, 'rb'))
     else:
         return render(render, 'OriginalBeat/login.html')
 

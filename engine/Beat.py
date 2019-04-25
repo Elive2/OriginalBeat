@@ -26,8 +26,9 @@ class Beat():
 	by the models and project details
 	"""
 
-	def __init__(self, midi_upload_file_path):
+	def __init__(self, midi_upload_file_path, midi_output_file_path):
 		self._midi_upload_file_path = midi_upload_file_path
+		self._midi_output_file_path = midi_output_file_path
 
 	#getters:
 
@@ -46,6 +47,11 @@ class Beat():
 	@property
 	def notes_chords_rests(self):
 		return self._notes_chords_rests
+
+	@property
+	def midi_stream(self):
+		return self._midi_stream
+	
 	
 
 	#setters:
@@ -67,6 +73,10 @@ class Beat():
 	@notes_chords_rests.setter
 	def notes_chords_rests(self, data_list):
 		self._notes_chords_rests = data_list
+
+	@midi_stream.setter
+	def midi_stream(self, stream):
+		self._midi_stream = stream
 
 
 
