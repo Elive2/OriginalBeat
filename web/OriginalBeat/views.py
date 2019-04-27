@@ -23,10 +23,14 @@ import os, sys
 import json
 from django.conf import settings
 from django.shortcuts import HttpResponseRedirect
+import os
 
 
 # TODO: This Shouldn't be hard coded
-sys.path.append('/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat')
+if(os.environ['PROJ_DIR']):
+    sys.path.append(os.environ['PROJ_DIR'])
+else:
+    print("PLEASE SET THE ENVIRONMENT VARIABLE 'PROJ_DIR' to the root of OriginalBeat")
 USR_FILE_PATH = os.path.join(os.path.join(settings.BASE_DIR , 'OriginalBeat'),'userfiles')
 from engine import BeatEngine
 
