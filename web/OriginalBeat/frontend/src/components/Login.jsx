@@ -4,7 +4,7 @@ import { Container, Row, Col, Form, FormGroup, Label, Input, FormText, Jumbotron
 import Footer from './Footer';
 import CSRFToken from './CSRFToken';
 
-var server = "http://127.0.0.1:8000/midi/";
+var server = process.env.API_URL + "midi/";
 
 
 class Login extends React.Component{

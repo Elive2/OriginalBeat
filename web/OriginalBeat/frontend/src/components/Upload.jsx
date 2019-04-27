@@ -5,7 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import CSRFToken from './CSRFToken';
 
-var server = "http://127.0.0.1:8000/midi/";
+var server = process.env.API_URL + "midi/";
 
 
 class Upload extends React.Component{
