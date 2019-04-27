@@ -33,7 +33,7 @@
 import mido
 #from MarkovKey import MarkovKey
 #from BayesNet import BayesNet
-import sys
+import sys, os
 
 #TODO: this shouldn't be hardcoded
 sys.path.append(os.environ['PROJ_DIR'] + '/engine')
