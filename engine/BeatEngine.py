@@ -36,7 +36,7 @@ import mido
 import sys
 
 #TODO: this shouldn't be hardcoded
-sys.path.append('/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat/engine/')
+sys.path.append(os.environ['PROJ_DIR'] + '/engine')
 from KeyChord import KeyChord
 import music21
 import os
