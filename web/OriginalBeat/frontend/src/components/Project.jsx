@@ -19,6 +19,7 @@ class Project extends React.Component{
 				    	<Col xs="8" sm="8" >
 
 								<h3>Original Melody</h3>
+								/* might need different PianoRoll components for each*/
 								<PianoRoll/>
 								<p>
 						          <Button color="primary">Download</Button>
@@ -28,8 +29,33 @@ class Project extends React.Component{
 				  		<Col sm="2"></Col>
 
 					</Row>
-					<Row>
 
+					<Row>
+						<Col xs="4" sm="2" ></Col>
+						<Col xs="8" sm="8" >
+
+								<h3>Melody with Harmonizing Layer</h3>
+								<PianoRoll/>
+								<p>
+								  <Button color="primary">Download</Button>
+								</p>
+
+						</Col>
+						<Col sm="2"></Col>
+					</Row>
+
+					<Row>
+						<Col xs="4" sm="2" ></Col>
+						<Col xs="8" sm="8" >
+
+								<h3>Melody with Harmonizing Layer and Drums</h3>
+								<PianoRoll/>
+								<p>
+								  <Button color="primary">Download</Button>
+								</p>
+
+						</Col>
+						<Col sm="2"></Col>
 					</Row>
 				</div>
 				<Footer/>

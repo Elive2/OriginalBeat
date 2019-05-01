@@ -45,10 +45,10 @@ class Header extends React.Component{
 				</Row>
 				<Row>
 				<div class="topnav">
-				  <a class="active" href="/Upload">Home</a>
-				  <a href="/About">About</a>
-				  <a href="/Profile">Profile</a>
-				  <a href="/Contact">Contact</a>
+				  <a class="active" href="/">Home</a>
+				  <a href="/templates/OriginalBeat/about.html">About</a>
+				  <a href="/registration/login.html">Profile</a>
+				  <a href="/templates/OriginalBeat/contact.html">Contact</a>
 				</div>
 
 				</Row>
