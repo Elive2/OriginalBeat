@@ -131,7 +131,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # this URL is ABSOLUTE, will need to change in production mode
-MEDIA_ROOT = '/Users/eliyale/Developer/scu/SeniorDesign/OriginalBeat/web/OriginalBeat/userfiles/uploads/'
+MEDIA_ROOT = '/home/eyale/OriginalBeat/web/OriginalBeat/userfiles/uploads/'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
