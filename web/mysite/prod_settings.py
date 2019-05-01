@@ -26,7 +26,7 @@ SECRET_KEY = '(#fmgsbnl19kcwf$py-&i8kz$ga9livorqkqw_kp%g!=hbkh02'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['138.197.199.250']
+ALLOWED_HOSTS = ['138.197.199.250', 'theoriginalbeat.com', 'www.theoriginalbeat.com']
 
 
 # Application definition
