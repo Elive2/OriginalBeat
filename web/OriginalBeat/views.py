@@ -58,17 +58,24 @@ def detail(request, song_id):
 
 def midi(request):
     if request.user.is_authenticated:
+        print("is_authenticated")
         if request.method == 'POST' and request.FILES['Midi']:
+            print("in post request")
             myfile = request.FILES['Midi']
+            print("got file")
             fs = FileSystemStorage()
+            print("created fs")
             #handle projects here, for now just delete the file if it exists
             if(fs.exists(request.user.username + '_' + myfile.name)):
                 fs.delete(request.user.username + '_' + myfile.name)
+                print("deleted file")
 
             filename = fs.save(request.user.username + '_' + myfile.name, myfile)
+            print("saved file")
             uploaded_file_url = fs.url(filename)
             output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
             engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, output_location, None)
+            print("created engine")
 
             return render(request, 'OriginalBeat/project.html')
         else:
