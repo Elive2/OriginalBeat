@@ -19,15 +19,17 @@ class Project extends React.Component{
 				    	<Col xs="8" sm="8" >
 
 								<h3>Original Melody</h3>
-								/* might need different PianoRoll components for each*/
+
 								<PianoRoll/>
-								<p>
-										<Form method="get" action="/download/">
-   										<Button type="submit" color="primary">Download</Button>
-										</Form>
-						    </p>
+
 						</Col>
-				  		<Col sm="2"></Col>
+				  		<Col sm="2">
+								<p>
+								<Form method="get" action="/download/">
+								<Button type="submit" color="primary">Download</Button>
+								</Form>
+								</p>
+					</Col>
 
 					</Row>
 
