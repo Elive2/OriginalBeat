@@ -14,7 +14,23 @@ class Index extends React.Component{
 		return (
 			<div>
 				<Header/>
-					<h1>Welcome to the Original Beat!</h1>
+					<div class = "title">
+
+						<Row>
+			
+							<h3>Welcome to the </h3>
+						</Row>
+						<Row>
+							<h4>Original Beat!</h4>
+						</Row>
+						<Row>
+							<h2> To begin please select an option below</h2>
+						</Row>
+						<Row>
+							<Col xs="6"> <Button color="primary">Create Melody</Button> </Col>
+	  						<Col xs="6"><Button color="primary">Upload Melody</Button></Col>
+						</Row>
+					</div>
 				<Footer/>
 			</div>
 		)
