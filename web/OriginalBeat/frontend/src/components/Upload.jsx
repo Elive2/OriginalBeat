@@ -4,14 +4,25 @@ import { Container, Row, Col, Form, FormGroup, Label, Input, FormText, Jumbotron
 import Header from './Header';
 import Footer from './Footer';
 import CSRFToken from './CSRFToken';
+import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
+import 'react-piano/dist/styles.css';
 
 var server = process.env.API_URL + "midi/";
-
 
 class Upload extends React.Component{
 	constructor(props) {
 	  super(props);
+
+	  this.firstNote = MidiNumbers.fromNote('c3')
+	  this.lastNote = MidiNumbers.fromNote('f5')
+	  this.keyboardShortcuts = KeyboardShortcuts.create({
+	  	firstNote: this.firstNote,
+	  	lastNote: this.lastNote,
+	  	keyboardConfig: KeyboardShortcuts.HOME_ROW,
+	  })
 	}
+
+	
 
 	/*handleSubmit(event) {
   	console.log("HANDLING SUBMIT");
@@ -50,9 +61,8 @@ class Upload extends React.Component{
 						</div>
 					</Row>
 					<Row>
-					<div class = "title">
-						<Col sm="12" md={{ size: 12}}>
-
+						{/*<Col sm="12" md={{ size: 12}}>*/}
+						<Col xs="6">
 							<Jumbotron>
 								<Form encType="multipart/form-data" action='/midi/' method="post">
 								<CSRFToken />
@@ -75,7 +85,20 @@ class Upload extends React.Component{
 							</Form>
 							</Jumbotron>
 						</Col>
-						</div>
+						<Col xs="6">
+							<Piano noteRange={{first: this.firstNote, last: this.lastNote}}
+								playNote={(midiNumber) => {
+									//star
+									console.log("start")
+								}}
+								stopNote={(midiNumber) => {
+									//stop
+									console.log("stop")
+								}}
+								width={1000}
+								keyboardShortcuts={this.keyboardShortcuts}
+							/>
+						</Col>
 					</Row>
 				<Footer/>
 			</div>

@@ -21,9 +21,10 @@ class Project extends React.Component{
 								<h3>Original Melody</h3>
 								<PianoRoll/>
 								<p>
-						          <Button color="primary">Download</Button>
-						        </p>
-
+										<Form method="get" action="/download/">
+   										<Button type="submit" color="primary">Download</Button>
+										</Form>
+						    </p>
 						</Col>
 				  		<Col sm="2"></Col>
 

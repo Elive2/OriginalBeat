@@ -39,6 +39,7 @@
     "react": "^16.6.0",
     "react-bootstrap": "^0.32.4",
     "react-dom": "^16.6.0",
+    "react-piano": "^3.1.2",
     "reactstrap": "^6.5.0",
     "webpack-bundle-tracker": "^0.4.2-beta"
   }
