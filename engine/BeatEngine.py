@@ -38,6 +38,7 @@ import sys, os
 #TODO: this shouldn't be hardcoded
 sys.path.append(os.environ['PROJ_DIR'] + '/engine')
 from KeyChord import KeyChord
+from BayesNet import BayesNet
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -70,7 +71,7 @@ class BeatEngine():
         playsong
 
     """
-    def __init__(self, midi_upload_file_path, midi_file_output_path, model_type):
+    def __init__(self, midi_upload_file_path, midi_file_output_path, midi_file_melody_output_path, midi_file_harmony_output_path, model_type):
         """
             function: __init__
 
@@ -97,10 +98,12 @@ class BeatEngine():
         self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
         #read and parse the midifile
+        self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = KeyChord(self._beat)
+        model = BayesNet(self._beat)
         #generate the output in place on self._beat
+        #model.predict()
         model.generate()
         # test for harmonized chords
         print()
@@ -111,9 +114,21 @@ class BeatEngine():
             print(i)
 
 
-        #write the output
+        #write the output midi
         mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
         mf.open(midi_file_output_path, 'wb')
+        mf.write()
+        mf.close()
+
+        #write output melody
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_melody)
+        mf.open(midi_file_melody_output_path, 'wb')
+        mf.write()
+        mf.close()
+
+        #write output harmony
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_harmony)
+        mf.open(midi_file_harmony_output_path, 'wb')
         mf.write()
         mf.close()
 
@@ -127,7 +142,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/midifiles/Aminor.mid', '../data/output/output.mid', None)
+    engine = BeatEngine('../data/output/output_melody.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
 
 
 if __name__ == '__main__':

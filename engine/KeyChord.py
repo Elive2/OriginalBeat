@@ -25,10 +25,16 @@ class KeyChord():
 
 
     def generate(self):
-        self._beat._midi_stream.parts[0].makeMeasures(inPlace=True)
-        ms = self._beat._midi_stream.parts[0].measures(0,None)
+        #begin operating on the combined stream
+        self._beat.midi_stream.parts[0].makeMeasures(inPlace=True)
+        ms = self._beat.midi_stream.parts[0].measures(0,None)
 
         new_part = music21.stream.Part()
+        key_harm = KeyHarm(self._beat)
+        input()
+
+        key_harm.get_possible_harmonized_chords('C')
+
 
         for measure in ms:
             measureNotes = []
@@ -45,7 +51,9 @@ class KeyChord():
 
             
 
-        self._beat._midi_stream.append(new_part)
+        self._beat.midi_stream.append(new_part)
+
+        self._beat.midi_stream_harmony = music21.stream.Stream(new_part)
 
         #key = music21.key.Key('a')
         #print(key.getChord(music21.pitch.Pitch(0), music21.pitch.Pitch(12)).pitches)

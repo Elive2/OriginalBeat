@@ -17,8 +17,6 @@ class CSRFToken extends React.Component {
             }
         }
     }
-    console.log("COOKIE VALUE:")
-    console.log(cookieValue)
     return cookieValue;
 	}
 

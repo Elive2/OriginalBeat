@@ -17,18 +17,32 @@ class Index extends React.Component{
 					<div class = "title">
 
 						<Row>
-			
+							<Col>
 							<h3>Welcome to the </h3>
+							</Col>
 						</Row>
 						<Row>
-							<h4>Original Beat!</h4>
+							<Col>
+								<h4 class = "font-effect-anaglyph" >Original Beat!</h4>
+							</Col>
 						</Row>
 						<Row>
-							<h2> To begin please select an option below</h2>
-						</Row>
-						<Row>
-							<Col xs="6"> <Button color="primary">Create Melody</Button> </Col>
-	  						<Col xs="6"><Button color="primary">Upload Melody</Button></Col>
+							<Col>
+								<Jumbotron>
+									<Row>
+										<Col>
+										<h3 Style="font-size: 25px;"> To begin please sign in</h3>
+										</Col>
+									</Row>
+									<Row>
+										<Col>
+											<Form method="get" action="/accounts/login">
+												<Button color="secondary">Sign In</Button>
+											</Form>
+										</Col>
+									</Row>
+								</Jumbotron>
+							</Col>
 						</Row>
 					</div>
 				<Footer/>

@@ -12,7 +12,7 @@ class KeyHarm():
         self._beat = beatInsatnce
         print(self._beat._midi_upload_file_path)
         midi = music21.converter.parse(self._beat._midi_upload_file_path)
-        self._manual_chords(midi)
+        #self._manual_chords(midi)
 
     def _manual_chords(self, midi):
         midi.parts[0].makeMeasures(inPlace=True)
@@ -28,7 +28,7 @@ class KeyHarm():
 
             if (len(measureNotes) > 0):
                 c = music21.chord.Chord(list(set(measureNotes)))
-                #make this a pramter of the time signature
+                #make this a paramter of the time signature
                 c.duration.quarterLength = 4.0
                 chord_type = music21.harmony.chordSymbolFigureFromChord(c, True)[1]
                 new_part.append(c)

@@ -47,7 +47,7 @@ class Header extends React.Component{
 				<div class="topnav">
 				  <a class="active" href="/">Home</a>
 				  <a href="/templates/OriginalBeat/about.html">About</a>
-				  <a href="/registration/login.html">Profile</a>
+				  <a href="/accounts/login">Profile</a>
 				  <a href="/templates/OriginalBeat/contact.html">Contact</a>
 				</div>
 

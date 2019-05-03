@@ -24,6 +24,7 @@ import json
 from django.conf import settings
 from django.shortcuts import HttpResponseRedirect
 import os
+from django.views.decorators.http import require_http_methods
 
 
 # TODO: This Shouldn't be hard coded
@@ -35,6 +36,7 @@ USR_FILE_PATH = os.path.join(os.path.join(settings.BASE_DIR , 'OriginalBeat'),'u
 from engine import BeatEngine
 
 @ensure_csrf_cookie
+@require_http_methods(["GET"])
 def index(request):
     if request.user.is_authenticated:
         latestSongList = songName.objects.order_by('-pub_date')[:5]
@@ -46,19 +48,20 @@ def index(request):
     else:
         return render(request, 'OriginalBeat/index.html')
 
+@require_http_methods(["GET"])
 def project(request):
     if request.user.is_authenticated:
         return render(request, 'OriginalBeat/project.html')
     else:
         return HttpResponseRedirect('/accounts/login/')
-	
+
 def detail(request, song_id):
     song = get_object_or_404(songName, pk = song_id)
     return render(request, 'OriginalBeat/index.html', {'song':song})
 
+@require_http_methods(["GET", "POST"])
 def midi(request):
     if request.user.is_authenticated:
-        print("is_authenticated")
         if request.method == 'POST' and request.FILES['Midi']:
             print("in post request")
             myfile = request.FILES['Midi']
@@ -73,8 +76,10 @@ def midi(request):
             filename = fs.save(request.user.username + '_' + myfile.name, myfile)
             print("saved file")
             uploaded_file_url = fs.url(filename)
-            output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
-            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, output_location, None)
+            midi_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
+            midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
+            midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
+            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, None)
             print("created engine")
 
             return render(request, 'OriginalBeat/project.html')
@@ -85,8 +90,26 @@ def midi(request):
         return HttpResponseRedirect('/accounts/login/')
 
 def download(request):
-    midi_path = 'OriginalBeat/static/userfiles/output.mid'
-    return serve(request, os.path.basename(midi_path), os.path.dirname(midi_path))
+    midi_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
+    #return serve(request, midi_output_location)
+    return FileResponse(open(midi_output_location, 'rb'))
+
+@require_http_methods(["GET"])
+def midi_melody(request):
+    if request.user.is_authenticated:
+        output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
+        return FileResponse(open(output_location, 'rb'))
+    else:
+        return HttpResponseRedirect('/accounts/login/')
+
+@require_http_methods(["GET"])
+def midi_harmony(request):
+    if request.user.is_authenticated:
+        output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
+        return FileResponse(open(output_location, 'rb'))
+    else:
+        return HttpResponseRedirect('/accounts/login/')
+
 
 
 
