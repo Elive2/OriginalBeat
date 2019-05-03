@@ -8,11 +8,6 @@ import PianoInput from './PianoInput';
 
 var server = process.env.API_URL + "midi/";
 
-const pianoClasse = {
-	app
-		
-}
-
 class Upload2 extends React.Component{
 	constructor(props) {
 	  super(props);
