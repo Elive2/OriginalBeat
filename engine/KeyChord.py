@@ -29,12 +29,7 @@ class KeyChord():
         ms = self._beat.midi_stream.parts[0].measures(0,None)
 
         new_part = music21.stream.Part()
-        key_harm = KeyHarm(self._beat)
-        input()
-
-        key_harm.get_possible_harmonized_chords('C')
-
-
+        
         for measure in ms:
             measureNotes = []
             for note in measure:
