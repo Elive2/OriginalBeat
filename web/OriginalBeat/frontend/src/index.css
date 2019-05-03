@@ -124,3 +124,12 @@ h4 {
 .loginForm {
 	margin: 20px;
 }
+
+#piano-img {
+  height: 70px;
+  width: 270px;
+}
+
+#piano-input {
+  background-color: rgb(97, 149, 181);
+}

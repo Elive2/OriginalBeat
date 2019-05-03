@@ -59,6 +59,15 @@ class Beat():
 	@property
 	def midi_stream_harmony(self):
 		return self._midi_stream_harmony
+
+	@property
+	def midi_upload_file_path(self):
+		return self._midi_upload_file_path
+
+	@property
+	def midi_output_file_path(self):
+		return self._midi_output_file_path
+	
 	
 	
 	
@@ -94,6 +103,9 @@ class Beat():
 	@midi_stream_harmony.setter
 	def midi_stream_harmony(self, stream):
 		self._midi_stream_harmony = stream
+
+
+
 
 
 

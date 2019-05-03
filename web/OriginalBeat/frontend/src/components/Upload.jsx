@@ -6,8 +6,47 @@ import Footer from './Footer';
 import CSRFToken from './CSRFToken';
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
+import posed, {PoseGroup} from 'react-pose';
+import DimensionsProvider from './DimensionsProvider';
+import SoundfontProvider from './SoundfontProvider';
 
 var server = process.env.API_URL + "midi/";
+
+const WonkyModal = posed.div({
+	fullscreen: {
+		width: "100vw",
+		height: "100vh",
+		transition: {
+		  duration: 400,
+		  ease: 'linear'
+		}
+	},
+	idle: {
+		width: "100%",
+		height: "100%",
+		transition: {
+		  duration: 400,
+		  ease: 'linear'
+		}
+	},
+	invisible: {
+		applyAtEnd: { display: "none" },
+	}
+})
+
+// webkitAudioContext fallback needed to support Safari
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const soundfontHostname = 'https://d1pzp51pvbm36p.cloudfront.net';
+
+const noteRange = {
+  first: MidiNumbers.fromNote('c3'),
+  last: MidiNumbers.fromNote('f5'),
+};
+const keyboardShortcuts = KeyboardShortcuts.create({
+  firstNote: noteRange.first,
+  lastNote: noteRange.last,
+  keyboardConfig: KeyboardShortcuts.HOME_ROW,
+});
 
 class Upload extends React.Component{
 	constructor(props) {
@@ -20,36 +59,28 @@ class Upload extends React.Component{
 	  	lastNote: this.lastNote,
 	  	keyboardConfig: KeyboardShortcuts.HOME_ROW,
 	  })
+	  this.state = {
+	  	uploadPose: 'idle',
+	  	pianoPose: 'idle',
+	  }
 	}
 
-	
+  selectMethod(method) {
+  	if(method == 'upload') {
+  		this.setState({
+  			uploadPose: 'fullscreen',
+  			pianoPose: 'invisible'
+  		})
+  	}
+  	else if(method == 'piano') {
+  		this.setState({
+  			pianoPose: 'fullscreen',
+  			uploadPose: 'invisible'
+  		})
+  	}
 
-	/*handleSubmit(event) {
-  	console.log("HANDLING SUBMIT");
-  	//this.toggle()
-  	//prevents the default action="" from begin called, instead we handle
-  	//the submit in this custom method
-  	event.preventDefault();
+  }
 
-  	//create an obect which contains all the form data
-  	const formData = new FormData(event.target)
-  	var formObject = {};
-		formData.forEach(function(value, key){
-		    formObject[key] = value;
-		});
-
-  	//post the FormData object to our backend
-  	fetch(server, {
-  		method: 'POST',
-  		headers: {
-  			"Content-Type" : "application/x-www-form-urlencoded",
-  		},
-  		body: formObject,
-  	}).then(response => response.json())
-      .then(data => {
-      	console.log("UPLOAD SUCCESS")
-      });
-  }*/
 
 	render() {
 		return (
@@ -61,8 +92,32 @@ class Upload extends React.Component{
 						</div>
 					</Row>
 					<Row>
-						{/*<Col sm="12" md={{ size: 12}}>*/}
-						<Col xs="6">
+						<Col sm="6">
+						<WonkyModal className="wonkyModal" id="pianoBox" pose={this.state.pianoPose} onClick={() => this.selectMethod('piano')}>
+									<DimensionsProvider>
+							      {({ containerWidth, containerHeight }) => (
+							        <SoundfontProvider
+							          instrumentName="acoustic_grand_piano"
+							          audioContext={audioContext}
+							          hostname={soundfontHostname}
+							          render={({ isLoading, playNote, stopNote }) => (
+							            <Piano
+							              noteRange={noteRange}
+							              width={containerWidth}
+							              playNote={playNote}
+							              stopNote={stopNote}
+							              disabled={isLoading}
+							              keyboardShortcuts={keyboardShortcuts}
+							              {...this.props}
+							            />
+							          )}
+							        />
+							      )}
+							    </DimensionsProvider>
+						</WonkyModal>
+						</Col>
+						<Col sm="6">
+						<WonkyModal className="wonkyModal" id="pianoBox" pose={this.state.uploadPose} onClick={() => this.selectMethod('upload')}>
 							<Jumbotron>
 								<Form encType="multipart/form-data" action='/midi/' method="post">
 								<CSRFToken />
@@ -84,20 +139,7 @@ class Upload extends React.Component{
 								</Row>
 							</Form>
 							</Jumbotron>
-						</Col>
-						<Col xs="6">
-							<Piano noteRange={{first: this.firstNote, last: this.lastNote}}
-								playNote={(midiNumber) => {
-									//star
-									console.log("start")
-								}}
-								stopNote={(midiNumber) => {
-									//stop
-									console.log("stop")
-								}}
-								width={1000}
-								keyboardShortcuts={this.keyboardShortcuts}
-							/>
+							</WonkyModal>
 						</Col>
 					</Row>
 				<Footer/>

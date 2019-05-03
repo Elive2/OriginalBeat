@@ -40,3 +40,7 @@ model.add_states(s1, s2, s3)
 model.add_edge(s1, s3)
 model.add_edge(s2, s3)
 model.bake()
+
+model.to_json()
+
+print(model.predict([['A', 'B', None]]))
