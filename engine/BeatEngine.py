@@ -103,26 +103,27 @@ class BeatEngine():
 
         model = BayesNet(self._beat)
         #generate the output in place on self._beat
-        # model.generate()
+        #model.predict()
+        model.generate()
 
 
-        # #write the output midi
-        # mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
-        # mf.open(midi_file_output_path, 'wb')
-        # mf.write()
-        # mf.close()
+        #write the output midi
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
+        mf.open(midi_file_output_path, 'wb')
+        mf.write()
+        mf.close()
 
-        # #write output melody
-        # mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_melody)
-        # mf.open(midi_file_melody_output_path, 'wb')
-        # mf.write()
-        # mf.close()
+        #write output melody
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_melody)
+        mf.open(midi_file_melody_output_path, 'wb')
+        mf.write()
+        mf.close()
 
-        # #write output harmony
-        # mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_harmony)
-        # mf.open(midi_file_harmony_output_path, 'wb')
-        # mf.write()
-        # mf.close()
+        #write output harmony
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_harmony)
+        mf.open(midi_file_harmony_output_path, 'wb')
+        mf.write()
+        mf.close()
 
 
     #saving this for later

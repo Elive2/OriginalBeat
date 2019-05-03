@@ -54,7 +54,7 @@ from itertools import accumulate
 from pomegranate import *
 import numpy as np
 from Beat import Beat
-import pickle
+import random
 
 BEGIN = "___BEGIN__"
 END = "___END__"
@@ -86,7 +86,7 @@ class BayesNet:
 
         #boolean to control wether or not to read from disk
         self._load_from_disk = False
-        self._build = True
+        self._build = 'disk'
 
         self._beat = beat_instance
 
@@ -96,7 +96,7 @@ class BayesNet:
         self._cond_table_v1 = []
         self._cond_table_m1 = []
 
-        if(self._build):
+        if(self._build == 'data'):
             if(self._load_from_disk):
                 with open(chord_model_location, 'r') as infile:
                     self._chord_model = self._model_from_json(json.load(infile), CHORD)
@@ -140,13 +140,62 @@ class BayesNet:
             self._build_cond_table_m1()
             self._build_net()
 
-        else:
+        elif(self._build == 'disk'):
             with open(model_output_path, 'rb') as f:
-                self._bayes_model = from_json(json.load(f))
-            self._predict()
+                self._bayes_model = BayesianNetwork().from_json(json.load(f))
 
-    def predict():
-        print(self._bayes_model.predict([['0', 'I', '4', None, None]]))
+        elif(self._build == 'manual'):
+            self._build_cond_table_c0_manual()
+            self._build_cond_table_c1_manual()
+            self._build_cond_table_v0_manual()
+            self._build_cond_table_v1_manual()
+            self._build_cond_table_m1_manual()
+            self._build_net()
+
+    def generate(self):
+        '''
+            self._bayes_model.predict([[v0, c0, m1, None, None]])
+        '''
+
+        #self._beat.midi_stream.parts[0].makeMeasures(inPlace=True)
+        #ms = self._beat.midi_stream.parts[0].measures(0,None)
+
+        #c_transposed_part = transpose(self._beat.midi_stream.parts[0], self._beat.key, 'c')
+        new_part = music21.stream.Part()
+
+        #seed the generator with the inital notes
+        v1 = '0'
+        c1 = 'I'
+
+        for elements_by_offset in music21.stream.iterator.OffsetIterator(self._beat.midi_stream.parts[0]):
+            for entry in elements_by_offset:
+                print(entry)
+                if(isinstance(entry, music21.note.Note)):
+                    v0 = v1
+                    c0 = c1
+                    m1 = str(entry.pitch.pitchClass)
+
+                    prediction = self._bayes_model.predict([[v0,c0,m1,None,None]])
+                    v1 = prediction[0][3]
+                    c1 = prediction[0][4]
+
+                    chord_list = [str(p) for p in music21.roman.RomanNumeral(c1, self._beat.key).pitches]
+                    chord = music21.chord.Chord(chord_list)
+                    chord.duration.quarterLength = 1.0
+
+                    voicing = music21.note.Note()
+                    voicing.pitch.pitchClass = int(v1)
+                    voicing.duration.quarterLength = 1.0
+
+                    new_part.append(chord)
+                    new_part.append(voicing)
+            
+        self._beat.midi_stream.append(new_part)
+
+        self._beat.midi_stream_harmony = music21.stream.Stream(new_part)
+
+    def predict(self):
+        print(self._bayes_model.predict([['0', 'I', '9', None, None]]))
 
 
 
@@ -366,6 +415,76 @@ class BayesNet:
         log(cond_list)
 
 
+    def _build_cond_table_c0_manual(self):
+        cond_list = {}
+        for chord in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+            cond_list[chord] = 1 / 12
+
+        if(DEBUG):
+            print("c0 cond_list")
+            print(cond_list)
+            input()
+
+        self._cond_table_c0 = DiscreteDistribution(cond_list)
+
+
+    def _build_cond_table_c1_manual(self):
+                #Note: should preallocate this and not append
+        cond_list = []
+        for chord1 in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+            for chord2 in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+                prob = random.uniform(0,1)
+                cond_list.append([chord1, chord2, prob])
+
+        if(DEBUG):
+            print("c1 cond list")
+            print(cond_list)
+            input()
+
+        self._cond_table_c1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c0])
+
+    def _build_cond_table_v0_manual(self):
+        cond_list = {}
+        for note in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+            cond_list[note] = 1 / 12
+
+        self._cond_table_v0 = DiscreteDistribution(cond_list)
+
+        if(DEBUG):
+            print("vo cond list")
+            print(cond_list)
+            input()
+
+
+    def _build_cond_table_v1_manual(self):
+        cond_list = []
+        for note1 in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+            for note2 in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+                prob = random.uniform(0,1)
+                cond_list.append([note1, note2, prob])
+
+        self._cond_table_v1 = ConditionalProbabilityTable(cond_list, [self._cond_table_v0])
+
+        if(DEBUG):
+            print("v1 cond list")
+            print(cond_list)
+            input()
+
+    def _build_cond_table_m1_manual(self):
+        cond_list = []
+        for chord in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+            for note in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+                prob = random.uniform(0,1)
+                cond_list.append([chord, note, prob])
+
+        self._cond_table_m1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c1])
+
+        if(DEBUG):
+            print("m1 cond list")
+            print(cond_list)
+            input()
+
+
     def _model_to_json(self, model):
         """
         Dump the chord, note or chord note model as a JSON object, for loading later.
@@ -402,7 +521,7 @@ class BayesNet:
         print("instantiating network")
         self._bayes_model = BayesianNetwork("Generator")
         print("adding edges")
-        self._bayes_model.add_states(v0, c0, m1, v1, c1)
+        self._bayes_model.add_nodes(v0, c0, m1, v1, c1)
         self._bayes_model.add_edge(c0, c1)
         self._bayes_model.add_edge(v0, v1)
         self._bayes_model.add_edge(c1, m1)
@@ -413,10 +532,20 @@ class BayesNet:
         except Exception as e:
             print(e)
 
-        #self._bayes_model.plot()
-        with open(model_output_path, 'wb') as f:
+       #self._bayes_model.plot()
+        print(self._bayes_model.to_json())
+        with open(model_output_path, 'w') as f:
             json.dump(self._bayes_model.to_json(), f)
 
         print("making prediction")
+        print(self._bayes_model.predict([['5', 'iii', '4', None, None]]))
+        print("making prediction")
+        print(self._bayes_model.predict([['0', 'ii', '4', None, None]]))
+        print("making prediction")
         print(self._bayes_model.predict([['0', 'I', '4', None, None]]))
+        print("making prediction")
+        print(self._bayes_model.predict([['4', 'I', '4', None, None]]))
+        print("making prediction")
+        print(self._bayes_model.predict([['0', 'v', '4', None, None]]))
+
 

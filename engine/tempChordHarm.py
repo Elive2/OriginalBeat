@@ -11,7 +11,7 @@ class KeyHarm():
         self._beat = beatInsatnce
         print(self._beat._midi_upload_file_path)
         midi = music21.converter.parse(self._beat._midi_upload_file_path)
-        self._manual_chords(midi)
+        #self._manual_chords(midi)
 
     def _manual_chords(self, midi):
         midi.parts[0].makeMeasures(inPlace=True)
@@ -27,7 +27,7 @@ class KeyHarm():
 
             if (len(measureNotes) > 0):
                 c = music21.chord.Chord(list(set(measureNotes)))
-                #make this a pramter of the time signature
+                #make this a paramter of the time signature
                 c.duration.quarterLength = 4.0
                 chord_type = music21.harmony.chordSymbolFigureFromChord(c, True)[1]
                 new_part.append(c)
@@ -49,7 +49,9 @@ class KeyHarm():
 
     def get_possible_harmonized_chords(self, keyName):
         curKey = music21.key.convertKeyStringToMusic21KeyString(keyName)
+        print(curKey)
         curKeyScale = music21.scale.ConcreteScale(tonic = curKey)
+        print(curKeyScale)
 
         possibleHarmonizedChords = [curKeyScale.getTonic()]
 
@@ -57,11 +59,13 @@ class KeyHarm():
         for i in range(1, 7):
             possibleHarmonizedChords.append(curKeyScale.next())
 
+        print(possibleHarmonizedChords)
+
         # finds harmonizing chord and prints it
-        for iter in range(1, 8):
-            pitch1 = possibleHarmonizedChords[iter]
-            pitch2 = possibleHarmonizedChords[(iter + 2) % 8]
-            pitch3 = possibleHarmonizedChords[(iter + 4) % 8]
+        for i in range(1, 8):
+            pitch1 = possibleHarmonizedChords[i]
+            pitch2 = possibleHarmonizedChords[(i + 2) % 8]
+            pitch3 = possibleHarmonizedChords[(i + 4) % 8]
 
             finalChord = music21.chord.Chord([pitch1, pitch2, pitch3])
             print(music21.harmony.chordSymbolFigureFromChord(finalChord, True))
