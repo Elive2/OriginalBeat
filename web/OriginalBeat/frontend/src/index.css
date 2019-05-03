@@ -129,3 +129,7 @@ h4 {
   height: 70px;
   width: 270px;
 }
+
+#piano-input {
+  background-color: rgb(97, 149, 181);
+}

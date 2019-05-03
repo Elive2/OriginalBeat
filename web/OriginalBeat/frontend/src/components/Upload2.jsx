@@ -8,8 +8,10 @@ import PianoInput from './PianoInput';
 
 var server = process.env.API_URL + "midi/";
 
-
-
+const pianoClasse = {
+	app
+		
+}
 
 class Upload2 extends React.Component{
 	constructor(props) {
@@ -29,7 +31,7 @@ class Upload2 extends React.Component{
 						<Col sm={{ size: 'auto', offset: 2 }}>
 						<Jumbotron>
 								Play
-								<PianoInput />
+								<PianoInput classes={{}}/>
 								<br/>
 								<img src={"/static/piano.png"} id="piano-img"/>
 							</Jumbotron>

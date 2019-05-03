@@ -72,7 +72,7 @@ class PianoInput extends React.Component {
           onClose={this.handleClose}
           TransitionComponent={Transition}
         >
-          <AppBar className={classes.appBar}>
+          <AppBar id="piano-input">
             <Toolbar>
               <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
