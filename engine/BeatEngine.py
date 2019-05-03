@@ -38,6 +38,7 @@ import sys, os
 #TODO: this shouldn't be hardcoded
 sys.path.append(os.environ['PROJ_DIR'] + '/engine')
 from KeyChord import KeyChord
+from BayesNet import BayesNet
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -100,28 +101,28 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = KeyChord(self._beat)
+        model = BayesNet(self._beat)
         #generate the output in place on self._beat
-        model.generate()
+        # model.generate()
 
 
-        #write the output midi
-        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
-        mf.open(midi_file_output_path, 'wb')
-        mf.write()
-        mf.close()
+        # #write the output midi
+        # mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
+        # mf.open(midi_file_output_path, 'wb')
+        # mf.write()
+        # mf.close()
 
-        #write output melody
-        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_melody)
-        mf.open(midi_file_melody_output_path, 'wb')
-        mf.write()
-        mf.close()
+        # #write output melody
+        # mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_melody)
+        # mf.open(midi_file_melody_output_path, 'wb')
+        # mf.write()
+        # mf.close()
 
-        #write output harmony
-        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_harmony)
-        mf.open(midi_file_harmony_output_path, 'wb')
-        mf.write()
-        mf.close()
+        # #write output harmony
+        # mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_harmony)
+        # mf.open(midi_file_harmony_output_path, 'wb')
+        # mf.write()
+        # mf.close()
 
 
     #saving this for later

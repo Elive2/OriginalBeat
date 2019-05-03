@@ -177,24 +177,74 @@ def get_simul_chords_and_notes(path):
 
     return chord_and_note_list
 
-def get_song_data(patH):
+def get_song_data(path, given_key):
     """
         Function: get_song_data
     
         Description: Get all song event and categorize by offset. The returned data
         structure has format:
-
         {
             offset1: [melody_note, voicing_note, chord]
             offset2: [melody_note, voicing_note, chord]
             offset3: [melody_note, voicing_note, chord]
         }
-
         if any of the note or chords are not found at the offset, they have value None
+        should everything be transposed to c? including melody?
     """
 
-    pass
+    try:
 
+        midi = music21.converter.parse(path)
+        parts = music21.instrument.partitionByInstrument(midi)
+        song_data = {}
+
+        chord_part = parts[1] if len(parts) > 1 else parts[0]
+        melody_part = parts[0]
+        voicing_part = melody_part
+
+        #loop through elements in the melody part
+        for elements_by_offset in music21.stream.iterator.OffsetIterator(melody_part):
+            melody_note = None
+            voicing_note = None
+            chord = None
+            for entry in elements_by_offset:
+                offset = entry.offset
+
+                if isinstance(entry, music21.chord.Chord):
+                    #if its a chord, (unlikely) add it as a chord
+                    if(len(entry.pitchClasses) > 1):
+                        #chord_notes = ' '.join([str(e) for e in entry.name])
+                        chord = music21.roman.romanNumeralFromChord(entry, music21.key.Key(given_key)).romanNumeralAlone
+                    else:
+                        voicing_note = str(entry.pitch.pitchClass)
+                elif isinstance(entry, music21.note.Note):
+                    #if it is a melody note, add the melody note to the data
+                    melody_note = str(entry.pitch.pitchClass)
+
+                    #find all chords or voicings that are sounding at the same time in the chord/voicing part
+                    sounding = chord_part.allPlayingWhileSounding(entry, melody_part)
+                    for sounding_note in sounding:
+                        if isinstance(sounding_note, music21.chord.Chord):
+                                chord = music21.roman.romanNumeralFromChord(sounding_note, music21.key.Key(given_key)).romanNumeralAlone
+                        elif isinstance(sounding_note, music21.note.Note):
+                            voicing_note = str(sounding_note.pitch.pitchClass)
+
+                        #can't handle the case if there are multiple chords sounding
+                else:
+                    continue
+
+                song_data[offset] = [melody_note, voicing_note, chord]
+
+        print("got song data")
+        return song_data
+
+    except Exception as e:
+        print("failed on path " + str(path) + " with error: ")
+        print(e)
+
+def transpose(part, from_key, to_key):
+    i = interval.Interval(from_key.tonic, pitch.Pitch(to_key))
+    return part.transpose(i)
 
 def notes_chords_rests_to_midi(song_data):
     s = music21.stream.Stream()
