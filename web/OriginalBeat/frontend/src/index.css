@@ -124,3 +124,8 @@ h4 {
 .loginForm {
 	margin: 20px;
 }
+
+#piano-img {
+  height: 70px;
+  width: 270px;
+}

@@ -26,19 +26,22 @@ class Upload2 extends React.Component{
 						</div>
 					</Row>
 					<Row>
-						<Col sm="6">
+						<Col sm={{ size: 'auto', offset: 2 }}>
 						<Jumbotron>
+								Play
 								<PianoInput />
+								<br/>
+								<img src={"/static/piano.png"} id="piano-img"/>
 							</Jumbotron>
 						</Col>
-						<Col sm="6">
+						<Col sm={{ size: 'auto', offset: 2 }}>
 						<Jumbotron>
 								<Form encType="multipart/form-data" action='/midi/' method="post">
 								<CSRFToken />
 								<Row>
 									<Col>
 										<FormGroup>
-											<Label for="midiFile">To begin please upload a midi file below</Label>
+											<Label for="midiFile">Upload</Label>
 											<Input type="file" name="Midi" id="midiFile" accept=".mid"/>
 											<FormText color="muted">
 												Please select an 9 bar midifile to upload

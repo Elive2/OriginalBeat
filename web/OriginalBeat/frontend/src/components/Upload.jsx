@@ -94,7 +94,6 @@ class Upload extends React.Component{
 					<Row>
 						<Col sm="6">
 						<WonkyModal className="wonkyModal" id="pianoBox" pose={this.state.pianoPose} onClick={() => this.selectMethod('piano')}>
-							<Jumbotron>
 									<DimensionsProvider>
 							      {({ containerWidth, containerHeight }) => (
 							        <SoundfontProvider
@@ -115,7 +114,6 @@ class Upload extends React.Component{
 							        />
 							      )}
 							    </DimensionsProvider>
-							</Jumbotron>
 						</WonkyModal>
 						</Col>
 						<Col sm="6">

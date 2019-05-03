@@ -64,7 +64,7 @@ class PianoInput extends React.Component {
     return (
       <div>
         <Button variant="outlined" color="primary" onClick={this.handleClickOpen}>
-          Open full-screen dialog
+          Piano Editor
         </Button>
         <Dialog
           fullScreen
