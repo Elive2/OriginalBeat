@@ -54,6 +54,7 @@ from itertools import accumulate
 from pomegranate import *
 import numpy as np
 from Beat import Beat
+import pickle
 
 BEGIN = "___BEGIN__"
 END = "___END__"
@@ -69,7 +70,8 @@ chord_model_location = Path('./Models/Chord_Model.txt')
 melody_note_model_location = Path('./Models/Melody_Note_Model.txt')
 voicing_note_model_location = Path('./Models/Voicing_Note_Model.txt')
 note_chord_model_location = Path('./Models/Note_Chord_Model.txt')
-midifiles_directory = Path("../data/midifiles/")
+midifiles_directory = Path("../data/less_midifiles/")
+model_output_path = Path("./Models/Bayes_Net.json")
 
 def log(words):
     if DEBUG:
@@ -84,6 +86,7 @@ class BayesNet:
 
         #boolean to control wether or not to read from disk
         self._load_from_disk = False
+        self._build = True
 
         self._beat = beat_instance
 
@@ -93,48 +96,58 @@ class BayesNet:
         self._cond_table_v1 = []
         self._cond_table_m1 = []
 
-        if(self._load_from_disk):
-            with open(chord_model_location, 'r') as infile:
-                self._chord_model = self._model_from_json(json.load(infile), CHORD)
+        if(self._build):
+            if(self._load_from_disk):
+                with open(chord_model_location, 'r') as infile:
+                    self._chord_model = self._model_from_json(json.load(infile), CHORD)
 
-            with open(melody_note_model_location, 'r') as infile:
-                self._melody_note_model = self._model_from_json(json.load(infile), MELODYNOTE)
+                with open(melody_note_model_location, 'r') as infile:
+                    self._melody_note_model = self._model_from_json(json.load(infile), MELODYNOTE)
 
-            with open(note_chord_model_location, 'r') as infile:
-                self._note_chord_model = self._model_from_json(json.load(infile), NOTECHORD)
+                with open(note_chord_model_location, 'r') as infile:
+                    self._note_chord_model = self._model_from_json(json.load(infile), NOTECHORD)
 
-            with open(voicing_note_model_location, 'r') as infile:
-                self._voicing_note_model = self._model_from_json(json.load(infile), VOICINGNOTE)
+                with open(voicing_note_model_location, 'r') as infile:
+                    self._voicing_note_model = self._model_from_json(json.load(infile), VOICINGNOTE)
 
-            self._build_alpha_model()
+                self._build_alpha_model()
+
+            else:
+                self._chord_model = {}
+                self._melody_note_model = {}
+                self._voicing_note_model = {}
+                self._note_chord_model = {}
+                self._build_alpha_model()
+
+            
+            log("chord model")
+            log(self._chord_model)
+            if DEBUG: input()
+            log("melody note model")
+            log(self._melody_note_model)
+            if DEBUG: input()
+            log("voicing note model")
+            log(self._voicing_note_model)
+            if DEBUG: input()
+            log("note chord model")
+            log(self._note_chord_model)
+            if DEBUG: input() 
+
+            self._build_cond_table_c0()
+            self._build_cond_table_c1()
+            self._build_cond_table_v0()
+            self._build_cond_table_v1()
+            self._build_cond_table_m1()
+            self._build_net()
 
         else:
-            self._chord_model = {}
-            self._melody_note_model = {}
-            self._voicing_note_model = {}
-            self._note_chord_model = {}
-            self._build_alpha_model()
+            with open(model_output_path, 'rb') as f:
+                self._bayes_model = from_json(json.load(f))
+            self._predict()
 
-        
-        log("chord model")
-        log(self._chord_model)
-        if DEBUG: input()
-        log("melody note model")
-        log(self._melody_note_model)
-        if DEBUG: input()
-        log("voicing note model")
-        log(self._voicing_note_model)
-        if DEBUG: input()
-        log("note chord model")
-        log(self._note_chord_model)
-        if DEBUG: input() 
+    def predict():
+        print(self._bayes_model.predict([['0', 'I', '4', None, None]]))
 
-        self._build_cond_table_c0()
-        self._build_cond_table_c1()
-        self._build_cond_table_v0()
-        self._build_cond_table_v1()
-        self._build_cond_table_m1()
-        self._build_net()
 
 
     def _build_alpha_model(self):
@@ -224,7 +237,7 @@ class BayesNet:
         length = len(self._chord_model.keys())
 
         for chord, next_chords in self._chord_model.items():
-            cond_list[chord] = 1 / length
+            cond_list[chord] = round(1 / length,2)
 
 
         self._cond_table_c0 = DiscreteDistribution(cond_list)
@@ -242,7 +255,7 @@ class BayesNet:
             choices, weights = zip(*self._chord_model[chord].items())
             total = sum(list(accumulate(weights)))
             for next_chord, count in self._chord_model[chord].items():
-                probability = count / total;
+                probability = round(count / total, 2)
                 cond_list.append([chord, next_chord, probability])
 
         #populate all combos that haven't been found with probability 0, pomgranate requires this
@@ -258,7 +271,7 @@ class BayesNet:
         cond_list = {}
         length = len(self._voicing_note_model.keys())
         for note in self._voicing_note_model:
-            cond_list[note] = 1 / length
+            cond_list[note] = round(1 / length,2)
 
         self._cond_table_v0 = DiscreteDistribution(cond_list)
         self._all_possible_notes = cond_list.keys()
@@ -284,7 +297,7 @@ class BayesNet:
             choices, weights = zip(*self._voicing_note_model[note].items())
             total = sum(list(accumulate(weights)))
             for next_note, count in self._voicing_note_model[note].items():
-                probability = count / total;
+                probability = round(count / total, 2)
                 cond_list.append([note, next_note, probability])
 
         self._fill_in_missing_voicing_probabilities(cond_list)
@@ -307,7 +320,7 @@ class BayesNet:
         for note_chord, count in self._note_chord_model.items():
             note = note_chord.split(',')[0]
             chord = note_chord.split(',')[1]
-            probability = count / total
+            probability = round(count / total, 2)
             cond_list.append([chord, note, probability])
 
         self._fill_in_missing_chord_and_note_probabilites(cond_list)
@@ -400,6 +413,10 @@ class BayesNet:
         except Exception as e:
             print(e)
 
+        #self._bayes_model.plot()
+        with open(model_output_path, 'wb') as f:
+            json.dump(self._bayes_model.to_json(), f)
+
         print("making prediction")
-        log(self._bayes_model.predict(['0', 'I', '4', None, None]))
+        print(self._bayes_model.predict([['0', 'I', '4', None, None]]))
 
