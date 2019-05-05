@@ -66,12 +66,19 @@ NOTECHORD = "NOTECHORD"
 DEBUG = False
 
 
-chord_model_location = Path('./Models/Chord_Model.txt')
-melody_note_model_location = Path('./Models/Melody_Note_Model.txt')
-voicing_note_model_location = Path('./Models/Voicing_Note_Model.txt')
-note_chord_model_location = Path('./Models/Note_Chord_Model.txt')
-midifiles_directory = Path("../data/less_midifiles/")
-model_output_path = Path("./Models/Bayes_Net.json")
+chord_model_location = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Chord_Model.txt'))
+melody_note_model_location = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Melody_Note_Model.txt'))
+voicing_note_model_location = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Voicing_Note_Model.txt'))
+note_chord_model_location = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Note_Chord_Model.txt'))
+midifiles_directory = Path(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'data'), 'midifiles'))
+model_output_path = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Bayes_Net.json'))
+
+# chord_model_location = Path('./Models/Chord_Model.txt')
+# melody_note_model_location = Path('./Models/Melody_Note_Model.txt')
+# voicing_note_model_location = Path('./Models/Voicing_Note_Model.txt')
+# note_chord_model_location = Path('./Models/Note_Chord_Model.txt')
+# midifiles_directory = Path("../data/less_midifiles/")
+# model_output_path = Path("./Models/Bayes_Net.json")
 
 def log(words):
     if DEBUG:
@@ -84,15 +91,21 @@ class BayesNet:
     def __init__(self, beat_instance):
 
 
-        #boolean to control wether or not to read from disk
+        #boolean to control wether or not to read models from disk
         self._load_from_disk = False
-        self._build = 'disk'
+
+        #boolean to control wether to build model manual probabilites,
+        #data derived probabilities, or loaded from a json model on disk
+
+        #self._build = 'data'
+        #self._build = 'disk'
+        self._build = 'manual'
 
         self._beat = beat_instance
 
-        self._cond_table_c0 = []
+        self._cond_table_c0 = {}
         self._cond_table_c1 = []
-        self._cond_table_v0 = []
+        self._cond_table_v0 = {}
         self._cond_table_v1 = []
         self._cond_table_m1 = []
 
@@ -150,6 +163,7 @@ class BayesNet:
             self._build_cond_table_v0_manual()
             self._build_cond_table_v1_manual()
             self._build_cond_table_m1_manual()
+
             self._build_net()
 
     def generate(self):
@@ -157,20 +171,60 @@ class BayesNet:
             self._bayes_model.predict([[v0, c0, m1, None, None]])
         '''
 
-        #self._beat.midi_stream.parts[0].makeMeasures(inPlace=True)
-        #ms = self._beat.midi_stream.parts[0].measures(0,None)
+        measure_stream = self._beat.midi_stream.parts[0].makeMeasures(inPlace=False)
+        ms = self._beat.midi_stream.parts[0].measures(0,None)
 
         #c_transposed_part = transpose(self._beat.midi_stream.parts[0], self._beat.key, 'c')
         new_part = music21.stream.Part()
 
-        #seed the generator with the inital notes
-        v1 = '0'
-        c1 = 'I'
+
+        v1 = ''
+        c1 = ''
+
+        #initial notes that will be used to seed the generator
+        for measure in ms:
+            measure_notes = []
+            for note in measure:
+                if isinstance(note, music21.note.Note) and v1 == '':
+                    v1 = str(note.pitch.pitchClass)
+                    measure_notes.append(note.pitch.pitchClass)
+                elif (isinstance(note, music21.note.Note)):
+                    measure_notes.append(note.pitch.pitchClass)
+
+            chord = music21.chord.Chord(list(set(measure_notes)))
+            roman_chord = music21.roman.romanNumeralFromChord(chord, music21.key.Key(self._beat.key))
+            c1 = roman_chord.figure
+
+            break
+
+
+        #simple mechanism to manage the rhythm each entry is the offset that the next
+        #harmony note or chord should be played at
+        #IDEA: could do this on top of one chord per bar
+        rhythm = []
+
+        # #array of all harmony objects to be added to the stream
+        # harmony = []
+
+        # for measure in ms:
+        #     measureNotes = []
+        #     for note in measure:
+        #         if isinstance(note, music21.note.Note):
+        #             measureNotes.append(note.pitch.pitchClass)
+
+        #     if (len(measureNotes) > 0):
+        #         c1 = music21.chord.Chord(list(set(measureNotes)))
+        #         #make this a pramter of the time signature
+        #         c.duration.quarterLength = 4.0
+
+
 
         for elements_by_offset in music21.stream.iterator.OffsetIterator(self._beat.midi_stream.parts[0]):
             for entry in elements_by_offset:
-                print(entry)
+                log(entry)
                 if(isinstance(entry, music21.note.Note)):
+                    #first add this entries offset to the rhythm
+                    rhythm.append(entry.offset)
                     v0 = v1
                     c0 = c1
                     m1 = str(entry.pitch.pitchClass)
@@ -181,14 +235,16 @@ class BayesNet:
 
                     chord_list = [str(p) for p in music21.roman.RomanNumeral(c1, self._beat.key).pitches]
                     chord = music21.chord.Chord(chord_list)
-                    chord.duration.quarterLength = 1.0
+                    chord.offset = entry.offset
 
                     voicing = music21.note.Note()
                     voicing.pitch.pitchClass = int(v1)
-                    voicing.duration.quarterLength = 1.0
+                    voicing.offset = entry.offset
 
-                    new_part.append(chord)
-                    new_part.append(voicing)
+                    if(random.randint(0,4) < 3):
+                        new_part.append(chord)
+                    else:
+                        new_part.append(voicing)
             
         self._beat.midi_stream.append(new_part)
 
@@ -483,7 +539,6 @@ class BayesNet:
             print("m1 cond list")
             print(cond_list)
             input()
-
 
     def _model_to_json(self, model):
         """

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack -p",
     "start": "webpack-dev-server --config ./webpack.config.js --mode development --env.API_URL=http://localhost/",
+    "prod": "webpack --config ./webpack.config.js --env.API_URL=http://134.209.59.255 --mode production",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "author": "Yotam Mann",

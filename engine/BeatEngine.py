@@ -101,7 +101,7 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = KeyChord(self._beat)
+        model = BayesNet(self._beat)
         #generate the output in place on self._beat
         #model.predict()
         model.generate()
@@ -135,7 +135,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/output/output_melody.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+    engine = BeatEngine('../data/testers/Cmajor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
 
 if __name__ == '__main__':
     main()
