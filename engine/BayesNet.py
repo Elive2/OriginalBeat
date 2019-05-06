@@ -98,16 +98,22 @@ class BayesNet:
         #data derived probabilities, or loaded from a json model on disk
 
         #self._build = 'data'
-        #self._build = 'disk'
-        self._build = 'manual'
+        self._build = 'disk'
+        #self._build = 'manual'
 
         self._beat = beat_instance
 
-        self._cond_table_c0 = {}
+        self._cond_table_c0 = []
         self._cond_table_c1 = []
-        self._cond_table_v0 = {}
+        self._cond_table_v0 = []
         self._cond_table_v1 = []
         self._cond_table_m1 = []
+
+        self._cond_list_c0 = {}
+        self._cond_list_c1 = []
+        self._cond_list_v0 = {}
+        self._cond_list_v1 = []
+        self._cond_list_m1 = []
 
         if(self._build == 'data'):
             if(self._load_from_disk):
@@ -123,14 +129,19 @@ class BayesNet:
                 with open(voicing_note_model_location, 'r') as infile:
                     self._voicing_note_model = self._model_from_json(json.load(infile), VOICINGNOTE)
 
-                self._build_alpha_model()
-
             else:
                 self._chord_model = {}
                 self._melody_note_model = {}
                 self._voicing_note_model = {}
                 self._note_chord_model = {}
-                self._build_alpha_model()
+
+            self._init_cond_list_c0()
+            self._init_cond_list_c1()
+            self._init_cond_list_v0()
+            self._init_cond_list_v1()
+            self._init_cond_list_m1()
+
+            self._build_alpha_model()
 
             
             log("chord model")
@@ -338,51 +349,43 @@ class BayesNet:
 
 
     def _build_cond_table_c0(self):
-        cond_list = {}
-        length = len(self._chord_model.keys())
-
-        for chord, next_chords in self._chord_model.items():
-            cond_list[chord] = round(1 / length,2)
-
-
-        self._cond_table_c0 = DiscreteDistribution(cond_list)
-        self._all_possible_chords = cond_list.keys()
-        self._cond_table_c0 = DiscreteDistribution(cond_list)
+        self._cond_table_c0 = DiscreteDistribution(self._cond_list_c0)
 
         log("c0 cond table")
-        log(cond_list)
+        log(self._cond_list_c0)
         if DEBUG: input()
 
 
     def _build_cond_table_c1(self):
-        cond_list = []
         for chord in self._chord_model:
             choices, weights = zip(*self._chord_model[chord].items())
             total = sum(list(accumulate(weights)))
             for next_chord, count in self._chord_model[chord].items():
                 probability = round(count / total, 2)
-                cond_list.append([chord, next_chord, probability])
+                #self._cond_list_c1.append([chord, next_chord, probability])
 
-        #populate all combos that haven't been found with probability 0, pomgranate requires this
-        self._fill_in_missing_chord_probabilites(cond_list)
+                index = 0
+                for row in self._cond_list_c1:
+                    if(row[0] == chord and row[1] == next_chord):
+                        log("REPLACING DEFAULT WITH A COMPUTED PROBABILITY")
 
-        self._cond_table_c1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c0])
+                        self._cond_list_c1[index] = [chord, next_chord, probability]
+                        break
+
+                    index+=1
+
+
+        self._cond_table_c1 = ConditionalProbabilityTable(self._cond_list_c1, [self._cond_table_c0])
 
         log("c1 cond table")
-        log(cond_list)
+        log(self._cond_list_c1)
         if DEBUG: input()
 
     def _build_cond_table_v0(self):
-        cond_list = {}
-        length = len(self._voicing_note_model.keys())
-        for note in self._voicing_note_model:
-            cond_list[note] = round(1 / length,2)
-
-        self._cond_table_v0 = DiscreteDistribution(cond_list)
-        self._all_possible_notes = cond_list.keys()
+        self._cond_table_v0 = DiscreteDistribution(self._cond_list_v0)
 
         log("v0 cond table")
-        log(cond_list)
+        log(self._cond_list_v0)
         if DEBUG: input()
 
     def _build_cond_table_v1(self):
@@ -397,19 +400,28 @@ class BayesNet:
             consider the melody note as the voicing but then this node would be similar
             to m1
         """
-        cond_list = []
         for note in self._voicing_note_model:
             choices, weights = zip(*self._voicing_note_model[note].items())
             total = sum(list(accumulate(weights)))
             for next_note, count in self._voicing_note_model[note].items():
                 probability = round(count / total, 2)
-                cond_list.append([note, next_note, probability])
+                #cond_list.append([note, next_note, probability])
 
-        self._fill_in_missing_voicing_probabilities(cond_list)
-        self._cond_table_v1 = ConditionalProbabilityTable(cond_list, [self._cond_table_v0])
+                index = 0
+                for row in self._cond_list_v1:
+                    if(row[0] == note and row[1] == next_note):
+                        log("REPLACING DEFAULT WITH A COMPUTED PROBABILITY")
+
+                        self._cond_list_v1[index] = [note, next_note, probability]
+                        break
+
+                    index+=1
+
+
+        self._cond_table_v1 = ConditionalProbabilityTable(self._cond_list_v1, [self._cond_table_v0])
 
         log("v1 cond table")
-        log(cond_list)
+        log(self._cond_list_v1)
         if DEBUG: input()
 
 
@@ -420,59 +432,67 @@ class BayesNet:
             Description: this function builds the conditional probability table for
             the node m1.
         """
-        cond_list = []
         total = sum(self._note_chord_model.values())
         for note_chord, count in self._note_chord_model.items():
             note = note_chord.split(',')[0]
             chord = note_chord.split(',')[1]
             probability = round(count / total, 2)
-            cond_list.append([chord, note, probability])
+            #cond_list.append([chord, note, probability])
 
-        self._fill_in_missing_chord_and_note_probabilites(cond_list)
-        self._cond_table_m1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c1])
+            index = 0
+            for row in self._cond_list_m1:
+                if(row[0] == chord and row[1] == note):
+                    log("REPLACING DEFAULT WITH A COMPUTED PROBABILITY")
+
+                    self._cond_list_m1[index] = [chord, note, probability]
+                    break
+
+                index+=1
+
+        self._cond_table_m1 = ConditionalProbabilityTable(self._cond_list_m1, [self._cond_table_c1])
 
         log("melody cond table")
-        log(cond_list)
+        log(self._cond_list_m1)
         if DEBUG: input()
 
-    def _fill_in_missing_chord_probabilites(self, cond_list):
-        data = np.array(cond_list)
-        for chord1 in self._all_possible_chords:
-            for chord2 in self._all_possible_chords:
-                if([chord1, chord2] in data[:,:2]):
-                    continue
-                else:
-                    cond_list.append([chord1, chord2, 0.0])
+    def _init_cond_list_c0(self):
+        self._cond_list_c0 = {}
+        for chord in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+            self._cond_list_c0[chord] = 1 / 12
 
-        log("filled in chord cond_list")
-        log(cond_list)
-    def _fill_in_missing_voicing_probabilities(self, cond_list):
-        data = np.array(cond_list)
-        for note1 in self._all_possible_notes:
-            for note2 in self._all_possible_notes:
-                if([note1, note2] in data[:,:2]):
-                    continue
-                else:
-                    cond_list.append([note1, note2, 0.0])
+    def _init_cond_list_c1(self):
+                #Note: should preallocate this and not append
+        self._cond_list_c1 = []
+        for chord1 in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+            for chord2 in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+                prob = 0.0
+                self._cond_list_c1.append([chord1, chord2, prob])
 
-        log("filled in voicing cond_list")
-        log(cond_list)
+    def _init_cond_list_v0(self):
+        self._cond_list_v0 = {}
+        for note in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+            self._cond_list_v0[note] = 1 / 12
 
-    def _fill_in_missing_chord_and_note_probabilites(self, cond_list):
-        data = np.array(cond_list)
-        for chord1 in self._all_possible_chords:
-            for note1 in self._all_possible_notes:
-                if([chord1, note1] in data[:,:2]):
-                    continue
-                else:
-                    cond_list.append([chord1, note1, 0.0])
+    def _init_cond_list_v1(self):
+        self._cond_list_v1 = []
+        for note1 in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+            for note2 in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+                prob = 0.0
+                self._cond_list_v1.append([note1, note2, prob])
 
-        log("filled in chord and notes")
-        log(cond_list)
+    def _init_cond_list_m1(self):
+        self._cond_list_m1 = []
+        for chord in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
+            for note in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
+                prob = 0.0
+                self._cond_list_m1.append([chord, note, prob])
 
 
+    '''
+        The following methods are preserved for legacy sake
+    '''
     def _build_cond_table_c0_manual(self):
-        cond_list = {}
+        self._cond_list_c0 = {}
         for chord in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
             cond_list[chord] = 1 / 12
 
@@ -481,12 +501,12 @@ class BayesNet:
             print(cond_list)
             input()
 
-        self._cond_table_c0 = DiscreteDistribution(cond_list)
+        self._cond_table_c0 = DiscreteDistribution(self._cond_list_c0)
 
 
     def _build_cond_table_c1_manual(self):
                 #Note: should preallocate this and not append
-        cond_list = []
+        self._cond_list_c1 = []
         for chord1 in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
             for chord2 in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
                 prob = random.uniform(0,1)
@@ -497,14 +517,14 @@ class BayesNet:
             print(cond_list)
             input()
 
-        self._cond_table_c1 = ConditionalProbabilityTable(cond_list, [self._cond_table_c0])
+        self._cond_table_c1 = ConditionalProbabilityTable(self._cond_list_c1, [self._cond_table_c0])
 
     def _build_cond_table_v0_manual(self):
-        cond_list = {}
+        self._cond_list_v0 = {}
         for note in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
             cond_list[note] = 1 / 12
 
-        self._cond_table_v0 = DiscreteDistribution(cond_list)
+        self._cond_table_v0 = DiscreteDistribution(self._cond_list_v0)
 
         if(DEBUG):
             print("vo cond list")
@@ -513,7 +533,7 @@ class BayesNet:
 
 
     def _build_cond_table_v1_manual(self):
-        cond_list = []
+        self._cond_list_v1 = []
         for note1 in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
             for note2 in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
                 prob = random.uniform(0,1)
@@ -527,7 +547,7 @@ class BayesNet:
             input()
 
     def _build_cond_table_m1_manual(self):
-        cond_list = []
+        self._cond_list_m1 = []
         for chord in ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']:
             for note in ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']:
                 prob = random.uniform(0,1)
@@ -566,41 +586,40 @@ class BayesNet:
 
 
     def _build_net(self):
-        print("creating nodes")
+        log("creating nodes")
         v0 = Node(self._cond_table_v0, name="v0")
         v1 = Node(self._cond_table_v1, name="v1")
         c0 = Node(self._cond_table_c0, name="c0")
         c1 = Node(self._cond_table_c1, name="c1")
         m1 = Node(self._cond_table_m1, name="m1")
 
-        print("instantiating network")
+        log("instantiating network")
         self._bayes_model = BayesianNetwork("Generator")
-        print("adding edges")
+        log("adding edges")
         self._bayes_model.add_nodes(v0, c0, m1, v1, c1)
         self._bayes_model.add_edge(c0, c1)
         self._bayes_model.add_edge(v0, v1)
         self._bayes_model.add_edge(c1, m1)
 
-        print("baking model")
+        log("baking model")
         try:
             self._bayes_model.bake()
         except Exception as e:
             print(e)
 
        #self._bayes_model.plot()
-        print(self._bayes_model.to_json())
         with open(model_output_path, 'w') as f:
             json.dump(self._bayes_model.to_json(), f)
 
-        print("making prediction")
-        print(self._bayes_model.predict([['5', 'iii', '4', None, None]]))
-        print("making prediction")
-        print(self._bayes_model.predict([['0', 'ii', '4', None, None]]))
-        print("making prediction")
-        print(self._bayes_model.predict([['0', 'I', '4', None, None]]))
-        print("making prediction")
-        print(self._bayes_model.predict([['4', 'I', '4', None, None]]))
-        print("making prediction")
-        print(self._bayes_model.predict([['0', 'v', '4', None, None]]))
+        # print("making prediction")
+        # print(self._bayes_model.predict([['5', 'iii', '4', None, None]]))
+        # print("making prediction")
+        # print(self._bayes_model.predict([['0', 'ii', '4', None, None]]))
+        # print("making prediction")
+        # print(self._bayes_model.predict([['0', 'I', '4', None, None]]))
+        # print("making prediction")
+        # print(self._bayes_model.predict([['4', 'I', '4', None, None]]))
+        # print("making prediction")
+        # print(self._bayes_model.predict([['0', 'v', '4', None, None]]))
 
 

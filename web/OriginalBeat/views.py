@@ -6,6 +6,7 @@
     TODO:
 
     [ ] - projects
+    [ ] - figure out why uploads are being saved with the file name, not just the username
 """
 
 from django.shortcuts import render
