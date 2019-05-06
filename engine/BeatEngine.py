@@ -135,7 +135,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/testers/Cmajor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+    engine = BeatEngine('../data/testers/Aminor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
 
 
 if __name__ == '__main__':
