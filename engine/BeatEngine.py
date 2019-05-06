@@ -39,6 +39,7 @@ import sys, os
 sys.path.append(os.environ['PROJ_DIR'] + '/engine')
 from KeyChord import KeyChord
 from BayesNet import BayesNet
+from DrumBeat import DrumBeat
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -90,7 +91,9 @@ class BeatEngine():
 
         #NOTE: this will eventually be a call to findTempo(), but for now
         #it is hardocded to 120 bpm
-        self._beat.tempo = 120
+        self._beat.tempo = findTempo(midi_upload_file_path)
+
+        print(self._beat.tempo)
 
         self._beat.key = findKey(midi_upload_file_path)
         #print(self._beat.key)
@@ -101,18 +104,14 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = BayesNet(self._beat)
+        model = KeyChord(self._beat)
         #generate the output in place on self._beat
         #model.predict()
         model.generate()
-        # test for harmonized chords
-        print()
-        print("Random Chord Choice: " + model.get_one_possible_harmonized_chords("C#"))
-        print()
-        test = model.get_all_possible_harmonized_chords("C#")
-        for i in test:
-            print(i)
 
+        #test drums
+        drumModel = DrumBeat(self._beat)
+        drumModel.generate()
 
         #write the output midi
         mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
@@ -143,6 +142,7 @@ class BeatEngine():
 
 def main():
     engine = BeatEngine('../data/output/output_melody.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+    #engine = BeatEngine('../data/less_midifiles/Above & Beyond.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
 
 
 if __name__ == '__main__':
