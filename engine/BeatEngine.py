@@ -105,13 +105,6 @@ class BeatEngine():
         #generate the output in place on self._beat
         #model.predict()
         model.generate()
-        # test for harmonized chords
-        print()
-        print("Random Chord Choice: " + model.get_one_possible_harmonized_chords("C#"))
-        print()
-        test = model.get_all_possible_harmonized_chords("C#")
-        for i in test:
-            print(i)
 
 
         #write the output midi
