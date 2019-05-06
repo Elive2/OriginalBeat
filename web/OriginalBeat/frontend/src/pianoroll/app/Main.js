@@ -21,9 +21,6 @@
  */
 
 var server = process.env.API_URL + 'midi/';
-console.log("SERVER")
-console.log("YOOOOOO")
-console.log(server)
 
 var CHROMATIC = [ 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B' ]
 
@@ -52,7 +49,7 @@ function noteFromMidi(midiNumber) {
 }
 
 function formatMidi(midi_json) {
-    console.log("formating the midi file for pianoroll");
+    //console.log("formating the midi file for pianoroll");
 
     var formattedHeader = {tempo: 120, timeSignature: [4,4]};
     var formattedNotes = [];
@@ -100,13 +97,13 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
 
             //set the first score
             const midi = Midi.fromUrl(server).then(function (data) {
-                console.log("MIDI NAME");
+                //console.log("MIDI NAME");
                 final_mid = formatMidi(data);
-                console.log("FORMATTED MIDI");
-                console.log(final_mid);
+                //console.log("FORMATTED MIDI");
+                //console.log(final_mid);
                 roll.setScore(final_mid);
             })
-            console.log(preludeInC);
+            //console.log(preludeInC);
 
             // fetch(server)
             //   .then(function(response) {

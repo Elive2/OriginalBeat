@@ -10,7 +10,7 @@ class Footer extends React.Component{
 	render() {
 		return (
 			<footer>
-				<div class = "title">
+				<div className = "title">
 					<Row>
 						<Col sm="12" md={{ size: 6, offset: 3 }}>
 							<a href="https://github.com/Elive2/OriginalBeat"><img className="github" src={"/static/GitHub-Mark-64px.png"}/></a>
