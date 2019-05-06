@@ -141,8 +141,12 @@ class BeatEngine():
 
 
 def main():
+<<<<<<< HEAD
     engine = BeatEngine('../data/output/output_melody.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
     #engine = BeatEngine('../data/less_midifiles/Above & Beyond.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+=======
+    engine = BeatEngine('../data/testers/Cmajor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+>>>>>>> fea4246b07ab69d7d6e421ab4700bef215a708f6
 
 
 if __name__ == '__main__':

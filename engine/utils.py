@@ -269,7 +269,7 @@ def get_song_data(path, given_key):
 
                 song_data[offset] = [melody_note, voicing_note, chord]
 
-        print("got song data")
+        #print("got song data")
         return song_data
 
     except Exception as e:
