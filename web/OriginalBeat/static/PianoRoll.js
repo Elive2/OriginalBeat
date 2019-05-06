@@ -119,7 +119,7 @@
 	    changes container of roll, interface, and overlay
 	 */
 
-	var server = ("http://localhost:8000/") + 'midi/';
+	var server = ("https://134.209.59.255/") + 'midi/';
 
 	var CHROMATIC = [ 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B' ]
 
