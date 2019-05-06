@@ -8,8 +8,13 @@
             with a one pass algorithm. I.E for each event scanned, determine which
             table it applies too, then add it to that tables running cond list and 
             increase the count of that event.
-    [ ] - functions to fill in missing probabilities
-    [ ] - rework schema - see notes
+    [x] - functions to fill in missing probabilities
+    [x] - rework schema - see notes
+    [ ] - if we come across a chord not seen before, add it to the network! ML!
+    [ ] - adjust rythm
+    [ ] - add in hybrid of Keychord
+    [ ] - try to hardcode some better probs
+
 
     Problem: the chords from in the m1_model come from the get_simul_chords_and_notes
     method which extracs chords from the second "part" of the midi file while the chords
