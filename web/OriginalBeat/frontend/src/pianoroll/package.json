@@ -7,7 +7,7 @@
     "start": "webpack -p",
     "build": "export API_URL=http://localhost:8000/ && webpack --config ./webpack.config.js --mode development",
     "watch": "webpack-dev-server --config ./webpack.config.js --mode development --env.API_URL=http://localhost/",
-    "prod": "export API_URL=https://134.209.59.255/ && webpack --config ./webpack.config.js  --mode production",
+    "prod": "export API_URL=https://134.209.59.255/ && webpack --config ./webpack.config.js  --mode development",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "author": "Yotam Mann",
