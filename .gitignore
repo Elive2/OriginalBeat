@@ -16,8 +16,6 @@ node_modules/
 
 userfiles/
 
-bundles/
-
 web/db.sqlite3
 
 web/webpack-stats.json
