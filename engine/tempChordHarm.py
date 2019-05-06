@@ -4,6 +4,7 @@
 from numpy.random import choice
 import music21
 import inspect
+import random
 
 class KeyHarm():
 
@@ -52,21 +53,22 @@ class KeyHarm():
         print(curKey)
         curKeyScale = music21.scale.ConcreteScale(tonic = curKey)
         print(curKeyScale)
-
         possibleHarmonizedChords = [curKeyScale.getTonic()]
-
+        print(possibleHarmonizedChords)
         # creates a list of all pitches in the scale 
         for i in range(1, 7):
-            possibleHarmonizedChords.append(curKeyScale.next())
-
-        print(possibleHarmonizedChords)
-
-        # finds harmonizing chord and prints it
-        for i in range(1, 8):
-            pitch1 = possibleHarmonizedChords[i]
-            pitch2 = possibleHarmonizedChords[(i + 2) % 8]
-            pitch3 = possibleHarmonizedChords[(i + 4) % 8]
-
+            newPitch = curKeyScale.next()
+            print(newPitch)
+            possibleHarmonizedChords.append(newPitch)
+        print("fin")
+        # finds harmonizing chord and prints i
+        for iter in range(1, 8):
+            pitch1 = possibleHarmonizedChords[iter]
+            pitch2 = possibleHarmonizedChords[(iter + 2) % 8]
+            pitch3 = possibleHarmonizedChords[(iter + 4) % 8]
+            print(pitch1)
+            print(pitch2)
+            print(pitch3)
             finalChord = music21.chord.Chord([pitch1, pitch2, pitch3])
             print(music21.harmony.chordSymbolFigureFromChord(finalChord, True))
         

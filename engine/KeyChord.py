@@ -7,7 +7,8 @@
 from numpy.random import choice
 import music21
 import inspect
-from tempChordHarm import KeyHarm
+import string
+import random
 
 class KeyChord():
     """
@@ -64,3 +65,50 @@ class KeyChord():
             newS.show('text')
 
 
+    def get_one_possible_harmonized_chords(self, keyName):
+        curKey = music21.key.convertKeyStringToMusic21KeyString(keyName)
+        if curKey.isupper():
+            curScale = music21.scale.MajorScale(curKey)
+
+        else:
+            curScale = music21.scale.MinorScale(curKey)
+
+        
+        scalePitches = []
+        for p in curScale.getPitches(curKey + "5", curKey + "6"):
+            scalePitches.append(p)
+
+        # finds harmonizing chord and prints i       
+        i = random.randint(0,7)
+        pitch1 = scalePitches[i]
+        pitch2 = scalePitches[(i + 2) % 7]
+        pitch3 = scalePitches[(i + 4) % 7]
+        finalChord = music21.chord.Chord([pitch1, pitch2, pitch3])
+        return music21.harmony.chordSymbolFigureFromChord(finalChord)
+
+    def get_all_possible_harmonized_chords(self, keyName):
+        curKey = music21.key.convertKeyStringToMusic21KeyString(keyName)
+        if curKey.isupper():
+            curScale = music21.scale.MajorScale(curKey)
+
+        else:
+            curScale = music21.scale.MinorScale(curKey)
+
+        
+        scalePitches = []
+        for p in curScale.getPitches(curKey + "5", curKey + "6"):
+            scalePitches.append(p)
+
+
+        possibleHarmonizedChords = []
+        # finds harmonizing chord and prints i
+
+        for i in range(0, 7):
+            pitch1 = scalePitches[i]
+            pitch2 = scalePitches[(i + 2) % 7]
+            pitch3 = scalePitches[(i + 4) % 7]
+
+            finalChord = music21.chord.Chord([pitch1, pitch2, pitch3])
+            possibleHarmonizedChords.append(music21.harmony.chordSymbolFigureFromChord(finalChord, False))
+
+        return possibleHarmonizedChords
