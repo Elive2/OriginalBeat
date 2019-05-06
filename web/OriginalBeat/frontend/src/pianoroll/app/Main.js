@@ -20,7 +20,10 @@
     changes container of roll, interface, and overlay
  */
 
-var server = "http://127.0.0.1:8000/midi/";
+var server = process.env.API_URL + 'midi/';
+console.log("SERVER")
+console.log("YOOOOOO")
+console.log(server)
 
 var CHROMATIC = [ 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B' ]
 
