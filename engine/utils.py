@@ -18,22 +18,17 @@ def findTempo(filename):
 
         Returns: the BPM of the midi file
     """
-    
-    mid = mido.MidiFile(filename)
 
-    #return mido.tempo2bpm(500000)
-    return mid.ticks_per_beat
-    """
     mf = music21.midi.MidiFile()
     mf.open(filename)
     mf.read()
-    #s = music21.midi.translate.midiFileToStream(mf)
+    s = music21.midi.translate.midiFileToStream(mf)
 
     #this seems to be fairly slow on large midifiles
-    tempo = music21.
+    tempo = music21.tempo.TempoIndication.getSoundingMetronomeMark(s)
 
-    #return tempo
-    """
+    return tempo
+    
 
     
     
