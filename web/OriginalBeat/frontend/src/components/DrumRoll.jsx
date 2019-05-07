@@ -11,7 +11,9 @@ class DrumRoll extends React.Component{
 			<div>
 				<Row>
 					<Col>
-						<iframe id = "drum" src={'/static/pianoRoll.html'} height="300" width="100%"></iframe>
+						<div className="pianorollFrame">
+							<iframe id = "drum" src={'/static/pianoRoll.html'} scrolling="no" height="300" width="100%"></iframe>
+						</div>
 					</Col>
 				</Row>
 			</div>
