@@ -13,7 +13,7 @@ class Index extends React.Component{
 	render() {
 		return (
 			<div>
-				<Header/>
+				<Header pageSelected={'Home'}/>
 					<div class = "title">
 
 						<Row>

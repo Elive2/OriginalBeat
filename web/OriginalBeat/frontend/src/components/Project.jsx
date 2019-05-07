@@ -41,7 +41,7 @@ class Project extends React.Component{
 	render() {
 		return (
 			<div>
-				<Header/>
+				<Header pageSelected={'Project'}/>
 				<div class = "title">
 					<Row className="layers">
 						<Col>

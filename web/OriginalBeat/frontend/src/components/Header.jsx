@@ -24,13 +24,13 @@ class Header extends React.Component{
 		pageSelected: this.props.pageSelected
 	};
 
-	thisPage () {
-		if (this.props.pageSelected == this.getElementById('About'))
-			return ('active')
-		else
-			return ('')
+	checkClass(name){
+		if (this.props.pageSelected == name)
+			return ("active")
+		else {
+			return ("nonactive")
+		}
 	}
-
 
 	toggle() {
 	  this.setState({
@@ -48,10 +48,10 @@ class Header extends React.Component{
 					</Col>
 					<Col>
 						<div  className="topnav">
-						  <a id='Home' className= {this.thisPage} href="/">Home</a>
-						  <a id='About' className= {this.thisPage} href="/about">About</a>
-						  <a id='Profile' className= {this.thisPage} href="/accounts/login">Profile</a>
-						  <a id='Contact' className= {this.thisPage} href="/contact.html">Contact</a>
+						  <a className={this.checkClass('Home')}  href="/">Home</a>
+						  <a className={this.checkClass('About')}  href="/about">About</a>
+						  <a className={this.checkClass('Profile')}  href="/accounts/login">Profile</a>
+						  <a className={this.checkClass('Contact')}  href="/contact">Contact</a>
 						</div>
 					</Col>
 					<Col>
