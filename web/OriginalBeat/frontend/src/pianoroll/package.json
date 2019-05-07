@@ -7,7 +7,7 @@
     "start": "webpack -p",
     "build": "export API_URL=http://localhost:8000/ && webpack --config ./webpack.config.js --mode development",
     "watch": "webpack-dev-server --config ./webpack.config.js --mode development --env.API_URL=http://localhost/",
-    "prod": "export API_URL=https://138.197.199.250/ && webpack --config ./webpack.config.js  --mode development",
+    "prod": "export API_URL=https://138.197.199.250/ && webpack --config ./webpack.config.js  --mode production",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "author": "Yotam Mann",
@@ -24,7 +24,7 @@
     "webpack": "^1.15.0"
   },
   "dependencies": {
-    "@tonejs/midi": "^1.2.3",
+    "@tonejs/midi": "^2.0.0",
     "binary-search-bounds": "^2.0.3",
     "brfs": "^1.4.0",
     "cross-env": "^5.2.0",
