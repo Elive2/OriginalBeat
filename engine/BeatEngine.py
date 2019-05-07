@@ -72,7 +72,7 @@ class BeatEngine():
         playsong
 
     """
-    def __init__(self, midi_upload_file_path, midi_file_output_path, midi_file_melody_output_path, midi_file_harmony_output_path, model_type):
+    def __init__(self, midi_upload_file_path, midi_file_output_path, midi_file_melody_output_path, midi_file_harmony_output_path, midi_file_drums_output_path, model_type):
         """
             function: __init__
 
@@ -93,8 +93,6 @@ class BeatEngine():
         #it is hardocded to 120 bpm
         self._beat.tempo = findTempo(midi_upload_file_path)
 
-        print(self._beat.tempo)
-
         self._beat.key = findKey(midi_upload_file_path)
         #print(self._beat.key)
 
@@ -109,7 +107,7 @@ class BeatEngine():
         #model.predict()
         model.generate()
 
-        #test drums
+        #Instanciate the Drums and generates the output in place on self._beat
         drumModel = DrumBeat(self._beat)
         drumModel.generate()
 
@@ -131,6 +129,14 @@ class BeatEngine():
         mf.write()
         mf.close()
 
+        
+        #write output drums to drum file
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_drums)
+        mf.open(midi_file_drums_output_path, 'wb')
+        mf.write()
+        mf.close()
+
+
 
     #saving this for later
     def _parse_midi_file(filename):
@@ -141,7 +147,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/testers/Aminor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+    engine = BeatEngine('../data/testers/Aminor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', '../data/output/output_drums.mid', None)
 
 
 if __name__ == '__main__':
