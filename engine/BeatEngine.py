@@ -102,10 +102,12 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = KeyChord(self._beat)
+        model = BayesNet(self._beat)
+        print("instantiated model")
         #generate the output in place on self._beat
         #model.predict()
         model.generate()
+        print("finished generation")
 
         #Instanciate the Drums and generates the output in place on self._beat
         drumModel = DrumBeat(self._beat)
@@ -135,6 +137,8 @@ class BeatEngine():
         mf.open(midi_file_drums_output_path, 'wb')
         mf.write()
         mf.close()
+
+        print("finished writing to all files")
 
 
 

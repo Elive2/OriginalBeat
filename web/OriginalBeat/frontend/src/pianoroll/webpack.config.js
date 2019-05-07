@@ -26,15 +26,12 @@ module.exports = {
 	output: {
 		filename: "../../../static/[name].js",
 		chunkFilename: "../../../static/[id].js",
-		sourceMapFilename : "../../../[file].map",
 	},
 	resolve: {
 		root: __dirname,
 		modulesDirectories : ["node_modules", "style", "app", "third_party", "third_party/Tone.js/"],
 	},
 	plugins: PROD ? [
-		new webpack.optimize.UglifyJsPlugin({minimize: true}),
-
 		new webpack.DefinePlugin({
 			'process.env': {
 				API_URL: JSON.stringify(process.env.API_URL)
