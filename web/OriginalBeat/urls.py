@@ -10,5 +10,6 @@ urlpatterns = [
     path('midi/melody', views.midi_melody, name='midi_melody'),
     path('midi/harmony', views.midi_harmony, name='midi_harmony'),
     path('download/', views.download, name='download'),
-    path('about/', views.about, name = 'about')
+    path('about/', views.about, name = 'about'),
+    path('contact/', views.contact, name = 'contact')
 ]

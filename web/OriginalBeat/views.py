@@ -48,10 +48,14 @@ def index(request):
         return render(request, 'OriginalBeat/upload.html', context)
     else:
         return render(request, 'OriginalBeat/index.html')
-        
+
 @require_http_methods(["GET"])
 def about(request):
     return render(request, 'OriginalBeat/about.html')
+
+@require_http_methods(["GET"])
+def contact(request):
+    return render(request, 'OriginalBeat/contact.html')
 
 @require_http_methods(["GET"])
 def project(request):

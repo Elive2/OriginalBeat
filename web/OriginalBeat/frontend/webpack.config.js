@@ -12,7 +12,8 @@ module.exports = env => {
       loginPage: './src/loginPage.jsx',
       signupPage: './src/signupPage.jsx',
       uploadPage: './src/uploadPage.jsx',
-      aboutPage: './src/aboutPage.jsx'
+      aboutPage: './src/aboutPage.jsx',
+      contactPage:'./src/contactPage.jsx'
       //profilePage: './src/profilePage.jsx'
     },
     module: {
