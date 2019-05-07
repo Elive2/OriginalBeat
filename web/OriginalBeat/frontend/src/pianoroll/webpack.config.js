@@ -26,7 +26,6 @@ module.exports = {
 	output: {
 		filename: "../../../static/[name].js",
 		chunkFilename: "../../../static/[id].js",
-		sourceMapFilename : "../../../[file].map",
 	},
 	resolve: {
 		root: __dirname,
