@@ -140,6 +140,11 @@ This script is invoked by supervisor automatically
 	* UFW: https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-18-04
 	* UFW commands: https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands
 
+Problems:
+
+error logs seems to be writing
+Midi.js.map error seems to be gone
+now there is a handshake error with ssl
 
 
 
