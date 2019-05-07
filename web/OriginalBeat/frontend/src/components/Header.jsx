@@ -29,8 +29,17 @@ class Header extends React.Component{
 			<header>
 				<Row>
 					<Col>
-						<img className="logo" src={"/static/logo.png"}/>
-						<h4 className="name">Original<br/>Beat </h4>
+						<a href='/'>
+							<img className="logo" src={"/static/logo.png"}/>
+						</a>
+					</Col>
+					<Col>
+						<div className="topnav">
+						  <a className="active" href="/">Home</a>
+						  <a href="/templates/OriginalBeat/about.html">About</a>
+						  <a href="/accounts/login">Profile</a>
+						  <a href="/templates/OriginalBeat/contact.html">Contact</a>
+						</div>
 					</Col>
 					<Col>
 						<Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggle} id="profile">
@@ -42,15 +51,6 @@ class Header extends React.Component{
 			        </DropdownMenu>
       			</Dropdown>
 					</Col>
-				</Row>
-				<Row>
-				<div class="topnav">
-				  <a class="active" href="/">Home</a>
-				  <a href="/templates/OriginalBeat/about.html">About</a>
-				  <a href="/accounts/login">Profile</a>
-				  <a href="/templates/OriginalBeat/contact.html">Contact</a>
-				</div>
-
 				</Row>
 			</header>
 		)

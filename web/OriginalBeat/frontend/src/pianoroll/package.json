@@ -4,9 +4,10 @@
   "description": "",
   "main": "build/Main.js",
   "scripts": {
-    "build": "webpack -p",
-    "start": "webpack-dev-server --config ./webpack.config.js --mode development --env.API_URL=http://localhost/",
-    "prod": "webpack --config ./webpack.config.js --env.API_URL=http://134.209.59.255 --mode production",
+    "start": "webpack -p",
+    "build": "export API_URL=http://localhost:8000/ && webpack --config ./webpack.config.js --mode development",
+    "watch": "webpack-dev-server --config ./webpack.config.js --mode development --env.API_URL=http://localhost/",
+    "prod": "export API_URL=https://138.197.199.250/ && webpack --config ./webpack.config.js  --mode production",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "author": "Yotam Mann",
@@ -23,15 +24,16 @@
     "webpack": "^1.15.0"
   },
   "dependencies": {
-    "@tonejs/midi": "^1.2.3",
+    "@tonejs/midi": "^2.0.0",
     "binary-search-bounds": "^2.0.3",
     "brfs": "^1.4.0",
+    "cross-env": "^5.2.0",
     "domready": "^1.0.8",
     "interval-tree-1d": "^1.0.3",
     "jquery": "^2.2.1",
     "jquery-mousewheel": "^3.1.13",
     "midiconvert": "^0.4.2",
-    "node-sass": "^3.4.2",
+    "node-sass": "^4.12.0",
     "process": "^0.11.1",
     "startaudiocontext": "^1.1.0",
     "teoria": "^1.11.0",

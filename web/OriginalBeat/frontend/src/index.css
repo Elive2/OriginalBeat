@@ -38,7 +38,7 @@ h4 {
 
 /* Add a black background color to the top navigation */
 .topnav {
-  background-color: #333;
+  background-color: #2e3e50;
   overflow: hidden;
   padding-left: 10px;
   font-family: 'Squada One';
@@ -62,7 +62,7 @@ h4 {
 
 /* Add a color to the active/current link */
 .topnav a.active {
-  background-color: maroon;
+  background-color: #009347;
   color: white;
 }
 
@@ -74,8 +74,9 @@ h4 {
 }
 
 .logo {
-	height: 65px;
-	width: 65px;
+	height: 125px;
+	width: 125px;
+  padding: 5px;
 	float: left;
 }
 
@@ -86,7 +87,8 @@ h4 {
 
 #profile {
 	position: absolute;
-	right: 100px;
+  float: right;
+	right: 50px;
 }
 
 

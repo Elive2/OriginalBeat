@@ -8,8 +8,13 @@
             with a one pass algorithm. I.E for each event scanned, determine which
             table it applies too, then add it to that tables running cond list and 
             increase the count of that event.
-    [ ] - functions to fill in missing probabilities
-    [ ] - rework schema - see notes
+    [x] - functions to fill in missing probabilities
+    [x] - rework schema - see notes
+    [ ] - if we come across a chord not seen before, add it to the network! ML!
+    [ ] - adjust rythm
+    [ ] - add in hybrid of Keychord
+    [ ] - try to hardcode some better probs
+
 
     Problem: the chords from in the m1_model come from the get_simul_chords_and_notes
     method which extracs chords from the second "part" of the midi file while the chords
@@ -62,6 +67,9 @@ CHORD = "CHORD"
 MELODYNOTE = "MELODYNOTE"
 VOICINGNOTE = "VOICINGNOTE"
 NOTECHORD = "NOTECHORD"
+
+POSSIBLE_NOTES = ['0', '1', '2', '3', '4','5','6','7','8','9','10','11']
+POSSIBLE_CHORDS = ['i' ,'ii', 'iii', 'iv', 'v', 'vi', 'I', 'II', 'III', 'IV', 'V', 'VI']
 
 DEBUG = False
 
@@ -165,6 +173,7 @@ class BayesNet:
             self._build_net()
 
         elif(self._build == 'disk'):
+            log("loading model from disk")
             with open(model_output_path, 'rb') as f:
                 self._bayes_model = BayesianNetwork().from_json(json.load(f))
 
@@ -205,6 +214,8 @@ class BayesNet:
             chord = music21.chord.Chord(list(set(measure_notes)))
             roman_chord = music21.roman.romanNumeralFromChord(chord, music21.key.Key(self._beat.key))
             c1 = roman_chord.figure
+            if(c1 not in POSSIBLE_CHORDS):
+                c1 = 'I'
 
             break
 
@@ -362,6 +373,9 @@ class BayesNet:
             total = sum(list(accumulate(weights)))
             for next_chord, count in self._chord_model[chord].items():
                 probability = round(count / total, 2)
+                #prevent repitition
+                if probability > 0.2:
+                    probability = 0.2
                 #self._cond_list_c1.append([chord, next_chord, probability])
 
                 index = 0
@@ -405,6 +419,9 @@ class BayesNet:
             total = sum(list(accumulate(weights)))
             for next_note, count in self._voicing_note_model[note].items():
                 probability = round(count / total, 2)
+                #Prevent repitition
+                if probability > 0.2:
+                    probability = 0.2
                 #cond_list.append([note, next_note, probability])
 
                 index = 0
@@ -608,6 +625,7 @@ class BayesNet:
             print(e)
 
        #self._bayes_model.plot()
+        log("saving model to disk")
         with open(model_output_path, 'w') as f:
             json.dump(self._bayes_model.to_json(), f)
 
