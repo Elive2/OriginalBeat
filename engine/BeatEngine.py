@@ -102,9 +102,11 @@ class BeatEngine():
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
         model = BayesNet(self._beat)
+        print("instantiated model")
         #generate the output in place on self._beat
         #model.predict()
         model.generate()
+        print("finished generation")
 
 
         #write the output midi
@@ -124,6 +126,8 @@ class BeatEngine():
         mf.open(midi_file_harmony_output_path, 'wb')
         mf.write()
         mf.close()
+
+        print("finished all writes")
 
 
     #saving this for later
