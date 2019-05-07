@@ -39,6 +39,7 @@ import sys, os
 sys.path.append(os.environ['PROJ_DIR'] + '/engine')
 from KeyChord import KeyChord
 from BayesNet import BayesNet
+from DrumBeat import DrumBeat
 import music21
 import os
 from Beat import Beat #for the beat class
@@ -71,7 +72,7 @@ class BeatEngine():
         playsong
 
     """
-    def __init__(self, midi_upload_file_path, midi_file_output_path, midi_file_melody_output_path, midi_file_harmony_output_path, model_type):
+    def __init__(self, midi_upload_file_path, midi_file_output_path, midi_file_melody_output_path, midi_file_harmony_output_path, midi_file_drums_output_path, model_type):
         """
             function: __init__
 
@@ -90,7 +91,7 @@ class BeatEngine():
 
         #NOTE: this will eventually be a call to findTempo(), but for now
         #it is hardocded to 120 bpm
-        self._beat.tempo = 120
+        self._beat.tempo = findTempo(midi_upload_file_path)
 
         self._beat.key = findKey(midi_upload_file_path)
         #print(self._beat.key)
@@ -108,6 +109,9 @@ class BeatEngine():
         model.generate()
         print("finished generation")
 
+        #Instanciate the Drums and generates the output in place on self._beat
+        drumModel = DrumBeat(self._beat)
+        drumModel.generate()
 
         #write the output midi
         mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream)
@@ -127,7 +131,15 @@ class BeatEngine():
         mf.write()
         mf.close()
 
-        print("finished all writes")
+        
+        #write output drums to drum file
+        mf = music21.midi.translate.streamToMidiFile(self._beat.midi_stream_drums)
+        mf.open(midi_file_drums_output_path, 'wb')
+        mf.write()
+        mf.close()
+
+        print("finished writing to all files")
+
 
 
     #saving this for later
@@ -139,7 +151,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/testers/Aminor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', None)
+    engine = BeatEngine('../data/testers/Aminor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', '../data/output/output_drums.mid', None)
 
 
 if __name__ == '__main__':

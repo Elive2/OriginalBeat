@@ -19,3 +19,5 @@ userfiles/
 web/db.sqlite3
 
 web/webpack-stats.json
+
+data/output

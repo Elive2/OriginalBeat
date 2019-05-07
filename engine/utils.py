@@ -6,6 +6,33 @@ from fractions import Fraction
 #NOTE: IT may be faster to parse the midifile once then pass
 #the stream object to these functions
 
+def findTempo(filename):
+    """
+        function: _findTempo
+
+        Description: private member function to compute the Tempo of 
+        a given midifile
+
+        Parameters: 
+            filename -- (string) absolute file path to a midi
+
+        Returns: the BPM of the midi file
+    """
+
+    """
+    mf = music21.midi.MidiFile()
+    mf.open(filename)
+    mf.read()
+    s = music21.midi.translate.midiFileToStream(mf)
+
+    tempo = music21.tempo.TempoIndication.getSoundingMetronomeMark(s)
+    """
+    tempo = 120
+    return tempo
+    
+
+
+
 def findKey(filename):
     """
         function: _findKey
