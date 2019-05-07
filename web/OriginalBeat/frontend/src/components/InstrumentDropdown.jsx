@@ -1,5 +1,6 @@
 import React from 'react';
 import '../index.css';
+
 import '@progress/kendo-theme-default/dist/all.css';
 import {DropDownList} from '@progress/kendo-react-dropdowns';
 
@@ -10,8 +11,8 @@ class InstrumentDropdown extends React.Component {
 	constructor(props) {
 	  super(props);
 	}
-	instrument = ['Synth', 'Piano'];
-	roll = ['melody','harmony','drum'];
+	instrument = ['Synth' , 'Piano'];
+	roll = [''];
 	state = { instrument: 'Synth',
 					roll: this.props.roll
 				} ;
@@ -23,7 +24,7 @@ class InstrumentDropdown extends React.Component {
 			var iframe = document.getElementById(this.state.roll);
 			var innerDoc1 = iframe.contentDocument || iframe.contentWindow.document;
 
-			// innerDoc1.SoundSelection.setInstrument('melody');
+			// innerDoc1.SoundSelection.setInstrument(this.state.instrument);
 			// innerDoc1.SoundSelection.onInstrument._piano.click();
 			innerDoc1.getElementById(this.state.instrument).click();
 		});
@@ -35,7 +36,7 @@ class InstrumentDropdown extends React.Component {
 	render() {
 		return (
             <div>
-                <div>Sound Selection:</div>
+                <div>Sound Selection: </div>
                 <DropDownList
                     data={this.instrument}
                     value={this.state.instrument}
