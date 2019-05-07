@@ -93,6 +93,15 @@ sudo nginx -t
 /etc/nginx/sites-available/OriginalBeat
 ```
 
+* The overall nginx config file is ad:
+```
+/etc/nginx/nginx.conf 
+```
+
+* To see nginx users and process
+```
+ps -eo "%U %G %a" | grep nginx
+```
 * The supervisor config is located at:
 ```
 /etc/supervisor/conf.d/OriginalBeat.conf

@@ -24,7 +24,7 @@
     "webpack": "^1.15.0"
   },
   "dependencies": {
-    "@tonejs/midi": "^2.0.0",
+    "@tonejs/midi": "^1.2.3",
     "binary-search-bounds": "^2.0.3",
     "brfs": "^1.4.0",
     "cross-env": "^5.2.0",
