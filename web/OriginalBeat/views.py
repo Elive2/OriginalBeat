@@ -48,6 +48,10 @@ def index(request):
         return render(request, 'OriginalBeat/upload.html', context)
     else:
         return render(request, 'OriginalBeat/index.html')
+        
+@require_http_methods(["GET"])
+def about(request):
+    return render(request, 'OriginalBeat/about.html')
 
 @require_http_methods(["GET"])
 def project(request):
@@ -110,8 +114,3 @@ def midi_harmony(request):
         return FileResponse(open(output_location, 'rb'))
     else:
         return HttpResponseRedirect('/accounts/login/')
-
-
-
-
-

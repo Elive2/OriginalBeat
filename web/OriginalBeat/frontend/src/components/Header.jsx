@@ -19,6 +19,19 @@ class Header extends React.Component{
 	  };
 	}
 
+	pageSelected = [''];
+	state = {
+		pageSelected: this.props.pageSelected
+	};
+
+	thisPage () {
+		if (this.props.pageSelected == this.getElementById('About'))
+			return ('active')
+		else
+			return ('')
+	}
+
+
 	toggle() {
 	  this.setState({
 	    dropdownOpen: !this.state.dropdownOpen
@@ -34,11 +47,11 @@ class Header extends React.Component{
 						</a>
 					</Col>
 					<Col>
-						<div className="topnav">
-						  <a className="active" href="/">Home</a>
-						  <a href="/templates/OriginalBeat/about.html">About</a>
-						  <a href="/accounts/login">Profile</a>
-						  <a href="/templates/OriginalBeat/contact.html">Contact</a>
+						<div  className="topnav">
+						  <a id='Home' className= {this.thisPage} href="/">Home</a>
+						  <a id='About' className= {this.thisPage} href="/about">About</a>
+						  <a id='Profile' className= {this.thisPage} href="/accounts/login">Profile</a>
+						  <a id='Contact' className= {this.thisPage} href="/contact.html">Contact</a>
 						</div>
 					</Col>
 					<Col>

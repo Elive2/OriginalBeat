@@ -10,9 +10,6 @@ import HarmonyRoll from './HarmonyRoll'
 import DrumRoll from './DrumRoll'
 import InstrumentDropdown from './InstrumentDropdown'
 
-let instrument = ['synth', 'piano'];
-
-
 
 class Project extends React.Component{
 	constructor(props) {

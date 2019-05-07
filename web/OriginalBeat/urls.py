@@ -9,5 +9,6 @@ urlpatterns = [
     path('midi/', views.midi, name='midi'),
     path('midi/melody', views.midi_melody, name='midi_melody'),
     path('midi/harmony', views.midi_harmony, name='midi_harmony'),
-    path('download/', views.download, name='download')
+    path('download/', views.download, name='download'),
+    path('about/', views.about, name = 'about')
 ]
