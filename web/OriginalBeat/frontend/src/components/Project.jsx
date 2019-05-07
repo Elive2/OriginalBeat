@@ -108,9 +108,9 @@ class Project extends React.Component{
 
 						</Col>
 						<Col className="download" sm="2">
-							<p>
-							  <Button color="primary">Download</Button>
-							</p>
+							<Form method="get" action="/download/">
+								<Button type="submit" color="primary">Download</Button>
+							</Form>
 						</Col>
 					</Row>
 
@@ -134,9 +134,9 @@ class Project extends React.Component{
 
 						</Col>
 						<Col className="download" sm="2">
-							<p>
-							  <Button color="primary">Download</Button>
-							</p>
+							<Form method="get" action="/download/">
+								<Button type="submit" color="primary">Download</Button>
+							</Form>
 						</Col>
 					</Row>
 				</div>
