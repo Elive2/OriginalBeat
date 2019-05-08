@@ -79,21 +79,31 @@ function formatMidi(midi_json) {
     return formattedMidi;
 }
 
-var final_mid = {};
+var rollMidi = {}
 
-function init() { window.parent.setUpFrame(); return true; }
 
-function setMidi(midi) {
-    final_mid = midi;
-}
-
+// function receiveMessage(event) {
+//     console.log("EVENT > DATA")
+//     console.log(event.data)
+//     rollMidi = event.data
+//     console.log("RECIEVED MESSAF");
+// }
 
 require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/core/Transport",
         "midi/preludeInC.json", "StartAudioContext", "style/main.scss", "Tone/core/Tone", "interface/Orientation", "interface/Overlay", "@tonejs/midi"],
     function (domReady, Roll, Player, Interface, Transport, preludeInC,
               StartAudioContext, mainStyle, Tone, Orientation, Overlay, Midi) {
 
-        domReady(function () {
+        window.addEventListener("message", receiveMessage, false);
+
+        //domReady(function () {
+        function receiveMessage(event) {
+            console.log("EVENT > DATA")
+            console.log(event.data)
+            rollMidi = event.data
+            console.log("RECIEVED MESSAF");
+
+            
 
             //the interface
             var player = new Player();
@@ -113,7 +123,9 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
             //     roll.setScore(final_mid);
             // })
             //console.log(preludeInC);
-            roll.setScore(final_mid);
+            //window.parent.setUpFrame();
+
+            roll.setScore(rollMidi);
 
             // fetch(server)
             //   .then(function(response) {
@@ -194,5 +206,5 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
                 window.parent.postMessage("ready", "*");
             }
 
-        });
+        };
     });
