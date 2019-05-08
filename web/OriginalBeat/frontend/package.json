@@ -9,7 +9,7 @@
     "watch": "webpack --config ./webpack.config.js --env.API_URL=http://localhost/ --watch --mode development",
     "serve_xampp": "copyfiles -u 1 ./dist/* /Applications/XAMPP/xamppfiles/htdocs/",
     "serve_django": "ncp ./dist/ ../templates/OriginalBeat/",
-    "prod": "webpack --config ./webpack.config.js --env.API_URL=http://138.197.199.250 --mode production",
+    "prod": "webpack --config ./webpack.config.js --env.API_URL=https://theoriginalbeat.com --mode production",
     "deploy": "webpack --config ./webpack.config.js --env.API_URL=<YOUR DEPLOYMENT SERVER HERE> --mode production",
     "test": "echo \"No test specified\" && exit 0"
   },
@@ -28,6 +28,7 @@
     "image-webpack-loader": "^4.5.0",
     "react-hot-loader": "^4.3.11",
     "style-loader": "^0.23.1",
+    "url-loader": "^1.1.2",
     "webpack": "^4.23.1",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.10"
@@ -35,6 +36,10 @@
   "dependencies": {
     "@material-ui/core": "^3.9.3",
     "@material-ui/icons": "^3.0.2",
+    "@progress/kendo-react-dropdowns": "^2.10.0",
+    "@progress/kendo-react-intl": "^2.10.0",
+    "@progress/kendo-theme-default": "^3.5.1",
+    "@tonejs/midi": "^2.0.0",
     "axios": "^0.18.0",
     "bv-react-data-report": "^1.1.0",
     "material-ui-icons": "^1.0.0-beta.36",
@@ -47,6 +52,7 @@
     "react-piano": "^3.1.2",
     "react-pose": "^4.0.8",
     "react-sticky-footer": "0.1.0-rc3",
+    "react-widgets": "^4.4.11",
     "reactstrap": "^6.5.0",
     "soundfont-player": "^0.11.0",
     "webpack-bundle-tracker": "^0.4.2-beta"

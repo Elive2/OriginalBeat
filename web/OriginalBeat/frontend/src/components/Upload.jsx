@@ -85,7 +85,7 @@ class Upload extends React.Component{
 	render() {
 		return (
 			<div>
-				<Header/>
+				<Header pageSelected={'Home'}/>
 					<Row>
 						<div class = "title">
 							<h4 class = "font-effect-anaglyph"> Original Beat</h4>

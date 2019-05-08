@@ -50,6 +50,14 @@ def index(request):
         return render(request, 'OriginalBeat/index.html')
 
 @require_http_methods(["GET"])
+def about(request):
+    return render(request, 'OriginalBeat/about.html')
+
+@require_http_methods(["GET"])
+def contact(request):
+    return render(request, 'OriginalBeat/contact.html')
+
+@require_http_methods(["GET"])
 def project(request):
     if request.user.is_authenticated:
         return render(request, 'OriginalBeat/project.html')
@@ -80,7 +88,8 @@ def midi(request):
             midi_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
             midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
             midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
-            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, None)
+            midi_drums_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
+            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, None)
             print("created engine")
 
             return render(request, 'OriginalBeat/project.html')
@@ -110,8 +119,3 @@ def midi_harmony(request):
         return FileResponse(open(output_location, 'rb'))
     else:
         return HttpResponseRedirect('/accounts/login/')
-
-
-
-
-
