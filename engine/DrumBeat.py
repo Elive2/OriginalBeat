@@ -14,7 +14,7 @@ class DrumBeat():
     """
         Class: DrumBeat
 
-        Description: Generates Bass Drums for every quarter note of the midi melody. Adds high hat based on the peak of the music
+        Description: Generates Bass Drum for every quarter note of the midi melody. Adds high hat based on the peak of the music
     """
 
     def __init__(self, beatInsatnce):
@@ -46,26 +46,35 @@ class DrumBeat():
 
         new_hh_part = music21.stream.Part()
         new_hh_part.insert(0, high_hat)
-        
         for measure in ms:
             for note in measure:
+                
                 if isinstance(note, music21.note.Note):
-
-                    bass = music21.note.Note(acoustic_bass_drum)
-                    bass.duration.quarterLength = 1.0
-                    new_bass_part.append(bass)
-        
-        #for i in range(2):
+                    if random.randint(1, 101) > 20:
+                        bass = music21.note.Note(acoustic_bass_drum)
+                        bass.duration.quarterLength = 1.0
+                        new_bass_part.append(bass)   
+                    else:
+                        bass = music21.note.Rest()
+                        bass.duration.quarterLength = 1.0
+                        new_bass_part.append(bass)                   
         for measure in ms:
             for note in measure:
                 if isinstance(note, music21.note.Note):
                     
                     hh1 = music21.note.Note(closed_high_hat)
                     hh1.duration.quarterLength = 0.5
-                    hh_and = music21.note.Note(closed_high_hat)
-                    hh_and.duration.quarterLength = 0.5
                     new_hh_part.append(hh1)
-                    new_hh_part.append(hh_and)
+
+                    rnd = random.randint(1, 101)
+                    if rnd > 50:
+                        hh_and = music21.note.Note(closed_high_hat)
+                        hh_and.duration.quarterLength = 0.5
+                        new_hh_part.append(hh_and)
+                    else:
+                        hh_and = music21.note.Rest()
+                        hh_and.duration.quarterLength = 0.5
+                        new_hh_part.append(hh_and)
 
         self._beat.midi_stream.append(new_bass_part)
         self._beat.midi_stream.append(new_hh_part)
