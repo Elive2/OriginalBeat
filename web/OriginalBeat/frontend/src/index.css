@@ -5,6 +5,7 @@ header {
 	background-color: rgb(97, 149, 181);
 	padding: 20px 10px 0px;
 
+
 }
 html {
     height: 100%;
@@ -15,6 +16,7 @@ body {
    min-height: 400px;
    margin-bottom: 50px;
    clear: both;
+   width: 100%;
 }
 
 footer {
@@ -117,11 +119,13 @@ h4 {
 	text-align: left;
 	font-size: 20px;
 	text-indent: 50px;
+	width: 100%;
 }
 
 .aboutBio {
-	margin-left: 70px;
-	margin-right: 70px;
+	padding-left:  50px;
+	padding-right: 50px;
+	width:100%;
 }
 
 .contact {
