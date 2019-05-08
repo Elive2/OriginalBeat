@@ -181,20 +181,27 @@
 	var rollMidi = {}
 
 
-	function receiveMessage(event) {
-	    console.log("EVENT > DATA")
-	    console.log(event.data)
-	    rollMidi = event.data
-	    console.log("RECIEVED MESSAF");
-	}
+	// function receiveMessage(event) {
+	//     console.log("EVENT > DATA")
+	//     console.log(event.data)
+	//     rollMidi = event.data
+	//     console.log("RECIEVED MESSAF");
+	// }
 
 	__webpack_require__.e/* require */(1, function(__webpack_require__) { var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(1), __webpack_require__(2), __webpack_require__(29), __webpack_require__(79), __webpack_require__(5),
 	        __webpack_require__(85), __webpack_require__(86), __webpack_require__(87), __webpack_require__(6), __webpack_require__(89), __webpack_require__(90), __webpack_require__(94)]; (function (domReady, Roll, Player, Interface, Transport, preludeInC,
 	              StartAudioContext, mainStyle, Tone, Orientation, Overlay, Midi) {
 
-	        domReady(function () {
+	        window.addEventListener("message", receiveMessage, false);
 
-	            window.addEventListener("message", receiveMessage, false);
+	        //domReady(function () {
+	        function receiveMessage(event) {
+	            console.log("EVENT > DATA")
+	            console.log(event.data)
+	            rollMidi = event.data
+	            console.log("RECIEVED MESSAF");
+
+	            
 
 	            //the interface
 	            var player = new Player();
@@ -297,7 +304,7 @@
 	                window.parent.postMessage("ready", "*");
 	            }
 
-	        });
+	        };
 	    }.apply(null, __WEBPACK_AMD_REQUIRE_ARRAY__));});
 
 
