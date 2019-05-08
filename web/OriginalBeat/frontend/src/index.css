@@ -75,6 +75,12 @@ h4 {
 
 }
 
+.inputRollFrame {
+	width: auto;
+	height: auto;
+	overflow: hidden;
+}
+
 
 .title {
 	margin: auto;
@@ -177,7 +183,7 @@ h4 {
 
 #piano-img {
   height: 70px;
-  width: 270px;
+  width: 320px;
 }
 
 #piano-input {

@@ -20,7 +20,8 @@ import Slide from '@material-ui/core/Slide';
 import DimensionsProvider from './DimensionsProvider';
 import SoundfontProvider from './SoundfontProvider';
 import RecordingPiano from './RecordingPiano'
-import MelodyRoll from './MelodyRoll'
+import RollDisplay from './RollDisplay';
+import {Row, Col} from 'reactstrap'
 
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
@@ -28,6 +29,7 @@ import 'react-piano/dist/styles.css';
 // webkitAudioContext fallback needed to support Safari
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const soundfontHostname = 'https://d1pzp51pvbm36p.cloudfront.net';
+
 
 const noteRange = {
   first: MidiNumbers.fromNote('c3'),
@@ -52,19 +54,22 @@ function Transition(props) {
   return <Slide direction="up" {...props} />;
 }
 
+
 class PianoInput extends React.Component {
-  state = {
-    open: false,
-    recording: {
-      mode: 'RECORDING',
-      events: [],
-      currentTime: 0,
-      currentEvents: [],
-    },
-  };
+
 
   constructor(props) {
     super(props);
+
+    this.state = {
+      open: false,
+      recording: {
+        mode: 'RECORDING',
+        events: [],
+        currentTime: 0,
+        currentEvents: [],
+      },
+    };
 
     this.scheduledEvents = [];
   }
@@ -140,6 +145,12 @@ class PianoInput extends React.Component {
     this.setState({ open: false });
   };
 
+  refreshNotes = () => {
+    this.setState({
+      midi: this.formatMidi(this.state.recording.events),
+    })
+  }
+
   render() {
     const { classes } = this.props;
     return (
@@ -169,33 +180,37 @@ class PianoInput extends React.Component {
             <br/>
             <br/>
             <br/>
-            <MelodyRoll />
-            <DimensionsProvider>
-              {({ containerWidth, containerHeight }) => (
-                <SoundfontProvider
-                  instrumentName="acoustic_grand_piano"
-                  audioContext={audioContext}
-                  hostname={soundfontHostname}
-                  render={({ isLoading, playNote, stopNote }) => (
-                    <RecordingPiano
-                      recording={this.state.recording}
-                      setRecording={this.setRecording}
-                      noteRange={noteRange}
-                      width={containerWidth}
-                      playNote={playNote}
-                      stopNote={stopNote}
-                      disabled={isLoading}
-                      keyboardShortcuts={keyboardShortcuts}
-                      {...this.props}
+            <Row>
+              <Col>
+                <br/>
+                <br/>
+                <br/>
+                  <RollDisplay data={this.state.recording.events}/>
+                
+                <DimensionsProvider>
+                  {({ containerWidth, containerHeight }) => (
+                    <SoundfontProvider
+                      instrumentName="acoustic_grand_piano"
+                      audioContext={audioContext}
+                      hostname={soundfontHostname}
+                      render={({ isLoading, playNote, stopNote }) => (
+                        <RecordingPiano
+                          recording={this.state.recording}
+                          setRecording={this.setRecording}
+                          noteRange={noteRange}
+                          width={containerWidth}
+                          playNote={playNote}
+                          stopNote={stopNote}
+                          disabled={isLoading}
+                          keyboardShortcuts={keyboardShortcuts}
+                          {...this.props}
+                        />
+                      )}
                     />
                   )}
-                />
-              )}
-            </DimensionsProvider>
-            <div className="mt-5">
-              <strong>Recorded notes</strong>
-              <div>{JSON.stringify(this.state.recording.events)}</div>
-            </div>
+                </DimensionsProvider>
+              </Col>
+            </Row>
         </Dialog>
       </div>
     );

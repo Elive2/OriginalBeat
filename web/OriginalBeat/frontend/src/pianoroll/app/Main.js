@@ -79,7 +79,8 @@ function formatMidi(midi_json) {
     return formattedMidi;
 }
 
-var rollMidi = {}
+var firstRender = true;
+var roll;
 
 
 // function receiveMessage(event) {
@@ -88,6 +89,7 @@ var rollMidi = {}
 //     rollMidi = event.data
 //     console.log("RECIEVED MESSAF");
 // }
+
 
 require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/core/Transport",
         "midi/preludeInC.json", "StartAudioContext", "style/main.scss", "Tone/core/Tone", "interface/Orientation", "interface/Overlay", "@tonejs/midi"],
@@ -98,113 +100,120 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
 
         //domReady(function () {
         function receiveMessage(event) {
-            console.log("EVENT > DATA")
-            console.log(event.data)
+            //console.log("EVENT > DATA")
+            //console.log(event.data)
             rollMidi = event.data
-            console.log("RECIEVED MESSAF");
-
+            //console.log("RECIEVED MESSAF");
             
+            if(firstRender) {
+                //the interface
+                var player = new Player();
 
-            //the interface
-            var player = new Player();
+                roll = new Roll(document.body);
 
-            var roll = new Roll(document.body);
+                var interface = new Interface(document.body);
 
-            var interface = new Interface(document.body);
+                var overlay = new Overlay(document.body, roll, interface);
 
-            var overlay = new Overlay(document.body, roll, interface);
+                //set the first score
+                // const midi = Midi.fromUrl(server).then(function (data) {
+                //     //console.log("MIDI NAME");
+                //     final_mid = formatMidi(data);
+                //     //console.log("FORMATTED MIDI");
+                //     //console.log(final_mid);
+                //     roll.setScore(final_mid);
+                // })
+                //console.log(preludeInC);
+                //window.parent.setUpFrame();
 
-            //set the first score
-            // const midi = Midi.fromUrl(server).then(function (data) {
-            //     //console.log("MIDI NAME");
-            //     final_mid = formatMidi(data);
-            //     //console.log("FORMATTED MIDI");
-            //     //console.log(final_mid);
-            //     roll.setScore(final_mid);
-            // })
-            //console.log(preludeInC);
-            //window.parent.setUpFrame();
+                roll.setScore(rollMidi);
 
-            roll.setScore(rollMidi);
+                // fetch(server)
+                //   .then(function(response) {
+                //     return response.json();
+                //   })
+                //   .then(function(myJson) {
+                //     roll.setScore(myJson);
+                //   });
 
-            // fetch(server)
-            //   .then(function(response) {
-            //     return response.json();
-            //   })
-            //   .then(function(myJson) {
-            //     roll.setScore(myJson);
-            //   });
+                //roll.setScore(preludeInC);
 
-            //roll.setScore(preludeInC);
-
-            /**
-             * EVENTS
-             */
-            interface.onInstrument(function (inst) {
-                player.setInstrument(inst);
-            });
-            interface.onPlay(function (playing) {
-                if (playing) {
-                    Tone.context.resume();
-                    roll.start();
-                } else {
-                    roll.stop();
-                    player.releaseAll();
-                }
-            });
-            interface.onScore(function (json) {
-                roll.setScore(json);
-            });
-
-            // var wasPlaying = false;
-            // interface.onRecord(function (recording) {
-            //     if (recording) {
-            //         wasPlaying = Transport.state === "started";
-            //         roll.stop();
-            //     } else {
-            //         if (wasPlaying) {
-            //             wasPlaying = false;
-            //             roll.start();
-            //         }
-            //     }
-            // });
-            // interface.onBuffer(function (buffer, duration, onset) {
-            //     player.setBuffer(buffer, duration, onset);
-            // });
-
-
-            roll.onnote = function (note, duration, time, velocity) {
-                player.triggerAttackRelease(note, duration, time, velocity);
-            };
-            roll.onstop = function () {
-                player.releaseAll();
-            };
-
-            var orientation = new Orientation(function () {
-                //called when stopped
-                Transport.stop();
-                roll.stop();
-                interface.stop();
-            });
-
-            window.parent.postMessage("loaded", "*");
-
-            //send the ready message to the parent
-            var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-            //full screen button on iOS
-            if (isIOS) {
-                //make a full screen element and put it in front
-                var iOSTapper = document.createElement("div");
-                iOSTapper.id = "iOSTap";
-                document.body.appendChild(iOSTapper);
-                new StartAudioContext(Tone.context, iOSTapper).then(function() {
-                    iOSTapper.remove();
-                    window.parent.postMessage('ready', '*');
+                /**
+                 * EVENTS
+                 */
+                interface.onInstrument(function (inst) {
+                    player.setInstrument(inst);
                 });
-            } else {
-                window.parent.postMessage("ready", "*");
+                interface.onPlay(function (playing) {
+                    if (playing) {
+                        Tone.context.resume();
+                        roll.start();
+                    } else {
+                        roll.stop();
+                        player.releaseAll();
+                    }
+                });
+                interface.onScore(function (json) {
+                    roll.setScore(json);
+                });
+
+                // var wasPlaying = false;
+                // interface.onRecord(function (recording) {
+                //     if (recording) {
+                //         wasPlaying = Transport.state === "started";
+                //         roll.stop();
+                //     } else {
+                //         if (wasPlaying) {
+                //             wasPlaying = false;
+                //             roll.start();
+                //         }
+                //     }
+                // });
+                // interface.onBuffer(function (buffer, duration, onset) {
+                //     player.setBuffer(buffer, duration, onset);
+                // });
+
+
+                roll.onnote = function (note, duration, time, velocity) {
+                    player.triggerAttackRelease(note, duration, time, velocity);
+                };
+                roll.onstop = function () {
+                    player.releaseAll();
+                };
+
+                var orientation = new Orientation(function () {
+                    //called when stopped
+                    Transport.stop();
+                    roll.stop();
+                    interface.stop();
+                });
+
+                window.parent.postMessage("loaded", "*");
+
+                //send the ready message to the parent
+                var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+                //full screen button on iOS
+                if (isIOS) {
+                    //make a full screen element and put it in front
+                    var iOSTapper = document.createElement("div");
+                    iOSTapper.id = "iOSTap";
+                    document.body.appendChild(iOSTapper);
+                    new StartAudioContext(Tone.context, iOSTapper).then(function() {
+                        iOSTapper.remove();
+                        window.parent.postMessage('ready', '*');
+                    });
+                } else {
+                    window.parent.postMessage("ready", "*");
+                }
+
+                firstRender = false;
+
             }
+            else {
+                roll.setScore(rollMidi);
+            }
+            
 
         };
     });

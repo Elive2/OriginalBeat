@@ -83,7 +83,7 @@ class Project extends React.Component{
 
 	}
 	componentDidMount (){
-		console.log("project mounted")
+		//console.log("project mounted")
 
 		Midi.fromUrl(server+'midi/melody/').then(data => {
 			this.setState({
