@@ -38,6 +38,7 @@ import sys, os
 #TODO: this shouldn't be hardcoded
 sys.path.append(os.environ['PROJ_DIR'] + '/engine')
 from KeyChord import KeyChord
+from KeyChord2 import KeyChord2
 from BayesNet import BayesNet
 from DrumBeat import DrumBeat
 import music21
@@ -102,7 +103,8 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = BayesNet(self._beat)
+        model = KeyChord2(self._beat)
+        #model.get_one_possible_harmonized_chords('C', 4)
         print("instantiated model")
         #generate the output in place on self._beat
         #model.predict()
@@ -151,7 +153,7 @@ class BeatEngine():
 
 
 def main():
-    engine = BeatEngine('../data/testers/Aminor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', '../data/output/output_drums.mid', None)
+    engine = BeatEngine('../data/testers/Cmajor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', '../data/output/output_drums.mid', None)
 
 
 if __name__ == '__main__':
