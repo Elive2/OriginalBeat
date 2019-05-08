@@ -31,7 +31,7 @@ class Contact extends React.Component{
 											</Col>
 											<Col>
 												<Row>
-													<p style={{ marginRight: 10 }}>email:  </p> <a href={"mailto:" + "email@gmail.com"}>eli@gmail.com</a>
+													<p style={{ marginRight: 10 }}>email:  </p> <a href={"mailto:" + "eyale@scu.edu"}>eyale@scu.edu</a>
 												</Row>
 											</Col>
 										</Row>
@@ -42,7 +42,7 @@ class Contact extends React.Component{
 											</Col>
 											<Col>
 												<Row>
-													<p style={{ marginRight: 10 }}>email:  </p> <a href={"mailto:" + "email@gmail.com"}>christian@gmail.com</a>
+													<p style={{ marginRight: 10 }}>email:  </p> <a href={"mailto:" + "cquintero@scu.edu"}>cquintero@scu.edu</a>
 												</Row>
 											</Col>
 										</Row>
@@ -53,7 +53,7 @@ class Contact extends React.Component{
 											</Col>
 											<Col>
 												<Row>
-													<p style={{ marginRight: 10 }}>email:  </p> <a href={"mailto:" + "email@gmail.com"}>matt@gmail.com</a>
+													<p style={{ marginRight: 10 }}>email:  </p> <a href={"mailto:" + "mkordonsky@scu.edu"}>mkordonsky@scu.edu</a>
 												</Row>
 											</Col>
 										</Row>
