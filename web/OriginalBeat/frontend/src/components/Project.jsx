@@ -124,6 +124,10 @@ class Project extends React.Component{
 
 	 }
 
+	 setID(name){
+		 document.getElementById('melody').id = name;
+	 }
+
 
 	render() {
 		return (
@@ -159,7 +163,7 @@ class Project extends React.Component{
 
 
 
-								<MelodyRoll midi={this.state.midiMelody}/>
+								<MelodyRoll inst={"melody"} midi={this.state.midiMelody}/>
 
 						</Col>
 
@@ -187,7 +191,7 @@ class Project extends React.Component{
 						<Col xs="8" sm="8" >
 
 
-								<MelodyRoll midi={this.state.midiHarmony}/>
+								<MelodyRoll inst={'harmony'} midi={this.state.midiHarmony}/>
 
 
 						</Col>
@@ -214,7 +218,7 @@ class Project extends React.Component{
 						<Col xs="8" sm="8" >
 
 
-								<MelodyRoll midi={this.state.midiDrum}/>
+								<MelodyRoll inst={'drum'} midi={this.state.midiDrum}/>
 
 						</Col>
 						<Col className="download" sm="2">

@@ -8,9 +8,17 @@ class MelodyRoll extends React.Component{
 	  super(props);
 	}
 
+	inst = [''];
+	state = {	inst: this.props.inst
+				} ;
+
 	setUpFrame() {
 		var frame = window.frames['melody'];
 		frame.setMidi(this.props.midi);
+	}
+
+	getID(){
+		return this.props.inst;
 	}
 
 	render() {
@@ -23,7 +31,7 @@ class MelodyRoll extends React.Component{
 						<div className="pianorollFrame">
 
 							<body>
-								<iframe name = "melody" id = "melody" src={'/static/pianoRoll.html'} scrolling="no" height="300" width="100%" ></iframe>
+								<iframe id = {this.props.inst} src={'/static/pianoRoll.html'} scrolling="no" height="300" width="100%" ></iframe>
 							</body>
 						</div>
 					</Col>
