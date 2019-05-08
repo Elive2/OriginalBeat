@@ -104,7 +104,7 @@ class Project extends React.Component{
 
 		 })
 
-		 Midi.fromUrl(server+'midi/').then(data => {
+		 Midi.fromUrl(server+'midi/drums/').then(data => {
 		 	this.setState({
 		 		midiDrum: formatMidi(data)
 		 	})

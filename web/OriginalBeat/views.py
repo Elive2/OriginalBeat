@@ -129,3 +129,11 @@ def input_midi(request):
 
     return HttpResponse("OK")
 
+@require_http_methods(["GET"])
+def midi_drums(request):
+    if request.user.is_authenticated:
+        output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
+        return FileResponse(open(output_location, 'rb'))
+    else:
+        return HttpResponseRedirect('/accounts/login/')
+
