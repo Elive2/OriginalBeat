@@ -26,6 +26,7 @@ from django.conf import settings
 from django.shortcuts import HttpResponseRedirect
 import os
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 
 
 # TODO: This Shouldn't be hard coded
@@ -119,3 +120,12 @@ def midi_harmony(request):
         return FileResponse(open(output_location, 'rb'))
     else:
         return HttpResponseRedirect('/accounts/login/')
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def input_midi(request):
+    print("in input midi")
+    print(request.body)
+
+    return HttpResponse("OK")
+

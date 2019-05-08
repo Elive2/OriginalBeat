@@ -22,7 +22,7 @@ class InputRoll extends React.Component{
 	}
 
 	componentWillUpdate() {
-		console.log("COMPONENT WILL UPDATE")
+		//console.log("COMPONENT WILL UPDATE")
 		this.sendToFrame(JSON.parse(JSON.stringify(this.props.midi)));
 
 	}
@@ -41,7 +41,7 @@ class InputRoll extends React.Component{
 	}
 
 	render() {
-		console.log("INPUT ROLL RERENDERING")
+		//console.log("INPUT ROLL RERENDERING")
 
 
 		return (

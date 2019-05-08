@@ -26,6 +26,8 @@ import {Row, Col} from 'reactstrap'
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
 
+var server = process.env.API_URL
+
 // webkitAudioContext fallback needed to support Safari
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const soundfontHostname = 'https://d1pzp51pvbm36p.cloudfront.net';
@@ -145,6 +147,21 @@ class PianoInput extends React.Component {
     this.setState({ open: false });
   };
 
+  handleSave = () => {
+    fetch(server + 'inputmidi/', {
+      method: 'post',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(this.state.recording.events)
+    }).then(res=>res.json())
+      .then(res => console.log(res));
+        this.setState({
+          open: false,
+        })
+  }
+
   refreshNotes = () => {
     this.setState({
       midi: this.formatMidi(this.state.recording.events),
@@ -172,7 +189,7 @@ class PianoInput extends React.Component {
               <Typography variant="h6" color="inherit" className={classes.flex}>
                 Sound
               </Typography>
-              <Button color="inherit" onClick={this.handleClose}>
+              <Button color="inherit" onClick={this.handleSave}>
                 save
               </Button>
             </Toolbar>
