@@ -79,6 +79,15 @@ function formatMidi(midi_json) {
     return formattedMidi;
 }
 
+var final_mid = {};
+
+function init() { window.parent.setUpFrame(); return true; }
+
+function setMidi(midi) {
+    final_mid = midi;
+}
+
+
 require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/core/Transport",
         "midi/preludeInC.json", "StartAudioContext", "style/main.scss", "Tone/core/Tone", "interface/Orientation", "interface/Overlay", "@tonejs/midi"],
     function (domReady, Roll, Player, Interface, Transport, preludeInC,
@@ -96,14 +105,15 @@ require(["domready", "roll/Roll", "sound/Player", "interface/Interface", "Tone/c
             var overlay = new Overlay(document.body, roll, interface);
 
             //set the first score
-            const midi = Midi.fromUrl(server).then(function (data) {
-                //console.log("MIDI NAME");
-                final_mid = formatMidi(data);
-                //console.log("FORMATTED MIDI");
-                //console.log(final_mid);
-                roll.setScore(final_mid);
-            })
+            // const midi = Midi.fromUrl(server).then(function (data) {
+            //     //console.log("MIDI NAME");
+            //     final_mid = formatMidi(data);
+            //     //console.log("FORMATTED MIDI");
+            //     //console.log(final_mid);
+            //     roll.setScore(final_mid);
+            // })
             //console.log(preludeInC);
+            roll.setScore(final_mid);
 
             // fetch(server)
             //   .then(function(response) {

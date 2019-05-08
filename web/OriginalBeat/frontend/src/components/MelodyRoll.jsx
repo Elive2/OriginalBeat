@@ -10,7 +10,7 @@ class MelodyRoll extends React.Component{
 
 	setUpFrame() {
 		var frame = window.frames['melody'];
-		frame.setMidiPath('../data/output/output_melody.mid');
+		frame.setMidi(this.props.midi);
 	}
 
 	render() {

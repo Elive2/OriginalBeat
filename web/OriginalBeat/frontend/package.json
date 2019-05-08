@@ -39,6 +39,7 @@
     "@progress/kendo-react-dropdowns": "^2.10.0",
     "@progress/kendo-react-intl": "^2.10.0",
     "@progress/kendo-theme-default": "^3.5.1",
+    "@tonejs/midi": "^2.0.0",
     "axios": "^0.18.0",
     "bv-react-data-report": "^1.1.0",
     "material-ui-icons": "^1.0.0-beta.36",

@@ -9,12 +9,99 @@ import MelodyRoll from './MelodyRoll'
 import HarmonyRoll from './HarmonyRoll'
 import DrumRoll from './DrumRoll'
 import InstrumentDropdown from './InstrumentDropdown'
+import Midi from '@tonejs/midi'
 
+var server = process.env.API_URL
+
+function noteFromMidi(midiNumber) {
+  if (isNaN(midiNumber) || midiNumber < 0 || midiNumber > 127) return null;
+  var name = CHROMATIC[midiNumber % 12];
+  var oct = Math.floor(midiNumber / 12) - 1;
+  return name + oct;
+}
+
+function formatMidi(midi_json) {
+    //console.log("formating the midi file for pianoroll");
+
+    var formattedHeader = {tempo: 120, timeSignature: [4,4]};
+    var formattedNotes = [];
+
+    for(var i = 0; i < midi_json['tracks'][0]['notes'].length; i++) {
+        var oldNote = midi_json['tracks'][0]['notes'][i]
+        var newNote = {'time': (Math.floor(oldNote['ticks'] / 20)).toString() + 'i',
+                    'midiNote': oldNote['midi'],
+                    'note': noteFromMidi(oldNote['midi']),
+                    'velocity': 1,
+                    'duration': (Math.floor(oldNote['durationTicks'] / 20)).toString() + 'i',
+                };
+        formattedNotes.push(newNote);
+    }
+    for(var i = 0; i < midi_json['tracks'][1]['notes'].length; i++) {
+        var oldNote = midi_json['tracks'][1]['notes'][i]
+        var newNote = {'time': (Math.floor(oldNote['ticks'] / 20)).toString() + 'i',
+                    'midiNote': oldNote['midi'],
+                    'note': noteFromMidi(oldNote['midi']),
+                    'velocity': 1,
+                    'duration': (Math.floor(oldNote['durationTicks'] / 20)).toString() + 'i',
+                };
+        formattedNotes.push(newNote);
+    }
+    var formattedMidi = {header: formattedHeader, notes: formattedNotes};
+
+    return formattedMidi;
+}
 
 class Project extends React.Component{
 	constructor(props) {
 	  super(props);
 
+	  this.state = {
+		  midiMelody: {},
+		  midiHarmony: {},
+		  midiDrum: {}
+	  };
+
+	  // var midiHarmony = Midi.fromUrl(server+'/midi/melody').then(function (data) {
+		//   final_mid = formatMidi(data);
+	  //
+	  // })
+	  //
+	  // var midiMelody = Midi.fromUrl(server+'/midi/harmony').then(function (data) {
+		//   final_mid = formatMidi(data);
+	  //
+	  //
+	  // })
+	  //
+	  // var midiDrum = Midi.fromUrl(server+'/midi/').then(function (data) {
+		//   final_mid = formatMidi(data);
+	  //
+	  //
+	  // })
+
+	}
+	componentDidMount (){
+
+	var midiHarmony = Midi.fromUrl(server+'midi/melody/').then(function (data) {
+		 final_mid = formatMidi(data);
+
+	 })
+
+	 var midiMelody = Midi.fromUrl(server+'midi/harmony/').then(function (data) {
+		 final_mid = formatMidi(data);
+
+
+	 })
+
+	 var midiDrum = Midi.fromUrl(server+'midi/').then(function (data) {
+		 final_mid = formatMidi(data);
+
+
+	 })
+		this.setState({
+			midiHarmony: midiHarmony,
+			midiMelody: midiMelody,
+			midiDrum: midiDrum
+		})
 	}
 
 	playAll() {
@@ -72,7 +159,7 @@ class Project extends React.Component{
 
 
 
-								<MelodyRoll/>
+								<MelodyRoll midi={this.state.midiMelody}/>
 
 						</Col>
 
@@ -100,7 +187,7 @@ class Project extends React.Component{
 						<Col xs="8" sm="8" >
 
 
-								<HarmonyRoll/>
+								<MelodyRoll midi={this.state.midiHarmony}/>
 
 
 						</Col>
@@ -127,7 +214,7 @@ class Project extends React.Component{
 						<Col xs="8" sm="8" >
 
 
-								<DrumRoll/>
+								<MelodyRoll midi={this.state.midiDrum}/>
 
 						</Col>
 						<Col className="download" sm="2">
