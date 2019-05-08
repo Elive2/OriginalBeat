@@ -24,7 +24,6 @@ class DrumBeat():
     def generate(self):
 
         #all possible percussive sounds for potential use
-        #
         acoustic_bass_drum = 35
         bass_drum_1 = 36
         closed_high_hat = 42
@@ -42,19 +41,34 @@ class DrumBeat():
         bass_drum = music21.instrument.BassDrum()
         high_hat = music21.instrument.HiHatCymbal()
 
-        new_part = music21.stream.Part()
-        new_part.insert(0, bass_drum)
-        #new_part.insert(0, high_hat)
+        new_bass_part = music21.stream.Part()
+        new_bass_part.insert(0, bass_drum)
+
+        new_hh_part = music21.stream.Part()
+        new_hh_part.insert(0, high_hat)
         
-        #print(bass_drum)
         for measure in ms:
             for note in measure:
                 if isinstance(note, music21.note.Note):
-                    n = music21.note.Note(35)
-                    n.duration.quarterLength = 1.0
-                    new_part.append(n)
 
-        #mfp =       
-        self._beat.midi_stream.append(new_part)
+                    bass = music21.note.Note(acoustic_bass_drum)
+                    bass.duration.quarterLength = 1.0
+                    new_bass_part.append(bass)
+        
+        #for i in range(2):
+        for measure in ms:
+            for note in measure:
+                if isinstance(note, music21.note.Note):
+                    
+                    hh1 = music21.note.Note(closed_high_hat)
+                    hh1.duration.quarterLength = 0.5
+                    hh_and = music21.note.Note(closed_high_hat)
+                    hh_and.duration.quarterLength = 0.5
+                    new_hh_part.append(hh1)
+                    new_hh_part.append(hh_and)
 
-        self._beat.midi_stream_drums = music21.stream.Stream(new_part)
+        self._beat.midi_stream.append(new_bass_part)
+        self._beat.midi_stream.append(new_hh_part)
+
+        self._beat.midi_stream_drums = music21.stream.Stream(new_bass_part)
+        self._beat.midi_stream_drums = music21.stream.Stream(new_hh_part)

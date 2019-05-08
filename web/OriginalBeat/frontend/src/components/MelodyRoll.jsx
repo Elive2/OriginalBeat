@@ -9,6 +9,7 @@ class MelodyRoll extends React.Component{
 	  super(props);
 	}
 
+
 	componentDidMount(){
 		this.ifr.onload = () => {
 			console.log("IFRAME LOADES")
@@ -24,6 +25,15 @@ class MelodyRoll extends React.Component{
     if(this.ifr) this.ifr.contentWindow.postMessage(data, '*');
   }
 
+	inst = [''];
+	state = {	inst: this.props.inst
+				
+	};
+
+	getID(){
+		return this.props.inst;
+	}
+
 	render() {
 
 
@@ -34,7 +44,7 @@ class MelodyRoll extends React.Component{
 						<div className="pianorollFrame">
 							<iframe 
 								name = "melody" 
-								id = "melody" 
+								id = {this.props.inst} 
 								src={'/static/pianoRoll.html'} 
 								scrolling="no" 
 								height="300" 
