@@ -14,7 +14,8 @@ class KeyChord2():
     """
         Class: KeyChord
 
-        Description: A very crude generator
+        Description: Generates a harmony to the original midi melody by finding the seven chords 
+        that harmonize with the original key and randomly selecting one
     """
 
     def __init__(self, beatInsatnce):
@@ -38,14 +39,19 @@ class KeyChord2():
 
             if (len(measureNotes) > 0):
                 c = music21.chord.Chord(list(set(measureNotes)))
-
+                
                 bass_pitch = c.bass()
                 octave = bass_pitch.octave
-                
-                key = music21.harmony.chordSymbolFigureFromChord(c, False)
-                key = key[0] + key[1] 
-                new_key = music21.key.Key(key)
 
+                key = music21.harmony.chordSymbolFigureFromChord(c, False)
+
+                if len(key) > 1:
+                    if key[1] == 'm':
+                        key = key[0] + key[1] 
+                    else:
+                        key = key[0]
+        
+                new_key = music21.key.Key(key)
                 new_chord = self.get_one_possible_harmonized_chords(new_key, octave)
                
                 #make this a pramter of the time signature
@@ -75,7 +81,7 @@ class KeyChord2():
             newS.show('text')
 
     def get_one_possible_harmonized_chords(self, key, octave):
-        print(key.pitches)
+        #print(key.pitches)
 
         scalePitches = key.pitches
 
@@ -85,5 +91,5 @@ class KeyChord2():
         pitch2 = scalePitches[(i + 2) % 7]
         pitch3 = scalePitches[(i + 4) % 7]
         finalChord = music21.chord.Chord([pitch1, pitch2, pitch3])
-        print(finalChord)
+        
         return finalChord
