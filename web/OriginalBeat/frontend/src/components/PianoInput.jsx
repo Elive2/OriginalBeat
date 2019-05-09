@@ -26,6 +26,7 @@ import {Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
 import MelodyRoll from './MelodyRoll'
+import { ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 var server = process.env.API_URL
 
@@ -104,6 +105,8 @@ class PianoInput extends React.Component {
     super(props);
 
     this.state = {
+      model: 'KeyChord2',
+      dropdownOpen: false,
       modal: false,
       open: false,
       recording: {
@@ -186,7 +189,7 @@ class PianoInput extends React.Component {
 
   handleClose = () => {
     this.setState({ open: false });
-    this.state.recording.events = []
+    this.onClickClear()
   };
 
   handleSave = () => {
@@ -206,7 +209,7 @@ class PianoInput extends React.Component {
         'Accept': 'application/json, text/plain, */*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(this.state.recording.events)
+      body: JSON.stringify({'midi':this.state.recording.events, 'model':this.state.model})
     }).then(() => {
       window.location.replace(server + 'project/')
     })
@@ -225,11 +228,24 @@ class PianoInput extends React.Component {
     this.setState({
       modal: !prevState
     });
+    this.onClickClear()
+  }
+
+  toggleDropdown = (prevState) => {
+    this.setState({
+      dropdownOpen: !this.state.dropdownOpen
+    });
   }
 
   refreshNotes = () => {
     this.setState({
       midi: this.formatMidi(this.state.recording.events),
+    })
+  }
+
+  selectDropdown(select_model)  {
+    this.setState({
+      model:select_model
     })
   }
 
@@ -240,9 +256,30 @@ class PianoInput extends React.Component {
         <Modal isOpen={this.state.modal} toggle={this.toggle}>
           <ModalHeader toggle={this.toggle}>Upload Melody</ModalHeader>
           <ModalBody>
-            {this.state.recording.events.length > 0 &&
-              <MelodyRoll midi={formatMidi(this.state.recording.events)}/>
-            }
+            <Row>
+              <Col>
+                {this.state.recording.events.length > 0 &&
+                  <MelodyRoll midi={formatMidi(this.state.recording.events)}/>
+                }
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropdown}>
+                  <DropdownToggle caret>
+                    Select Generation Model
+                  </DropdownToggle>
+                  <DropdownMenu>
+                    <DropdownItem onClick={() => {this.selectDropdown('KeyChord')}}>KeyChord</DropdownItem>
+                    <DropdownItem onClick={() => {this.selectDropdown('KeyChord2')}}>KeyChord2</DropdownItem>
+                    <DropdownItem onClick={() => {this.selectDropdown('BayesNet')}}>Bayesian Network</DropdownItem>
+                  </DropdownMenu>
+                </ButtonDropdown>
+              </Col>
+              <Col>
+                {this.state.model}
+              </Col>
+            </Row>
           </ModalBody>
           <ModalFooter>
             <Button color="primary" onClick={this.handleUpload}>Upload</Button>

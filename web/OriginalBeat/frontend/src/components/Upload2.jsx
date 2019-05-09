@@ -23,7 +23,7 @@ class Upload2 extends React.Component{
 						</div>
 					</Row>
 					<Row>
-						<Col sm={{ size: 'auto', offset: 2 }}>
+						<Col sm={{ size: 'auto', offset: 1 }}>
 						<Jumbotron>
 								Play
 								<PianoInput/>
@@ -43,6 +43,14 @@ class Upload2 extends React.Component{
 											<FormText color="muted">
 												Please select a one track midifile to upload
 											</FormText>
+										</FormGroup>
+										<FormGroup>
+											<Label for="select_model">Select Generation Model</Label>
+											<Input type="select" name="select" id="select_model">
+												<option>KeyChord</option>
+												<option>KeyChord2</option>
+												<option>BayesNet</option>
+											</Input>
 										</FormGroup>
 									</Col>
 								</Row>
