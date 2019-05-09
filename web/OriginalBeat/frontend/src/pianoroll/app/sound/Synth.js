@@ -22,7 +22,7 @@ function (Tone, Oscillator, PolySynth, FMSynth,JCReverb) {
 	var Synth = function(){
 
 		this.synth = new PolySynth(8, FMSynth).set({
-			"volume" : -8,
+			"volume" : -22,
 			"oscillator" : {
 				"type" : "sine1"
 			},
@@ -42,7 +42,11 @@ function (Tone, Oscillator, PolySynth, FMSynth,JCReverb) {
 
 		}).toMaster();
 
+        this.reverb = new Tone.JCReverb(.5).set({
+            "volume" : -22,
+        }).toMaster();
 
+        this.synth.connect(this.reverb);
 
 		this.synth.stealVoices = true;
 

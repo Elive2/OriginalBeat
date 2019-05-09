@@ -27,7 +27,7 @@ class MelodyRoll extends React.Component{
 
 	inst = [''];
 	state = {	inst: this.props.inst
-				
+
 	};
 
 	getID(){
@@ -42,11 +42,11 @@ class MelodyRoll extends React.Component{
 				<Row>
 					<Col>
 						<div className="pianorollFrame">
-							<iframe 
-								name = "melody" 
-								id = {this.props.inst} 
-								src={'/static/pianoRoll.html'} 
-								scrolling="no" 
+							<iframe
+								name = "melody"
+								id = {this.props.inst}
+								src={'/static/pianoRoll.html'}
+								scrolling="no"
 								height="300" 
 								width="100%"
 								ref={(f) => {this.ifr = f;} }

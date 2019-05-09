@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-define(["sound/Piano", "sound/Sampler", "sound/Synth"], 
-function (Piano, Sampler, Synth) {
+define(["sound/Piano", "sound/Sampler", "sound/Synth", "sound/Bass"],
+function (Piano, Sampler, Synth, Bass) {
 
 	var Player = function(){
 
 		//instances of all three instruments
 		this._synth = new Synth();
+
+        this._bass = new Bass();
 
 		this._piano = new Piano();
 
@@ -32,14 +34,17 @@ function (Piano, Sampler, Synth) {
 	Player.prototype.setInstrument = function(inst, buffer){
 		this.releaseAll();
 		switch(inst){
-			case "piano" : 
+			case "piano" :
 				this._piano.load();
 				this._currentInstrument = this._piano;
 				break;
-			case "synth" : 
+			case "synth" :
 				this._currentInstrument = this._synth;
 				break;
-			case "sampler" : 
+            case "bass" :
+    			this._currentInstrument = this._bass;
+    			break;
+			case "sampler" :
 				this._currentInstrument = this._sampler;
 				break;
 		}

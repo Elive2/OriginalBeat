@@ -43,7 +43,7 @@ define(["style/loading.scss"], function (loadStyle) {
 		this._loadingScreen.appendChild(this._scoreText);
 
 		if (type === "score"){
-			// this._scoreText.innerHTML = info.composer + "<br>" + info.name;	
+			// this._scoreText.innerHTML = info.composer + "<br>" + info.name;
 		}
 
 		this._loadStart = Date.now();

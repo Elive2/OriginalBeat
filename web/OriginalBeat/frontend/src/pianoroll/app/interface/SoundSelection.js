@@ -29,12 +29,21 @@ define(["style/interface.scss"], function (interfaceStyle) {
 		this._piano.addEventListener("click", this._clicked.bind(this, "piano"));
 		this._buttons.appendChild(this._piano);
 
+        this._bass = document.createElement("DIV");
+		this._bass.id = "Bass";
+		this._bass.classList.add("Button");
+		this._bass.classList.add("icon-svg_harp");
+		this._bass.addEventListener("click", this._clicked.bind(this, "bass"));
+		this._buttons.appendChild(this._bass);
+
 		this._synth = document.createElement("DIV");
 		this._synth.id = "Synth";
 		this._synth.classList.add("Button");
 		this._synth.classList.add("icon-svg_wave_form");
 		this._synth.addEventListener("click", this._clicked.bind(this, "synth"));
 		this._buttons.appendChild(this._synth);
+
+
 
 		// this.microphone = document.createElement("DIV");
 		// this.microphone.id = "Sampler";
@@ -87,6 +96,10 @@ define(["style/interface.scss"], function (interfaceStyle) {
 			case "piano" :
 				this._piano.classList.add("Active");
 				break;
+            case "bass" :
+    			this._piano.classList.add("Active");
+    			break;
+
 		}
 	};
 

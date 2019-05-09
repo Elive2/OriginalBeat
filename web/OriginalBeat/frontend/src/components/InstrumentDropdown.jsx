@@ -11,7 +11,7 @@ class InstrumentDropdown extends React.Component {
 	constructor(props) {
 	  super(props);
 	}
-	instrument = ['Synth' , 'Piano'];
+	instrument = ['Synth' , 'Piano', 'Bass'];
 	roll = [''];
 	state = { instrument: 'Synth',
 					roll: this.props.roll
