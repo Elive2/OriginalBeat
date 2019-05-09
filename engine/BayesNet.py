@@ -169,6 +169,8 @@ class BayesNet:
             self._build_net()
 
         elif(self._build == 'disk'):
+            print(os.environ['PROJ_DIR'])
+            print(model_output_path)
             print("loading model from disk")
             log("loading model from disk")
             with open(model_output_path, 'rb') as f:
