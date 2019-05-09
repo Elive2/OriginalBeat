@@ -186,6 +186,7 @@ class PianoInput extends React.Component {
 
   handleClose = () => {
     this.setState({ open: false });
+    this.state.recording.events = []
   };
 
   handleSave = () => {
@@ -206,7 +207,10 @@ class PianoInput extends React.Component {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(this.state.recording.events)
-    }).catch((error) => {
+    }).then(() => {
+      window.location.replace(server + 'project/')
+    })
+      .catch((error) => {
       console.log(error)
     })
 
