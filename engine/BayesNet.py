@@ -59,8 +59,6 @@ from pomegranate import *
 from Beat import Beat
 import random
 
-BEGIN = "___BEGIN__"
-END = "___END__"
 CHORD = "CHORD"
 MELODYNOTE = "MELODYNOTE"
 VOICINGNOTE = "VOICINGNOTE"
@@ -96,7 +94,7 @@ def log(words):
 class BayesNet:
     def __init__(self, beat_instance):
 
-
+        print("in init")
         #boolean to control wether or not to read models from disk
         self._load_from_disk = False
 
@@ -171,9 +169,11 @@ class BayesNet:
             self._build_net()
 
         elif(self._build == 'disk'):
+            print("loading model from disk")
             log("loading model from disk")
             with open(model_output_path, 'rb') as f:
                 self._bayes_model = BayesianNetwork().from_json(json.load(f))
+            print("loaded from disk")
 
         elif(self._build == 'manual'):
             self._build_cond_table_c0_manual()
@@ -188,7 +188,7 @@ class BayesNet:
         '''
             self._bayes_model.predict([[v0, c0, m1, None, None]])
         '''
-
+        print("In generate")
         measure_stream = self._beat.midi_stream.parts[0].makeMeasures(inPlace=False)
         ms = self._beat.midi_stream.parts[0].measures(0,None)
 

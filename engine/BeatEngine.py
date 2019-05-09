@@ -103,8 +103,11 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
+        print("parsed files")
+
         if(model_type == 'BayesNet'):
             self._model = BayesNet(self._beat)
+            print("created BayesNet")
         elif(model_type == 'KeyChord'):
             self._model = KeyChord(self._beat)
         elif(model_type == 'KeyChord2'):
