@@ -14,36 +14,32 @@
  * limitations under the License.
  */
 
-define(["Tone/core/Tone", "Tone/source/Oscillator", "Tone/instrument/PolySynth", "Tone/instrument/FMSynth", "Tone/effect/JCReverb"],
-function (Tone, Oscillator, PolySynth, FMSynth,JCReverb) {
+define(["Tone/core/Tone", "Tone/source/Oscillator", "Tone/instrument/PolySynth", "Tone/instrument/SimpleSynth", "Tone/effect/JCReverb"],
+function (Tone, Oscillator, PolySynth, SimpleSynth,JCReverb) {
 
 
 
 	var Synth = function(){
 
-		this.synth = new PolySynth(8, FMSynth).set({
-			"volume" : -22,
-			"oscillator" : {
-				"type" : "sine1"
+		this.synth = new PolySynth(8, SimpleSynth).set({
+			"volume" : -21,
+            "oscillator" : {
+				"type" : "fatsawtooth",
+				"count" : 3,
+				"spread" : 30
 			},
 			"envelope" : {
-				"attack" :  0.01,
-				"decay" :  2,
-				"sustain" :  1,
-				"release" :  4,
-			},
-
-
-
-
-
-
-
+				"attack" : 0.01,
+				"decay" : 0.1,
+				"sustain" : 0.5,
+				"release" : 0.4,
+				"attackCurve" : "exponential"
+            },
 
 		}).toMaster();
 
         this.reverb = new Tone.JCReverb(.5).set({
-            "volume" : -22,
+            "volume" : -21,
         }).toMaster();
 
         this.synth.connect(this.reverb);

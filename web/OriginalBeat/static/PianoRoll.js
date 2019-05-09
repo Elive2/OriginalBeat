@@ -119,7 +119,7 @@
 	    changes container of roll, interface, and overlay
 	 */
 
-	var server = ("https://www.theoriginalbeat.com/") + 'midi/';
+	var server = ("http://localhost:8000/") + 'midi/';
 
 	var CHROMATIC = [ 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B' ]
 
@@ -190,8 +190,8 @@
 	// }
 
 
-	__webpack_require__.e/* require */(1, function(__webpack_require__) { var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(1), __webpack_require__(2), __webpack_require__(29), __webpack_require__(108), __webpack_require__(5),
-	        __webpack_require__(114), __webpack_require__(115), __webpack_require__(116), __webpack_require__(6), __webpack_require__(118), __webpack_require__(119), __webpack_require__(123)]; (function (domReady, Roll, Player, Interface, Transport, preludeInC,
+	__webpack_require__.e/* require */(1, function(__webpack_require__) { var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(1), __webpack_require__(2), __webpack_require__(29), __webpack_require__(107), __webpack_require__(5),
+	        __webpack_require__(113), __webpack_require__(114), __webpack_require__(115), __webpack_require__(6), __webpack_require__(117), __webpack_require__(118), __webpack_require__(122)]; (function (domReady, Roll, Player, Interface, Transport, preludeInC,
 	              StartAudioContext, mainStyle, Tone, Orientation, Overlay, Midi) {
 
 	        window.addEventListener("message", receiveMessage, false);
