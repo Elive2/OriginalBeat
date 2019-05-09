@@ -173,7 +173,7 @@ class BayesNet:
             print(model_output_path)
             print("loading model from disk")
             log("loading model from disk")
-            with open(model_output_path, 'rb') as f:
+            with open(model_output_path) as f:
                 self._bayes_model = BayesianNetwork().from_json(json.load(f))
             print("loaded from disk")
 
