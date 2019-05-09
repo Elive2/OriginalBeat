@@ -97,7 +97,7 @@ class BeatEngine():
         self._beat.key = findKey(midi_upload_file_path)
         #print(self._beat.key)
 
-        self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
+        #self._beat.notes_chords_rests = get_notes_chords_rests(midi_upload_file_path)
 
         #read and parse the midifile
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)

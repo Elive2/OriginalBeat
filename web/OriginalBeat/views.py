@@ -165,7 +165,7 @@ def input_midi(request):
     engine = BeatEngine.BeatEngine(uploaded_file_path, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, model)
     print("created engine")
 
-    return render(request, 'OriginalBeat/project.html')
+    return HttpResponseRedirect('/project/')
 
 @require_http_methods(["GET"])
 def midi_drums(request):

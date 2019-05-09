@@ -203,6 +203,11 @@ class PianoInput extends React.Component {
   }
 
   handleUpload = () => {
+    this.setState({
+      modal: false,
+      open: false
+    })
+
     fetch(server + 'inputmidi/', {
       method: 'post',
       headers: {
@@ -212,14 +217,8 @@ class PianoInput extends React.Component {
       body: JSON.stringify({'midi':this.state.recording.events, 'model':this.state.model})
     }).then(() => {
       window.location.replace(server + 'project/')
-    })
-      .catch((error) => {
+    }).catch((error) => {
       console.log(error)
-    })
-
-    this.setState({
-      modal: false,
-      open: false
     })
 
   }
