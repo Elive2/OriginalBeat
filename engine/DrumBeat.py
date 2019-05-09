@@ -84,4 +84,10 @@ class DrumBeat():
         
         self._beat.midi_stream.append(new_hh_part)
         
+
+        self._beat.midi_stream_drums = music21.stream.Stream()
+        
+        self._beat.midi_stream_drums.append(new_bass_part)
+        self._beat.midi_stream_drums.append(new_hh_part)
+        
         
