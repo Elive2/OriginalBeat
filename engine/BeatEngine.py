@@ -116,11 +116,11 @@ class BeatEngine():
             self._model = KeyChord2(self._beat)
         
         #model.get_one_possible_harmonized_chords('C', 4)
-        print("instantiated model")
+        #print("instantiated model")
         #generate the output in place on self._beat
         #model.predict()
         self._model.generate()
-        print("finished generation")
+        #print("finished generation")
 
         #Instanciate the Drums and generates the output in place on self._beat
         drumModel = DrumBeat(self._beat)
@@ -151,7 +151,7 @@ class BeatEngine():
         mf.write()
         mf.close()
 
-        print("finished writing to all files")
+        #print("finished writing to all files")
 
 
 
@@ -163,10 +163,10 @@ class BeatEngine():
             print(msg.note);
 
 
-def main():
-    engine = BeatEngine('../data/testers/Cmajor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', '../data/output/output_drums.mid', 'BayesNet')
+# def main():
+#     engine = BeatEngine('../data/testers/Cmajor.mid', '../data/output/output.mid', '../data/output/output_melody.mid', '../data/output/output_harmony.mid', '../data/output/output_drums.mid', 'BayesNet')
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 

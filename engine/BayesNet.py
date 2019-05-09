@@ -75,7 +75,10 @@ melody_note_model_location = Path(os.path.join(os.path.join(os.path.join(os.envi
 voicing_note_model_location = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Voicing_Note_Model.txt'))
 note_chord_model_location = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Note_Chord_Model.txt'))
 midifiles_directory = Path(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'data'), 'midifiles'))
-model_output_path = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Bayes_Net.json'))
+
+#model_output_path = Path(os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Bayes_Net.json'))
+
+model_output_path = os.path.join(os.path.join(os.path.join(os.environ['PROJ_DIR'], 'engine'), 'Models'), 'Bayes_Net.json')
 
 # chord_model_location = Path('./Models/Chord_Model.txt')
 # melody_note_model_location = Path('./Models/Melody_Note_Model.txt')
@@ -169,13 +172,9 @@ class BayesNet:
             self._build_net()
 
         elif(self._build == 'disk'):
-            print(os.environ['PROJ_DIR'])
-            print(model_output_path)
-            print("loading model from disk")
             log("loading model from disk")
             with open(model_output_path) as f:
                 self._bayes_model = BayesianNetwork().from_json(json.load(f))
-            print("loaded from disk")
 
         elif(self._build == 'manual'):
             self._build_cond_table_c0_manual()
@@ -190,7 +189,6 @@ class BayesNet:
         '''
             self._bayes_model.predict([[v0, c0, m1, None, None]])
         '''
-        print("In generate")
         measure_stream = self._beat.midi_stream.parts[0].makeMeasures(inPlace=False)
         ms = self._beat.midi_stream.parts[0].measures(0,None)
 

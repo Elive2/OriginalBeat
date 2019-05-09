@@ -52,8 +52,8 @@ class KeyChord2():
                         key = key[0]
         
                 new_key = music21.key.Key(self._beat.key)
-                print("KEYYEYEYEY")
-                print(self._beat.key)
+                #print("KEYYEYEYEY")
+                #print(self._beat.key)
                 new_chord = self.get_one_possible_harmonized_chords(new_key, octave)
                
                 #make this a pramter of the time signature

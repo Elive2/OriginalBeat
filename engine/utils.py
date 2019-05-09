@@ -61,8 +61,8 @@ def findKey(filename):
     #this seems to be fairly slow on large midifiles
     key = music21.analysis.discrete.analyzeStream(s, 'Krumhansl')
 
-    print("USING ALGORITHM")
-    print(key)
+    #print("USING ALGORITHM")
+    #print(key)
 
     #can get lots of cool stuff from the key, ie, relative major
     #scales, tonic and even transpose

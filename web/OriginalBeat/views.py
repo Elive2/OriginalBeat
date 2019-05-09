@@ -74,30 +74,30 @@ def detail(request, song_id):
 def midi_upload(request):
     if request.user.is_authenticated:
         if request.method == 'POST' and request.FILES['Midi']:
-            print("in post request")
+            #print("in post request")
             myfile = request.FILES['Midi']
-            print("got file")
+            #print("got file")
             fs = FileSystemStorage()
-            print("created fs")
+            #print("created fs")
             #handle projects here, for now just delete the file if it exists
             if(fs.exists(request.user.username + '_' + myfile.name)):
                 fs.delete(request.user.username + '_' + myfile.name)
                 print("deleted file")
 
             form_dict = dict(request.POST)
-            print('SELECTE')
+            #print('SELECTE')
             model = str(form_dict['select'][0])
-            print(model)
+            #print(model)
 
             filename = fs.save(request.user.username + '_' + myfile.name, myfile)
-            print("saved file")
+            #print("saved file")
             uploaded_file_url = fs.url(filename)
             midi_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
             midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
             midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
             midi_drums_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
             engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, model)
-            print("created engine")
+            #print("created engine")
 
             return render(request, 'OriginalBeat/project.html')
         else:
@@ -131,11 +131,11 @@ def midi_harmony(request):
 @require_http_methods(["POST"])
 def input_midi(request):
     body = json.loads(request.body)
-    print(body)
+    #print(body)
     midi_json = body['midi']
     model = str(body['model'])
-    print("MODELLLLL")
-    print(model)
+    #print("MODELLLLL")
+    #print(model)
 
     midi_stream = stream.Stream()
     for input_note in midi_json:
@@ -156,14 +156,14 @@ def input_midi(request):
     mf.open(uploaded_file_path, 'wb')
     mf.write()
     mf.close()
-    print("saved input to disk")
+    #print("saved input to disk")
 
     midi_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '.mid')
     midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
     midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
     midi_drums_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
     engine = BeatEngine.BeatEngine(uploaded_file_path, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, model)
-    print("created engine")
+    #print("created engine")
 
     return HttpResponseRedirect('/project/')
 
