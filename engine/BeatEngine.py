@@ -103,12 +103,20 @@ class BeatEngine():
         self._beat.midi_stream_melody = music21.converter.parse(self._beat._midi_upload_file_path)
         self._beat.midi_stream = music21.converter.parse(self._beat._midi_upload_file_path)
 
-        model = KeyChord2(self._beat)
+        if(model_type == 'BayesNet'):
+            self._model = BayesNet(self._beat)
+        elif(model_type == 'KeyChord'):
+            self._model = KeyChord(self._beat)
+        elif(model_type == 'KeyChord2'):
+            self._model = KeyChord2(self._beat)
+        else:
+            self._model = KeyChord2(self._beat)
+        
         #model.get_one_possible_harmonized_chords('C', 4)
         print("instantiated model")
         #generate the output in place on self._beat
         #model.predict()
-        model.generate()
+        self._model.generate()
         print("finished generation")
 
         #Instanciate the Drums and generates the output in place on self._beat

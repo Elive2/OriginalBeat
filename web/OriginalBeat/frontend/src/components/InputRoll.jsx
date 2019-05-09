@@ -4,7 +4,7 @@ import { Container, Row, Col, Form, FormGroup, Label, Input, FormText, Jumbotron
 
 
 
-class MelodyRoll extends React.Component{
+class InputRoll extends React.Component{
 	constructor(props) {
 	  super(props);
 	}
@@ -12,12 +12,18 @@ class MelodyRoll extends React.Component{
 
 	componentDidMount(){
 		this.ifr.onload = () => {
-			console.log("IFRAME LOADES")
+			//console.log("IFRAME LOADES")
 			//this.ifr.contentWindow.postMessage('hello', "*");
-			console.log(this.props.midi)
+			//console.log(this.props.midi)
 			this.sendToFrame(JSON.parse(JSON.stringify(this.props.midi)));
 		}
 		//window.addEventListener("message", this.handleFrameTasks);
+
+	}
+
+	componentWillUpdate() {
+		//console.log("COMPONENT WILL UPDATE")
+		this.sendToFrame(JSON.parse(JSON.stringify(this.props.midi)));
 
 	}
 
@@ -27,7 +33,7 @@ class MelodyRoll extends React.Component{
 
 	inst = [''];
 	state = {	inst: this.props.inst
-
+				
 	};
 
 	getID(){
@@ -35,18 +41,19 @@ class MelodyRoll extends React.Component{
 	}
 
 	render() {
+		//console.log("INPUT ROLL RERENDERING")
 
 
 		return (
 			<div>
 				<Row>
 					<Col>
-						<div className="pianorollFrame">
-							<iframe
-								name = "melody"
-								id = {this.props.inst}
-								src={'/static/pianoRoll.html'}
-								scrolling="no"
+						<div className="inputRollFrame">
+							<iframe 
+								name = "melody" 
+								id = {this.props.inst} 
+								src={'/static/pianoRoll.html'} 
+								scrolling="no" 
 								height="300" 
 								width="100%"
 								ref={(f) => {this.ifr = f;} }
@@ -60,4 +67,4 @@ class MelodyRoll extends React.Component{
 	}
 }
 
-export default MelodyRoll
+export default InputRoll

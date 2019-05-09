@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Squada+One|Trade+Winds);
+@import url(https://fonts.googleapis.com/css?family=Squada+One|Trade+Winds|Organically);
 @import url(https://fonts.googleapis.com/css?family=Rancho&effect=shadow-multiple|3d-float|fire-animation|neon|anaglyph);
 
 header {
@@ -33,7 +33,7 @@ h3 {
 
 
 h4 {
-	font-family:'Trade Winds';
+	font-family:'Squada One';
 	font-size: 80px;
 }
 
@@ -73,6 +73,12 @@ h4 {
 	height: 180px;
 	overflow: hidden;
 
+}
+
+.inputRollFrame {
+	width: auto;
+	height: auto;
+	overflow: hidden;
 }
 
 
@@ -176,8 +182,8 @@ h4 {
 }
 
 #piano-img {
-  height: 70px;
-  width: 270px;
+  height: 100px;
+  width: 420px;
 }
 
 #piano-input {

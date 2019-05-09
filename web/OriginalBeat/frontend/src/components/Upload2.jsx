@@ -19,14 +19,14 @@ class Upload2 extends React.Component{
 				<Header pageSelected={'Home'}/>
 					<Row>
 						<div className = "title">
-							<h4 className = "font-effect-anaglyph"> Original Beat</h4>
+							<h4>Original Beat</h4>
 						</div>
 					</Row>
 					<Row>
-						<Col sm={{ size: 'auto', offset: 2 }}>
+						<Col sm={{ size: 'auto', offset: 1 }}>
 						<Jumbotron>
 								Play
-								<PianoInput classes={{}}/>
+								<PianoInput/>
 								<br/>
 								<img src={"/static/piano.png"} id="piano-img"/>
 							</Jumbotron>
@@ -41,8 +41,16 @@ class Upload2 extends React.Component{
 											<Label for="midiFile">Upload</Label>
 											<Input type="file" name="Midi" id="midiFile" accept=".mid"/>
 											<FormText color="muted">
-												Please select an 9 bar midifile to upload
+												Please select a one track midifile to upload
 											</FormText>
+										</FormGroup>
+										<FormGroup>
+											<Label for="select_model">Select Generation Model</Label>
+											<Input type="select" name="select" id="select_model">
+												<option>KeyChord</option>
+												<option>KeyChord2</option>
+												<option>BayesNet</option>
+											</Input>
 										</FormGroup>
 									</Col>
 								</Row>

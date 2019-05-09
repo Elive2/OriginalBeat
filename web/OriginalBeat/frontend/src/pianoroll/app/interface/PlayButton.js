@@ -20,7 +20,7 @@
 	Removes the prev and next buttons
  */
 
-define(["style/interface.scss", "data/Scores", "Tone/core/Transport", "interface/Loader"], 
+define(["style/interface.scss", "data/Scores", "Tone/core/Transport", "interface/Loader"],
 	function (interfaceStyle, Scores, Transport, Loader) {
 
 	var PlayButton = function(container){
@@ -59,8 +59,8 @@ define(["style/interface.scss", "data/Scores", "Tone/core/Transport", "interface
 		this._nextButton = document.createElement("div");
 		this._nextButton.id = "Next";
 		this._nextButton.classList.add("Button");
-		this._nextButton.classList.add("ScoreButton");
-		this._nextButton.classList.add("icon-svg_right_arrow");
+		// this._nextButton.classList.add("ScoreButton");
+		// this._nextButton.classList.add("icon-svg_right_arrow");
 		container.appendChild(this._nextButton);
 		this._nextButton.addEventListener("click", this._selectScore.bind(this, 1));
 
