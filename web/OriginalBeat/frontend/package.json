@@ -9,7 +9,7 @@
     "watch": "webpack --config ./webpack.config.js --env.API_URL=http://localhost:8000/ --watch --mode development",
     "serve_xampp": "copyfiles -u 1 ./dist/* /Applications/XAMPP/xamppfiles/htdocs/",
     "serve_django": "ncp ./dist/ ../templates/OriginalBeat/",
-    "prod": "webpack --config ./webpack.config.js --env.API_URL=https://theoriginalbeat.com --mode production",
+    "prod": "webpack --config ./webpack.config.js --env.API_URL=https://theoriginalbeat.com/ --mode production",
     "deploy": "webpack --config ./webpack.config.js --env.API_URL=<YOUR DEPLOYMENT SERVER HERE> --mode production",
     "test": "echo \"No test specified\" && exit 0"
   },
