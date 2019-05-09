@@ -52,7 +52,7 @@ class KeyChord2():
                         key = key[0]
         
                 new_key = music21.key.Key(key)
-                new_chord = self.get_one_possible_harmonized_chords(new_key, octave)
+                new_chord = self.get_one_possible_harmonized_chords(self._beat.key, octave)
                
                 #make this a pramter of the time signature
                 new_chord.duration.quarterLength = 4.0

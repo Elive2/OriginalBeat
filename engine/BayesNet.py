@@ -51,13 +51,11 @@
 """
 
 import os
-from MarkovifyCustom import Chain
 from pathlib import Path
 from utils import *
 import json
 from itertools import accumulate
 from pomegranate import *
-import numpy as np
 from Beat import Beat
 import random
 
