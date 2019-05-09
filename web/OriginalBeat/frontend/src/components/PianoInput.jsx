@@ -22,9 +22,10 @@ import SoundfontProvider from './SoundfontProvider';
 import RecordingPiano from './RecordingPiano'
 import RollDisplay from './RollDisplay';
 import {Row, Col} from 'reactstrap'
-
+import {Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
+import MelodyRoll from './MelodyRoll'
 
 var server = process.env.API_URL
 
@@ -32,6 +33,45 @@ var server = process.env.API_URL
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const soundfontHostname = 'https://d1pzp51pvbm36p.cloudfront.net';
 
+var CHROMATIC = [ 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B' ]
+
+function noteFromMidi(midiNumber) {
+  if (isNaN(midiNumber) || midiNumber < 0 || midiNumber > 127) return null;
+  var name = CHROMATIC[midiNumber % 12];
+  var oct = Math.floor(midiNumber / 12) - 1;
+  return name + oct;
+}
+
+
+function formatMidi(midi_json) {
+    //console.log("MIDI JSON")
+    //console.log(midi_json)
+    var formattedHeader = {tempo: 120, timeSignature: [4,4]};
+    var formattedNotes = [];
+
+    for(var i = 0; i < midi_json.length; i++) {
+        var newNote = {'time': midi_json[i].time.toString() + 'i',
+                    'midiNote': midi_json[i].midiNumber,
+                    'note': noteFromMidi(midi_json[i].midiNumber),
+                    'velocity': 1,
+                    'duration': midi_json[i].duration.toString() + 'i',
+                };
+        formattedNotes.push(newNote);
+    }
+    // for(var i = 0; i < midi_json['tracks'][1]['notes'].length; i++) {
+    //     var oldNote = midi_json['tracks'][1]['notes'][i]
+    //     var newNote = {'time': (Math.floor(oldNote['ticks'] / 20)).toString() + 'i',
+    //                 'midiNote': oldNote['midi'],
+    //                 'note': noteFromMidi(oldNote['midi']),
+    //                 'velocity': 1,
+    //                 'duration': (Math.floor(oldNote['durationTicks'] / 20)).toString() + 'i',
+    //             };
+    //     formattedNotes.push(newNote);
+    // }
+    var formattedMidi = {header: formattedHeader, notes: formattedNotes};
+
+    return formattedMidi;
+}
 
 const noteRange = {
   first: MidiNumbers.fromNote('c3'),
@@ -64,6 +104,7 @@ class PianoInput extends React.Component {
     super(props);
 
     this.state = {
+      modal: false,
       open: false,
       recording: {
         mode: 'RECORDING',
@@ -145,9 +186,20 @@ class PianoInput extends React.Component {
 
   handleClose = () => {
     this.setState({ open: false });
+    this.state.recording.events = []
   };
 
   handleSave = () => {
+    this.setState({
+      open: false
+    })
+
+    this.setState({
+      modal: true
+    })
+  }
+
+  handleUpload = () => {
     fetch(server + 'inputmidi/', {
       method: 'post',
       headers: {
@@ -155,11 +207,24 @@ class PianoInput extends React.Component {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(this.state.recording.events)
-    }).then(res=>res.json())
-      .then(res => console.log(res));
-        this.setState({
-          open: false,
-        })
+    }).then(() => {
+      window.location.replace(server + 'project/')
+    })
+      .catch((error) => {
+      console.log(error)
+    })
+
+    this.setState({
+      modal: false,
+      open: false
+    })
+
+  }
+
+  toggle = (prevState) => {
+    this.setState({
+      modal: !prevState
+    });
   }
 
   refreshNotes = () => {
@@ -172,6 +237,17 @@ class PianoInput extends React.Component {
     const { classes } = this.props;
     return (
       <div>
+        <Modal isOpen={this.state.modal} toggle={this.toggle}>
+          <ModalHeader toggle={this.toggle}>Upload Melody</ModalHeader>
+          <ModalBody>
+            {this.state.recording.events.length > 0 &&
+              <MelodyRoll midi={formatMidi(this.state.recording.events)}/>
+            }
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={this.handleUpload}>Upload</Button>
+          </ModalFooter>
+        </Modal>
         <Button variant="outlined" color="primary" onClick={this.handleClickOpen}>
           Piano Editor
         </Button>
