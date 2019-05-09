@@ -39,13 +39,16 @@ class DrumBeat():
         ms = self._beat.midi_stream.parts[0].measures(0,None)
 
         bass_drum = music21.instrument.BassDrum()
+        
         high_hat = music21.instrument.HiHatCymbal()
+        
 
         new_bass_part = music21.stream.Part()
         new_bass_part.insert(0, bass_drum)
-
+        
         new_hh_part = music21.stream.Part()
         new_hh_part.insert(0, high_hat)
+        
         for measure in ms:
             for note in measure:
                 
@@ -57,7 +60,8 @@ class DrumBeat():
                     else:
                         bass = music21.note.Rest()
                         bass.duration.quarterLength = 1.0
-                        new_bass_part.append(bass)                   
+                        new_bass_part.append(bass)     
+                    
         for measure in ms:
             for note in measure:
                 if isinstance(note, music21.note.Note):
@@ -75,9 +79,9 @@ class DrumBeat():
                         hh_and = music21.note.Rest()
                         hh_and.duration.quarterLength = 0.5
                         new_hh_part.append(hh_and)
-
+        
         self._beat.midi_stream.append(new_bass_part)
+        
         self._beat.midi_stream.append(new_hh_part)
-
-        self._beat.midi_stream_drums = music21.stream.Stream(new_bass_part)
-        self._beat.midi_stream_drums = music21.stream.Stream(new_hh_part)
+        
+        
