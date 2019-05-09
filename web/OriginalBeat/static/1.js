@@ -19397,25 +19397,42 @@ webpackJsonp([1],[
 	 * limitations under the License.
 	 */
 
-	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(56), __webpack_require__(58), __webpack_require__(78)], __WEBPACK_AMD_DEFINE_RESULT__ = function (Tone, Oscillator, PolySynth, SimpleSynth) {
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(56), __webpack_require__(58), __webpack_require__(78), __webpack_require__(80)], __WEBPACK_AMD_DEFINE_RESULT__ = function (Tone, Oscillator, PolySynth, FMSynth,JCReverb) {
+
+
 
 		var Synth = function(){
 
-			this.synth = new PolySynth(8, SimpleSynth).set({
+			this.synth = new PolySynth(8, FMSynth).set({
 				"volume" : -8,
 				"oscillator" : {
-					"type" : "sine6"
-				}, 
-				"envelope" : {
-					"attack" :  0.015,
-					"decay" :  0.25,
-					"sustain" :  0.08,
-					"release" :  0.5,
+					"type" : "sine1"
 				},
+				"envelope" : {
+					"attack" :  0.01,
+					"decay" :  2,
+					"sustain" :  1,
+					"release" :  4,
+				},
+
+
+
+
+
+
+
+
 			}).toMaster();
 
+
+
 			this.synth.stealVoices = true;
+
+
 		};
+
+
+
 
 		Synth.prototype.triggerAttackRelease = function(note, duration, time, vel){
 			duration = Math.max(duration, 0.2);
@@ -19428,6 +19445,7 @@ webpackJsonp([1],[
 
 		return Synth;
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
 
 /***/ }),
 /* 56 */
@@ -23326,6 +23344,210 @@ webpackJsonp([1],[
 /* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(79), __webpack_require__(9), __webpack_require__(67), __webpack_require__(76)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  FMSynth is composed of two Tone.SimpleSynths where one Tone.SimpleSynth modulates
+		 *          the frequency of a second Tone.SimpleSynth. A lot of spectral content 
+		 *          can be explored using the modulationIndex parameter. Read more about
+		 *          frequency modulation synthesis on [SoundOnSound](http://www.soundonsound.com/sos/apr00/articles/synthsecrets.htm).
+		 *          <img src="https://docs.google.com/drawings/d/1h0PUDZXPgi4Ikx6bVT6oncrYPLluFKy7lj53puxj-DM/pub?w=902&h=462">
+		 *
+		 *  @constructor
+		 *  @extends {Tone.Monophonic}
+		 *  @param {Object} [options] the options available for the synth 
+		 *                          see defaults below
+		 *  @example
+		 * var fmSynth = new Tone.FMSynth().toMaster();
+		 * fmSynth.triggerAttackRelease("C5", "4n");
+		 */
+		Tone.FMSynth = function(options){
+
+			options = this.defaultArg(options, Tone.FMSynth.defaults);
+			Tone.Monophonic.call(this, options);
+
+			/**
+			 *  The carrier voice.
+			 *  @type {Tone.SimpleSynth}
+			 */
+			this._carrier = new Tone.SimpleSynth(options.carrier);
+			this._carrier.volume.value = -10;
+
+
+			/**
+			 *  The carrier's oscillator
+			 *  @type {Tone.Oscillator}
+			 */
+			this.oscillator = this._carrier.oscillator;
+
+			/**
+			 *  The carrier's envelope
+			 *  @type {Tone.Oscillator}
+			 */
+			this.envelope = this._carrier.envelope.set(options.envelope);
+
+			/**
+			 *  The modulator voice.
+			 *  @type {Tone.SimpleSynth}
+			 */
+			this._modulator = new Tone.SimpleSynth(options.modulator);
+			this._modulator.volume.value = -10;
+
+
+			/**
+			 *  The modulator's oscillator which is applied
+			 *  to the amplitude of the oscillator
+			 *  @type {Tone.Oscillator}
+			 */
+			this.modulation = this._modulator.oscillator.set(options.modulation);
+
+			/**
+			 *  The modulator's envelope
+			 *  @type {Tone.Oscillator}
+			 */
+			this.modulationEnvelope = this._modulator.envelope.set(options.modulationEnvelope);
+
+			/**
+			 *  The frequency control.
+			 *  @type {Frequency}
+			 *  @signal
+			 */
+			this.frequency = new Tone.Signal(440, Tone.Type.Frequency);
+
+			/**
+			 *  Harmonicity is the ratio between the two voices. A harmonicity of
+			 *  1 is no change. Harmonicity = 2 means a change of an octave. 
+			 *  @type {Positive}
+			 *  @signal
+			 *  @example
+			 * //pitch voice1 an octave below voice0
+			 * synth.harmonicity.value = 0.5;
+			 */
+			this.harmonicity = new Tone.Multiply(options.harmonicity);
+			this.harmonicity.units = Tone.Type.Positive;
+
+			/**
+			 *  The modulation index which essentially the depth or amount of the modulation. It is the 
+			 *  ratio of the frequency of the modulating signal (mf) to the amplitude of the 
+			 *  modulating signal (ma) -- as in ma/mf. 
+			 *	@type {Positive}
+			 *	@signal
+			 */
+			this.modulationIndex = new Tone.Multiply(options.modulationIndex);
+			this.modulationIndex.units = Tone.Type.Positive;
+
+			/**
+			 *  the node where the modulation happens
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this._modulationNode = this.context.createGain();
+
+			//control the two voices frequency
+			this.frequency.connect(this._carrier.frequency);
+			this.frequency.chain(this.harmonicity, this._modulator.frequency);
+			this.frequency.chain(this.modulationIndex, this._modulationNode);
+			this._modulator.connect(this._modulationNode.gain);
+			this._modulationNode.gain.value = 0;
+			this._modulationNode.connect(this._carrier.frequency);
+			this._carrier.connect(this.output);
+			this._readOnly(["frequency", "harmonicity", "modulationIndex", "oscillator", "envelope", "modulation", "modulationEnvelope"]);
+		};
+
+		Tone.extend(Tone.FMSynth, Tone.Monophonic);
+
+		/**
+		 *  @static
+		 *  @type {Object}
+		 */
+		Tone.FMSynth.defaults = {
+			"harmonicity" : 3,
+			"modulationIndex" : 10,
+			"oscillator" : {
+				"type" : "sine"
+			},
+			"envelope" : {
+				"attack" : 0.01,
+				"decay" : 0.01,
+				"sustain" : 1,
+				"release" : 0.5
+			},
+			"moduation" : {
+				"type" : "square"
+			},
+			"modulationEnvelope" : {
+				"attack" : 0.5,
+				"decay" : 0.0,
+				"sustain" : 1,
+				"release" : 0.5
+			}
+		};
+
+		/**
+		 * 	trigger the attack portion of the note
+		 *  
+		 *  @param  {Time} [time=now] the time the note will occur
+		 *  @param {number} [velocity=1] the velocity of the note
+		 *  @returns {Tone.FMSynth} this
+		 *  @private
+		 */
+		Tone.FMSynth.prototype._triggerEnvelopeAttack = function(time, velocity){
+			time = this.toSeconds(time);
+			//the envelopes
+			this.envelope.triggerAttack(time, velocity);
+			this.modulationEnvelope.triggerAttack(time);
+			return this;
+		};
+
+		/**
+		 *  trigger the release portion of the note
+		 *  
+		 *  @param  {Time} [time=now] the time the note will release
+		 *  @returns {Tone.FMSynth} this
+		 *  @private
+		 */
+		Tone.FMSynth.prototype._triggerEnvelopeRelease = function(time){
+			time = this.toSeconds(time);
+			this.envelope.triggerRelease(time);
+			this.modulationEnvelope.triggerRelease(time);
+			return this;
+		};
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.FMSynth} this
+		 */
+		Tone.FMSynth.prototype.dispose = function(){
+			Tone.Monophonic.prototype.dispose.call(this);
+			this._writable(["frequency", "harmonicity", "modulationIndex", "oscillator", "envelope", "modulation", "modulationEnvelope"]);
+			this._carrier.dispose();
+			this._carrier = null;
+			this._modulator.dispose();
+			this._modulator = null;
+			this.frequency.dispose();
+			this.frequency = null;
+			this.modulationIndex.dispose();
+			this.modulationIndex = null;
+			this.harmonicity.dispose();
+			this.harmonicity = null;
+			this._modulationNode.disconnect();
+			this._modulationNode = null;
+			this.oscillator = null;
+			this.envelope = null;
+			this.modulationEnvelope = null;
+			this.modulation = null;
+			return this;
+		};
+
+		return Tone.FMSynth;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 79 */
+/***/ (function(module, exports, __webpack_require__) {
+
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(60), __webpack_require__(68), __webpack_require__(9), __webpack_require__(76)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
@@ -23446,7 +23668,2546 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 79 */
+/* 80 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(81), __webpack_require__(83), __webpack_require__(65)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  an array of the comb filter delay time values
+		 *  @private
+		 *  @static
+		 *  @type {Array}
+		 */
+		var combFilterDelayTimes = [1687 / 25000, 1601 / 25000, 2053 / 25000, 2251 / 25000];
+
+		/**
+		 *  the resonances of each of the comb filters
+		 *  @private
+		 *  @static
+		 *  @type {Array}
+		 */
+		var combFilterResonances = [0.773, 0.802, 0.753, 0.733];
+
+		/**
+		 *  the allpass filter frequencies
+		 *  @private
+		 *  @static
+		 *  @type {Array}
+		 */
+		var allpassFilterFreqs = [347, 113, 37];
+
+		/**
+		 *  @class Tone.JCReverb is a simple [Schroeder Reverberator](https://ccrma.stanford.edu/~jos/pasp/Schroeder_Reverberators.html)
+		 *         tuned by John Chowning in 1970.
+		 *         It is made up of three allpass filters and four Tone.FeedbackCombFilter. 
+		 *         
+		 *
+		 *  @extends {Tone.Effect}
+		 *  @constructor
+		 *  @param {NormalRange|Object} [roomSize] Coorelates to the decay time.
+		 *  @example
+		 * var reverb = new Tone.JCReverb(0.4).connect(Tone.Master);
+		 * var delay = new Tone.FeedbackDelay(0.5); 
+		 * //connecting the synth to reverb through delay
+		 * var synth = new Tone.DuoSynth().chain(delay, reverb);
+		 * synth.triggerAttackRelease("A4","8n");
+		 */
+		Tone.JCReverb = function(){
+
+			var options = this.optionsObject(arguments, ["roomSize"], Tone.JCReverb.defaults);
+			Tone.StereoEffect.call(this, options);
+
+			/**
+			 *  room size control values between [0,1]
+			 *  @type {NormalRange}
+			 *  @signal
+			 */
+			this.roomSize = new Tone.Signal(options.roomSize, Tone.Type.NormalRange);
+
+			/**
+			 *  scale the room size
+			 *  @type {Tone.Scale}
+			 *  @private
+			 */
+			this._scaleRoomSize = new Tone.Scale(-0.733, 0.197);
+
+			/**
+			 *  a series of allpass filters
+			 *  @type {Array}
+			 *  @private
+			 */
+			this._allpassFilters = [];
+
+			/**
+			 *  parallel feedback comb filters
+			 *  @type {Array}
+			 *  @private
+			 */
+			this._feedbackCombFilters = [];
+
+			//make the allpass filters
+			for (var af = 0; af < allpassFilterFreqs.length; af++) {
+				var allpass = this.context.createBiquadFilter();
+				allpass.type = "allpass";
+				allpass.frequency.value = allpassFilterFreqs[af];
+				this._allpassFilters.push(allpass);
+			}
+
+			//and the comb filters
+			for (var cf = 0; cf < combFilterDelayTimes.length; cf++) {
+				var fbcf = new Tone.FeedbackCombFilter(combFilterDelayTimes[cf], 0.1);
+				this._scaleRoomSize.connect(fbcf.resonance);
+				fbcf.resonance.value = combFilterResonances[cf];
+				this._allpassFilters[this._allpassFilters.length - 1].connect(fbcf);
+				if (cf < combFilterDelayTimes.length / 2){
+					fbcf.connect(this.effectReturnL);
+				} else {
+					fbcf.connect(this.effectReturnR);
+				}
+				this._feedbackCombFilters.push(fbcf);
+			}
+
+			//chain the allpass filters together
+			this.roomSize.connect(this._scaleRoomSize);
+			this.connectSeries.apply(this, this._allpassFilters);
+			this.effectSendL.connect(this._allpassFilters[0]);
+			this.effectSendR.connect(this._allpassFilters[0]);
+			this._readOnly(["roomSize"]);
+		};
+
+		Tone.extend(Tone.JCReverb, Tone.StereoEffect);
+
+		/**
+		 *  the default values
+		 *  @static
+		 *  @const
+		 *  @type {Object}
+		 */
+		Tone.JCReverb.defaults = {
+			"roomSize" : 0.5
+		};
+
+		/**
+		 *  Clean up. 
+		 *  @returns {Tone.JCReverb} this
+		 */
+		Tone.JCReverb.prototype.dispose = function(){
+			Tone.StereoEffect.prototype.dispose.call(this);
+			for (var apf = 0; apf < this._allpassFilters.length; apf++) {
+				this._allpassFilters[apf].disconnect();
+				this._allpassFilters[apf] = null;
+			}
+			this._allpassFilters = null;
+			for (var fbcf = 0; fbcf < this._feedbackCombFilters.length; fbcf++) {
+				this._feedbackCombFilters[fbcf].dispose();
+				this._feedbackCombFilters[fbcf] = null;
+			}
+			this._feedbackCombFilters = null;
+			this._writable(["roomSize"]);
+			this.roomSize.dispose();
+			this.roomSize = null;
+			this._scaleRoomSize.dispose();
+			this._scaleRoomSize = null;
+			return this;
+		};
+
+		return Tone.JCReverb;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 81 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(82), __webpack_require__(9), __webpack_require__(13)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Comb filters are basic building blocks for physical modeling. Read more
+		 *         about comb filters on [CCRMA's website](https://ccrma.stanford.edu/~jos/pasp/Feedback_Comb_Filters.html).
+		 *
+		 *  @extends {Tone}
+		 *  @constructor
+		 *  @param {Time|Object} [delayTime] The delay time of the filter. 
+		 *  @param {NormalRange=} resonance The amount of feedback the filter has. 
+		 */
+		Tone.FeedbackCombFilter = function(){
+
+			Tone.call(this);
+			var options = this.optionsObject(arguments, ["delayTime", "resonance"], Tone.FeedbackCombFilter.defaults);
+
+			/**
+			 *  the delay node
+			 *  @type {DelayNode}
+			 *  @private
+			 */
+			this._delay = this.input = this.output = this.context.createDelay(1);
+
+			/**
+			 *  The amount of delay of the comb filter. 
+			 *  @type {Time}
+			 *  @signal
+			 */
+			this.delayTime = new Tone.Param({
+				"param" : this._delay.delayTime,
+				"value" : options.delayTime, 
+				"units" : Tone.Type.Time
+			});
+
+			/**
+			 *  the feedback node
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this._feedback = this.context.createGain();
+
+			/**
+			 *  The amount of feedback of the delayed signal. 
+			 *  @type {NormalRange}
+			 *  @signal
+			 */
+			this.resonance = new Tone.Param({
+				"param" : this._feedback.gain,
+				"value" : options.resonance, 
+				"units" : Tone.Type.NormalRange
+			});
+
+			this._delay.chain(this._feedback, this._delay);
+			this._readOnly(["resonance", "delayTime"]);
+		};
+
+		Tone.extend(Tone.FeedbackCombFilter);
+
+		/**
+		 *  the default parameters
+		 *  @static
+		 *  @const
+		 *  @type {Object}
+		 */
+		Tone.FeedbackCombFilter.defaults = {
+			"delayTime" : 0.1,
+			"resonance" : 0.5
+		};
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.FeedbackCombFilter} this
+		 */
+		Tone.FeedbackCombFilter.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._writable(["resonance", "delayTime"]);
+			this._delay.disconnect();
+			this._delay = null;
+			this.delayTime.dispose();
+			this.delayTime = null;
+			this.resonance.dispose();
+			this.resonance = null;
+			this._feedback.disconnect();
+			this._feedback = null;
+			return this;
+		};
+
+		return Tone.FeedbackCombFilter;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 82 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(65), __webpack_require__(62)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+		
+		/**
+		 *  @class  Performs an exponential scaling on an input signal.
+		 *          Scales a NormalRange value [0,1] exponentially
+		 *          to the output range of outputMin to outputMax.
+		 *
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @param {number} [outputMin=0] The output value when the input is 0. 
+		 *  @param {number} [outputMax=1]	The output value when the input is 1. 
+		 *  @param {number} [exponent=2] The exponent which scales the incoming signal.
+		 *  @example
+		 * var scaleExp = new Tone.ScaleExp(0, 100, 2);
+		 * var signal = new Tone.Signal(0.5).connect(scaleExp);
+		 */
+		Tone.ScaleExp = function(outputMin, outputMax, exponent){
+
+			/**
+			 *  scale the input to the output range
+			 *  @type {Tone.Scale}
+			 *  @private
+			 */
+			this._scale = this.output = new Tone.Scale(outputMin, outputMax);
+
+			/**
+			 *  @private
+			 *  @type {Tone.Pow}
+			 *  @private
+			 */
+			this._exp = this.input = new Tone.Pow(this.defaultArg(exponent, 2));
+
+			this._exp.connect(this._scale);
+		};
+
+		Tone.extend(Tone.ScaleExp, Tone.SignalBase);
+
+		/**
+		 * Instead of interpolating linearly between the <code>min</code> and 
+		 * <code>max</code> values, setting the exponent will interpolate between
+		 * the two values with an exponential curve. 
+		 * @memberOf Tone.ScaleExp#
+		 * @type {number}
+		 * @name exponent
+		 */
+		Object.defineProperty(Tone.ScaleExp.prototype, "exponent", {
+			get : function(){
+				return this._exp.value;
+			},
+			set : function(exp){
+				this._exp.value = exp;
+			}
+		});
+
+		/**
+		 * The minimum output value. This number is output when 
+		 * the value input value is 0. 
+		 * @memberOf Tone.ScaleExp#
+		 * @type {number}
+		 * @name min
+		 */
+		Object.defineProperty(Tone.ScaleExp.prototype, "min", {
+			get : function(){
+				return this._scale.min;
+			},
+			set : function(min){
+				this._scale.min = min;
+			}
+		});
+
+		/**
+		 * The maximum output value. This number is output when 
+		 * the value input value is 1. 
+		 * @memberOf Tone.ScaleExp#
+		 * @type {number}
+		 * @name max
+		 */
+		Object.defineProperty(Tone.ScaleExp.prototype, "max", {
+			get : function(){
+				return this._scale.max;
+			},
+			set : function(max){
+				this._scale.max = max;
+			}
+		});
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.ScaleExp} this
+		 */
+		Tone.ScaleExp.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._scale.dispose();
+			this._scale = null;
+			this._exp.dispose();
+			this._exp = null;
+			return this;
+		}; 
+
+
+		return Tone.ScaleExp;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+/* 83 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(84), __webpack_require__(104), 
+		__webpack_require__(105), __webpack_require__(85)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Base class for Stereo effects. Provides effectSendL/R and effectReturnL/R. 
+		 *
+		 *	@constructor
+		 *	@extends {Tone.Effect}
+		 */
+		Tone.StereoEffect = function(){
+
+			Tone.call(this);
+			//get the defaults
+			var options = this.optionsObject(arguments, ["wet"], Tone.Effect.defaults);
+
+			/**
+			 *  the drywet knob to control the amount of effect
+			 *  @type {Tone.CrossFade}
+			 *  @private
+			 */
+			this._dryWet = new Tone.CrossFade(options.wet);
+
+			/**
+			 *  The wet control, i.e. how much of the effected
+			 *  will pass through to the output. 
+			 *  @type {NormalRange}
+			 *  @signal
+			 */
+			this.wet = this._dryWet.fade;
+
+			/**
+			 *  then split it
+			 *  @type {Tone.Split}
+			 *  @private
+			 */
+			this._split = new Tone.Split();
+
+			/**
+			 *  the effects send LEFT
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this.effectSendL = this._split.left;
+
+			/**
+			 *  the effects send RIGHT
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this.effectSendR = this._split.right;
+
+			/**
+			 *  the stereo effect merger
+			 *  @type {Tone.Merge}
+			 *  @private
+			 */
+			this._merge = new Tone.Merge();
+
+			/**
+			 *  the effect return LEFT
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this.effectReturnL = this._merge.left;
+
+			/**
+			 *  the effect return RIGHT
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this.effectReturnR = this._merge.right;
+
+			//connections
+			this.input.connect(this._split);
+			//dry wet connections
+			this.input.connect(this._dryWet, 0, 0);
+			this._merge.connect(this._dryWet, 0, 1);
+			this._dryWet.connect(this.output);
+			this._readOnly(["wet"]);
+		};
+
+		Tone.extend(Tone.StereoEffect, Tone.Effect);
+
+		/**
+		 *  Clean up. 
+		 *  @returns {Tone.StereoEffect} this
+		 */
+		Tone.StereoEffect.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._dryWet.dispose();
+			this._dryWet = null;
+			this._split.dispose();
+			this._split = null;
+			this._merge.dispose();
+			this._merge = null;
+			this.effectSendL = null;
+			this.effectSendR = null;
+			this.effectReturnL = null;
+			this.effectReturnR = null;
+			this._writable(["wet"]);
+			this.wet = null;
+			return this;
+		};
+
+		return Tone.StereoEffect;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 84 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(85)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+		
+		/**
+		 * 	@class  Tone.Effect is the base class for effects. Connect the effect between
+		 * 	        the effectSend and effectReturn GainNodes, then control the amount of
+		 * 	        effect which goes to the output using the wet control.
+		 *
+		 *  @constructor
+		 *  @extends {Tone}
+		 *  @param {NormalRange|Object} [wet] The starting wet value. 
+		 */
+		Tone.Effect = function(){
+
+			Tone.call(this);
+
+			//get all of the defaults
+			var options = this.optionsObject(arguments, ["wet"], Tone.Effect.defaults);
+
+			/**
+			 *  the drywet knob to control the amount of effect
+			 *  @type {Tone.CrossFade}
+			 *  @private
+			 */
+			this._dryWet = new Tone.CrossFade(options.wet);
+
+			/**
+			 *  The wet control is how much of the effected
+			 *  will pass through to the output. 1 = 100% effected
+			 *  signal, 0 = 100% dry signal. 
+			 *  @type {NormalRange}
+			 *  @signal
+			 */
+			this.wet = this._dryWet.fade;
+
+			/**
+			 *  connect the effectSend to the input of hte effect
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this.effectSend = this.context.createGain();
+
+			/**
+			 *  connect the output of the effect to the effectReturn
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this.effectReturn = this.context.createGain();
+
+			//connections
+			this.input.connect(this._dryWet.a);
+			this.input.connect(this.effectSend);
+			this.effectReturn.connect(this._dryWet.b);
+			this._dryWet.connect(this.output);
+			this._readOnly(["wet"]);
+		};
+
+		Tone.extend(Tone.Effect);
+
+		/**
+		 *  @static
+		 *  @type {Object}
+		 */
+		Tone.Effect.defaults = {
+			"wet" : 1
+		};
+
+		/**
+		 *  chains the effect in between the effectSend and effectReturn
+		 *  @param  {Tone} effect
+		 *  @private
+		 *  @returns {Tone.Effect} this
+		 */
+		Tone.Effect.prototype.connectEffect = function(effect){
+			this.effectSend.chain(effect, this.effectReturn);
+			return this;
+		};
+
+		/**
+		 *  Clean up. 
+		 *  @returns {Tone.Effect} this
+		 */
+		Tone.Effect.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._dryWet.dispose();
+			this._dryWet = null;
+			this.effectSend.disconnect();
+			this.effectSend = null;
+			this.effectReturn.disconnect();
+			this.effectReturn = null;
+			this._writable(["wet"]);
+			this.wet = null;
+			return this;
+		};
+
+		return Tone.Effect;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 85 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(86), __webpack_require__(103)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 * @class  Tone.Crossfade provides equal power fading between two inputs. 
+		 *         More on crossfading technique [here](https://en.wikipedia.org/wiki/Fade_(audio_engineering)#Crossfading).
+		 *
+		 * @constructor
+		 * @extends {Tone}
+		 * @param {NormalRange} [initialFade=0.5]
+		 * @example
+		 * var crossFade = new Tone.CrossFade(0.5);
+		 * //connect effect A to crossfade from
+		 * //effect output 0 to crossfade input 0
+		 * effectA.connect(crossFade, 0, 0);
+		 * //connect effect B to crossfade from
+		 * //effect output 0 to crossfade input 1
+		 * effectB.connect(crossFade, 0, 1);
+		 * crossFade.fade.value = 0;
+		 * // ^ only effectA is output
+		 * crossFade.fade.value = 1;
+		 * // ^ only effectB is output
+		 * crossFade.fade.value = 0.5;
+		 * // ^ the two signals are mixed equally. 
+		 */		
+		Tone.CrossFade = function(initialFade){
+
+			Tone.call(this, 2, 1);
+
+			/**
+			 *  Alias for <code>input[0]</code>. 
+			 *  @type {GainNode}
+			 */
+			this.a = this.input[0] = this.context.createGain();
+
+			/**
+			 *  Alias for <code>input[1]</code>. 
+			 *  @type {GainNode}
+			 */
+			this.b = this.input[1] = this.context.createGain();
+
+			/**
+			 * 	The mix between the two inputs. A fade value of 0
+			 * 	will output 100% <code>input[0]</code> and 
+			 * 	a value of 1 will output 100% <code>input[1]</code>. 
+			 *  @type {NormalRange}
+			 *  @signal
+			 */
+			this.fade = new Tone.Signal(this.defaultArg(initialFade, 0.5), Tone.Type.NormalRange);
+
+			/**
+			 *  equal power gain cross fade
+			 *  @private
+			 *  @type {Tone.EqualPowerGain}
+			 */
+			this._equalPowerA = new Tone.EqualPowerGain();
+
+			/**
+			 *  equal power gain cross fade
+			 *  @private
+			 *  @type {Tone.EqualPowerGain}
+			 */
+			this._equalPowerB = new Tone.EqualPowerGain();
+			
+			/**
+			 *  invert the incoming signal
+			 *  @private
+			 *  @type {Tone}
+			 */
+			this._invert = new Tone.Expr("1 - $0");
+
+			//connections
+			this.a.connect(this.output);
+			this.b.connect(this.output);
+			this.fade.chain(this._equalPowerB, this.b.gain);
+			this.fade.chain(this._invert, this._equalPowerA, this.a.gain);
+			this._readOnly("fade");
+		};
+
+		Tone.extend(Tone.CrossFade);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.CrossFade} this
+		 */
+		Tone.CrossFade.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._writable("fade");
+			this._equalPowerA.dispose();
+			this._equalPowerA = null;
+			this._equalPowerB.dispose();
+			this._equalPowerB = null;
+			this.fade.dispose();
+			this.fade = null;
+			this._invert.dispose();
+			this._invert = null;
+			this.a.disconnect();
+			this.a = null;
+			this.b.disconnect();
+			this.b = null;
+			return this;
+		};
+
+		return Tone.CrossFade;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+/* 86 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(66), __webpack_require__(87), __webpack_require__(67), 
+		__webpack_require__(89), __webpack_require__(94), __webpack_require__(95), __webpack_require__(96), 
+		__webpack_require__(97), __webpack_require__(98), __webpack_require__(91), __webpack_require__(92), 
+		__webpack_require__(93), __webpack_require__(99), __webpack_require__(88), __webpack_require__(100), 
+		__webpack_require__(101), __webpack_require__(102), __webpack_require__(62), __webpack_require__(73)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Evaluate an expression at audio rate. <br><br>
+		 *         Parsing code modified from https://code.google.com/p/tapdigit/
+		 *         Copyright 2011 2012 Ariya Hidayat, New BSD License
+		 *
+		 *  @extends {Tone.SignalBase}
+		 *  @constructor
+		 *  @param {string} expr the expression to generate
+		 *  @example
+		 * //adds the signals from input[0] and input[1].
+		 * var expr = new Tone.Expr("$0 + $1");
+		 */
+		Tone.Expr = function(){
+
+			var expr = this._replacements(Array.prototype.slice.call(arguments));
+			var inputCount = this._parseInputs(expr);
+
+			/**
+			 *  hold onto all of the nodes for disposal
+			 *  @type {Array}
+			 *  @private
+			 */
+			this._nodes = [];
+
+			/**
+			 *  The inputs. The length is determined by the expression. 
+			 *  @type {Array}
+			 */
+			this.input = new Array(inputCount);
+
+			//create a gain for each input
+			for (var i = 0; i < inputCount; i++){
+				this.input[i] = this.context.createGain();
+			}
+
+			//parse the syntax tree
+			var tree = this._parseTree(expr);
+			//evaluate the results
+			var result;
+			try {
+				result = this._eval(tree);
+			} catch (e){
+				this._disposeNodes();
+				throw new Error("Could evaluate expression: "+expr);
+			}
+
+			/**
+			 *  The output node is the result of the expression
+			 *  @type {Tone}
+			 */
+			this.output = result;
+		};
+
+		Tone.extend(Tone.Expr, Tone.SignalBase);
+
+		//some helpers to cut down the amount of code
+		function applyBinary(Constructor, args, self){
+			var op = new Constructor();
+			self._eval(args[0]).connect(op, 0, 0);
+			self._eval(args[1]).connect(op, 0, 1);
+			return op;
+		}
+		function applyUnary(Constructor, args, self){
+			var op = new Constructor();
+			self._eval(args[0]).connect(op, 0, 0);
+			return op;
+		}
+		function getNumber(arg){
+			return arg ? parseFloat(arg) : undefined;
+		}
+		function literalNumber(arg){
+			return arg && arg.args ? parseFloat(arg.args) : undefined;
+		}
+
+		/*
+		 *  the Expressions that Tone.Expr can parse.
+		 *
+		 *  each expression belongs to a group and contains a regexp 
+		 *  for selecting the operator as well as that operators method
+		 *  
+		 *  @type {Object}
+		 *  @private
+		 */
+		Tone.Expr._Expressions = {
+			//values
+			"value" : {
+				"signal" : {
+					regexp : /^\d+\.\d+|^\d+/,
+					method : function(arg){
+						var sig = new Tone.Signal(getNumber(arg));
+						return sig;
+					}
+				},
+				"input" : {
+					regexp : /^\$\d/,
+					method : function(arg, self){
+						return self.input[getNumber(arg.substr(1))];
+					}
+				}
+			},
+			//syntactic glue
+			"glue" : {
+				"(" : {
+					regexp : /^\(/,
+				},
+				")" : {
+					regexp : /^\)/,
+				},
+				"," : {
+					regexp : /^,/,
+				}
+			},
+			//functions
+			"func" : {
+				"abs" :  {
+					regexp : /^abs/,
+					method : applyUnary.bind(this, Tone.Abs)
+				},
+				"min" : {
+					regexp : /^min/,
+					method : applyBinary.bind(this, Tone.Min)
+				},
+				"max" : {
+					regexp : /^max/,
+					method : applyBinary.bind(this, Tone.Max)
+				},
+				"if" :  {
+					regexp : /^if/,
+					method : function(args, self){
+						var op = new Tone.IfThenElse();
+						self._eval(args[0]).connect(op.if);
+						self._eval(args[1]).connect(op.then);
+						self._eval(args[2]).connect(op.else);
+						return op;
+					}
+				},
+				"gt0" : {
+					regexp : /^gt0/,
+					method : applyUnary.bind(this, Tone.GreaterThanZero)
+				},
+				"eq0" : {
+					regexp : /^eq0/,
+					method : applyUnary.bind(this, Tone.EqualZero)
+				},
+				"mod" : {
+					regexp : /^mod/,
+					method : function(args, self){
+						var modulus = literalNumber(args[1]);
+						var op = new Tone.Modulo(modulus);
+						self._eval(args[0]).connect(op);
+						return op;
+					}
+				},
+				"pow" : {
+					regexp : /^pow/,
+					method : function(args, self){
+						var exp = literalNumber(args[1]);
+						var op = new Tone.Pow(exp);
+						self._eval(args[0]).connect(op);
+						return op;
+					}
+				},
+				"a2g" : {
+					regexp : /^a2g/,
+					method : function(args, self){
+						var op = new Tone.AudioToGain();
+						self._eval(args[0]).connect(op);
+						return op;
+					}
+				},
+			},
+			//binary expressions
+			"binary" : {
+				"+" : {
+					regexp : /^\+/,
+					precedence : 1,
+					method : applyBinary.bind(this, Tone.Add)
+				},
+				"-" : {
+					regexp : /^\-/,
+					precedence : 1,
+					method : function(args, self){
+						//both unary and binary op
+						if (args.length === 1){
+							return applyUnary(Tone.Negate, args, self);
+						} else {
+							return applyBinary(Tone.Subtract, args, self);
+						}
+					}
+				},
+				"*" : {
+					regexp : /^\*/,
+					precedence : 0,
+					method : applyBinary.bind(this, Tone.Multiply)
+				},
+				">" : {
+					regexp : /^\>/,
+					precedence : 2,
+					method : applyBinary.bind(this, Tone.GreaterThan)
+				},
+				"<" : {
+					regexp : /^</,
+					precedence : 2,
+					method : applyBinary.bind(this, Tone.LessThan)
+				},
+				"==" : {
+					regexp : /^==/,
+					precedence : 3,
+					method : applyBinary.bind(this, Tone.Equal)
+				},
+				"&&" : {
+					regexp : /^&&/,
+					precedence : 4,
+					method : applyBinary.bind(this, Tone.AND)
+				},
+				"||" : {
+					regexp : /^\|\|/,
+					precedence : 5,
+					method : applyBinary.bind(this, Tone.OR)
+				},
+			},
+			//unary expressions
+			"unary" : {
+				"-" : {
+					regexp : /^\-/,
+					method : applyUnary.bind(this, Tone.Negate)
+				},
+				"!" : {
+					regexp : /^\!/,
+					method : applyUnary.bind(this, Tone.NOT)
+				},
+			},
+		};
+			
+		/**
+		 *  @param   {string} expr the expression string
+		 *  @return  {number}      the input count
+		 *  @private
+		 */
+		Tone.Expr.prototype._parseInputs = function(expr){
+			var inputArray = expr.match(/\$\d/g);
+			var inputMax = 0;
+			if (inputArray !== null){
+				for (var i = 0; i < inputArray.length; i++){
+					var inputNum = parseInt(inputArray[i].substr(1)) + 1;
+					inputMax = Math.max(inputMax, inputNum);
+				}
+			}
+			return inputMax;
+		};
+
+		/**
+		 *  @param   {Array} args 	an array of arguments
+		 *  @return  {string} the results of the replacements being replaced
+		 *  @private
+		 */
+		Tone.Expr.prototype._replacements = function(args){
+			var expr = args.shift();
+			for (var i = 0; i < args.length; i++){
+				expr = expr.replace(/\%/i, args[i]);
+			}
+			return expr;
+		};
+
+		/**
+		 *  tokenize the expression based on the Expressions object
+		 *  @param   {string} expr 
+		 *  @return  {Object}      returns two methods on the tokenized list, next and peek
+		 *  @private
+		 */
+		Tone.Expr.prototype._tokenize = function(expr){
+			var position = -1;
+			var tokens = [];
+
+			while(expr.length > 0){
+				expr = expr.trim();
+				var token =  getNextToken(expr);
+				tokens.push(token);
+				expr = expr.substr(token.value.length);
+			}
+
+			function getNextToken(expr){
+				for (var type in Tone.Expr._Expressions){
+					var group = Tone.Expr._Expressions[type];
+					for (var opName in group){
+						var op = group[opName];
+						var reg = op.regexp;
+						var match = expr.match(reg);
+						if (match !== null){
+							return {
+								type : type,
+								value : match[0],
+								method : op.method
+							};
+						}
+					}
+				}
+				throw new SyntaxError("Unexpected token "+expr);
+			}
+
+			return {
+				next : function(){
+					return tokens[++position];
+				},
+				peek : function(){
+					return tokens[position + 1];
+				}
+			};
+		};
+
+		/**
+		 *  recursively parse the string expression into a syntax tree
+		 *  
+		 *  @param   {string} expr 
+		 *  @return  {Object}
+		 *  @private
+		 */
+		Tone.Expr.prototype._parseTree = function(expr){
+			var lexer = this._tokenize(expr);
+			var isUndef = this.isUndef.bind(this);
+
+			function matchSyntax(token, syn) {
+				return !isUndef(token) && 
+					token.type === "glue" &&
+					token.value === syn;
+			}
+
+			function matchGroup(token, groupName, prec) {
+				var ret = false;
+				var group = Tone.Expr._Expressions[groupName];
+				if (!isUndef(token)){
+					for (var opName in group){
+						var op = group[opName];
+						if (op.regexp.test(token.value)){
+							if (!isUndef(prec)){
+								if(op.precedence === prec){	
+									return true;
+								}
+							} else {
+								return true;
+							}
+						}
+					}
+				}
+				return ret;
+			}
+
+			function parseExpression(precedence) {
+				if (isUndef(precedence)){
+					precedence = 5;
+				}
+				var expr;
+				if (precedence < 0){
+					expr = parseUnary();
+				} else {
+					expr = parseExpression(precedence-1);
+				}
+				var token = lexer.peek();
+				while (matchGroup(token, "binary", precedence)) {
+					token = lexer.next();
+					expr = {
+						operator: token.value,
+						method : token.method,
+						args : [
+							expr,
+							parseExpression(precedence)
+						]
+					};
+					token = lexer.peek();
+				}
+				return expr;
+			}
+
+			function parseUnary() {
+				var token, expr;
+				token = lexer.peek();
+				if (matchGroup(token, "unary")) {
+					token = lexer.next();
+					expr = parseUnary();
+					return {
+						operator: token.value,
+						method : token.method,
+						args : [expr]
+					};
+				}
+				return parsePrimary();
+			}
+
+			function parsePrimary() {
+				var token, expr;
+				token = lexer.peek();
+				if (isUndef(token)) {
+					throw new SyntaxError("Unexpected termination of expression");
+				}
+				if (token.type === "func") {
+					token = lexer.next();
+					return parseFunctionCall(token);
+				}
+				if (token.type === "value") {
+					token = lexer.next();
+					return {
+						method : token.method,
+						args : token.value
+					};
+				}
+				if (matchSyntax(token, "(")) {
+					lexer.next();
+					expr = parseExpression();
+					token = lexer.next();
+					if (!matchSyntax(token, ")")) {
+						throw new SyntaxError("Expected )");
+					}
+					return expr;
+				}
+				throw new SyntaxError("Parse error, cannot process token " + token.value);
+			}
+
+			function parseFunctionCall(func) {
+				var token, args = [];
+				token = lexer.next();
+				if (!matchSyntax(token, "(")) {
+					throw new SyntaxError("Expected ( in a function call \"" + func.value + "\"");
+				}
+				token = lexer.peek();
+				if (!matchSyntax(token, ")")) {
+					args = parseArgumentList();
+				}
+				token = lexer.next();
+				if (!matchSyntax(token, ")")) {
+					throw new SyntaxError("Expected ) in a function call \"" + func.value + "\"");
+				}
+				return {
+					method : func.method,
+					args : args,
+					name : name
+				};
+			}
+
+			function parseArgumentList() {
+				var token, expr, args = [];
+				while (true) {
+					expr = parseExpression();
+					if (isUndef(expr)) {
+						// TODO maybe throw exception?
+						break;
+					}
+					args.push(expr);
+					token = lexer.peek();
+					if (!matchSyntax(token, ",")) {
+						break;
+					}
+					lexer.next();
+				}
+				return args;
+			}
+
+			return parseExpression();
+		};
+
+		/**
+		 *  recursively evaluate the expression tree
+		 *  @param   {Object} tree 
+		 *  @return  {AudioNode}      the resulting audio node from the expression
+		 *  @private
+		 */
+		Tone.Expr.prototype._eval = function(tree){
+			if (!this.isUndef(tree)){
+				var node = tree.method(tree.args, this);
+				this._nodes.push(node);
+				return node;
+			} 
+		};
+
+		/**
+		 *  dispose all the nodes
+		 *  @private
+		 */
+		Tone.Expr.prototype._disposeNodes = function(){
+			for (var i = 0; i < this._nodes.length; i++){
+				var node = this._nodes[i];
+				if (this.isFunction(node.dispose)) {
+					node.dispose();
+				} else if (this.isFunction(node.disconnect)) {
+					node.disconnect();
+				}
+				node = null;
+				this._nodes[i] = null;
+			}
+			this._nodes = null;
+		};
+
+		/**
+		 *  clean up
+		 */
+		Tone.Expr.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._disposeNodes();
+		};
+
+		return Tone.Expr;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 87 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(66), __webpack_require__(88), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Subtract the signal connected to <code>input[1]</code> from the signal connected 
+		 *         to <code>input[0]</code>. If an argument is provided in the constructor, the 
+		 *         signals <code>.value</code> will be subtracted from the incoming signal.
+		 *
+		 *  @extends {Tone.Signal}
+		 *  @constructor
+		 *  @param {number=} value The value to subtract from the incoming signal. If the value
+		 *                         is omitted, it will subtract the second signal from the first.
+		 *  @example
+		 * var sub = new Tone.Subtract(1);
+		 * var sig = new Tone.Signal(4).connect(sub);
+		 * //the output of sub is 3. 
+		 *  @example
+		 * var sub = new Tone.Subtract();
+		 * var sigA = new Tone.Signal(10);
+		 * var sigB = new Tone.Signal(2.5);
+		 * sigA.connect(sub, 0, 0);
+		 * sigB.connect(sub, 0, 1);
+		 * //output of sub is 7.5
+		 */
+		Tone.Subtract = function(value){
+
+			Tone.call(this, 2, 0);
+
+			/**
+			 *  the summing node
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this._sum = this.input[0] = this.output = this.context.createGain();
+
+			/**
+			 *  negate the input of the second input before connecting it
+			 *  to the summing node.
+			 *  @type {Tone.Negate}
+			 *  @private
+			 */
+			this._neg = new Tone.Negate();
+
+			/**
+			 *  the node where the value is set
+			 *  @private
+			 *  @type {Tone.Signal}
+			 */
+			this._param = this.input[1] = new Tone.Signal(value);
+
+			this._param.chain(this._neg, this._sum);
+		};
+
+		Tone.extend(Tone.Subtract, Tone.Signal);
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.SignalBase} this
+		 */
+		Tone.Subtract.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._neg.dispose();
+			this._neg = null;
+			this._sum.disconnect();
+			this._sum = null;
+			this._param.dispose();
+			this._param = null;
+			return this;
+		};
+
+		return Tone.Subtract;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 88 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(67), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Negate the incoming signal. i.e. an input signal of 10 will output -10
+		 *
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var neg = new Tone.Negate();
+		 * var sig = new Tone.Signal(-2).connect(neg);
+		 * //output of neg is positive 2. 
+		 */
+		Tone.Negate = function(){
+			/**
+			 *  negation is done by multiplying by -1
+			 *  @type {Tone.Multiply}
+			 *  @private
+			 */
+			this._multiply = this.input = this.output = new Tone.Multiply(-1);
+		};
+
+		Tone.extend(Tone.Negate, Tone.SignalBase);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.Negate} this
+		 */
+		Tone.Negate.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._multiply.dispose();
+			this._multiply = null;
+			return this;
+		}; 
+
+		return Tone.Negate;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 89 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(90), __webpack_require__(91)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class IfThenElse has three inputs. When the first input (if) is true (i.e. === 1), 
+		 *         then it will pass the second input (then) through to the output, otherwise, 
+		 *         if it's not true (i.e. === 0) then it will pass the third input (else) 
+		 *         through to the output. 
+		 *
+		 *  @extends {Tone.SignalBase}
+		 *  @constructor
+		 *  @example
+		 * var ifThenElse = new Tone.IfThenElse();
+		 * var ifSignal = new Tone.Signal(1).connect(ifThenElse.if);
+		 * var pwmOsc = new Tone.PWMOscillator().connect(ifThenElse.then);
+		 * var pulseOsc = new Tone.PulseOscillator().connect(ifThenElse.else);
+		 * //ifThenElse outputs pwmOsc
+		 * signal.value = 0;
+		 * //now ifThenElse outputs pulseOsc
+		 */
+		Tone.IfThenElse = function(){
+
+			Tone.call(this, 3, 0);
+
+			/**
+			 *  the selector node which is responsible for the routing
+			 *  @type {Tone.Select}
+			 *  @private
+			 */
+			this._selector = this.output = new Tone.Select(2);
+
+			//the input mapping
+			this.if = this.input[0] = this._selector.gate;
+			this.then = this.input[1] = this._selector.input[1];
+			this.else = this.input[2] = this._selector.input[0];
+		};
+
+		Tone.extend(Tone.IfThenElse, Tone.SignalBase);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.IfThenElse} this
+		 */
+		Tone.IfThenElse.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._selector.dispose();
+			this._selector = null;
+			this.if = null;
+			this.then = null;
+			this.else = null;
+			return this;
+		};
+
+		return Tone.IfThenElse;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 90 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(91), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Select between any number of inputs, sending the one 
+		 *         selected by the gate signal to the output
+		 *
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @param {number} [sourceCount=2] the number of inputs the switch accepts
+		 *  @example
+		 * var sel = new Tone.Select(2);
+		 * var sigA = new Tone.Signal(10).connect(sel, 0, 0);
+		 * var sigB = new Tone.Signal(20).connect(sel, 0, 1);
+		 * sel.gate.value = 0;
+		 * //sel outputs 10 (the value of sigA);
+		 * sel.gate.value = 1;
+		 * //sel outputs 20 (the value of sigB);
+		 */
+		Tone.Select = function(sourceCount){
+
+			sourceCount = this.defaultArg(sourceCount, 2);
+
+			Tone.call(this, sourceCount, 1);
+
+			/**
+			 *  the control signal
+			 *  @type {Number}
+			 *  @signal
+			 */
+			this.gate = new Tone.Signal(0);
+			this._readOnly("gate");
+
+			//make all the inputs and connect them
+			for (var i = 0; i < sourceCount; i++){
+				var switchGate = new SelectGate(i);
+				this.input[i] = switchGate;
+				this.gate.connect(switchGate.selecter);
+				switchGate.connect(this.output);
+			}
+		};
+
+		Tone.extend(Tone.Select, Tone.SignalBase);
+
+		/**
+		 *  Open a specific input and close the others.
+		 *  @param {number} which The gate to open. 
+		 *  @param {Time} [time=now] The time when the switch will open
+		 *  @returns {Tone.Select} this
+		 *  @example
+		 * //open input 1 in a half second from now
+		 * sel.select(1, "+0.5");
+		 */
+		Tone.Select.prototype.select = function(which, time){
+			//make sure it's an integer
+			which = Math.floor(which);
+			this.gate.setValueAtTime(which, this.toSeconds(time));
+			return this;
+		};
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.Select} this
+		 */
+		Tone.Select.prototype.dispose = function(){
+			this._writable("gate");
+			this.gate.dispose();
+			this.gate = null;
+			for (var i = 0; i < this.input.length; i++){
+				this.input[i].dispose();
+				this.input[i] = null;
+			}
+			Tone.prototype.dispose.call(this);
+			return this;
+		}; 
+
+		////////////START HELPER////////////
+
+		/**
+		 *  helper class for Tone.Select representing a single gate
+		 *  @constructor
+		 *  @extends {Tone}
+		 *  @private
+		 */
+		var SelectGate = function(num){
+
+			/**
+			 *  the selector
+			 *  @type {Tone.Equal}
+			 */
+			this.selecter = new Tone.Equal(num);
+
+			/**
+			 *  the gate
+			 *  @type {GainNode}
+			 */
+			this.gate = this.input = this.output = this.context.createGain();
+
+			//connect the selecter to the gate gain
+			this.selecter.connect(this.gate.gain);
+		};
+
+		Tone.extend(SelectGate);
+
+		/**
+		 *  clean up
+		 *  @private
+		 */
+		SelectGate.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this.selecter.dispose();
+			this.gate.disconnect();
+			this.selecter = null;
+			this.gate = null;
+		};
+
+		////////////END HELPER////////////
+
+		//return Tone.Select
+		return Tone.Select;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 91 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(92), __webpack_require__(87), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  Output 1 if the signal is equal to the value, otherwise outputs 0. 
+		 *          Can accept two signals if connected to inputs 0 and 1.
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @param {number=} value The number to compare the incoming signal to
+		 *  @example
+		 * var eq = new Tone.Equal(3);
+		 * var sig = new Tone.Signal(3).connect(eq);
+		 * //the output of eq is 1. 
+		 */
+		Tone.Equal = function(value){
+
+			Tone.call(this, 2, 0);
+
+			/**
+			 *  subtract the value from the incoming signal
+			 *  
+			 *  @type {Tone.Add}
+			 *  @private
+			 */
+			this._sub = this.input[0] = new Tone.Subtract(value);
+
+			/**
+			 *  @type {Tone.EqualZero}
+			 *  @private
+			 */
+			this._equals = this.output = new Tone.EqualZero();
+
+			this._sub.connect(this._equals);
+			this.input[1] = this._sub.input[1];
+		};
+
+		Tone.extend(Tone.Equal, Tone.SignalBase);
+
+		/**
+		 * The value to compare to the incoming signal.
+		 * @memberOf Tone.Equal#
+		 * @type {number}
+		 * @name value
+		 */
+		Object.defineProperty(Tone.Equal.prototype, "value", {
+			get : function(){
+				return this._sub.value;
+			},
+			set : function(value){
+				this._sub.value = value;
+			}
+		});
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.Equal} this
+		 */
+		Tone.Equal.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._equals.dispose();
+			this._equals = null;
+			this._sub.dispose();
+			this._sub = null;
+			return this;
+		};
+
+		return Tone.Equal;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 92 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(93), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  EqualZero outputs 1 when the input is equal to 
+		 *          0 and outputs 0 otherwise. 
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var eq0 = new Tone.EqualZero();
+		 * var sig = new Tone.Signal(0).connect(eq0);
+		 * //the output of eq0 is 1. 
+		 */
+		Tone.EqualZero = function(){
+
+			/**
+			 *  scale the incoming signal by a large factor
+			 *  @private
+			 *  @type {Tone.Multiply}
+			 */
+			this._scale = this.input = new Tone.Multiply(10000);
+			
+			/**
+			 *  @type {Tone.WaveShaper}
+			 *  @private
+			 */
+			this._thresh = new Tone.WaveShaper(function(val){
+				if (val === 0){
+					return 1;
+				} else {
+					return 0;
+				}
+			}, 128);
+
+			/**
+			 *  threshold the output so that it's 0 or 1
+			 *  @type {Tone.GreaterThanZero}
+			 *  @private
+			 */
+			this._gtz = this.output = new Tone.GreaterThanZero();
+
+			//connections
+			this._scale.chain(this._thresh, this._gtz);
+		};
+
+		Tone.extend(Tone.EqualZero, Tone.SignalBase);
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.EqualZero} this
+		 */
+		Tone.EqualZero.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._gtz.dispose();
+			this._gtz = null;
+			this._scale.dispose();
+			this._scale = null;
+			this._thresh.dispose();
+			this._thresh = null;
+			return this;
+		};
+
+		return Tone.EqualZero;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 93 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(67), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  GreaterThanZero outputs 1 when the input is strictly greater than zero
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var gt0 = new Tone.GreaterThanZero();
+		 * var sig = new Tone.Signal(0.01).connect(gt0);
+		 * //the output of gt0 is 1. 
+		 * sig.value = 0;
+		 * //the output of gt0 is 0. 
+		 */
+		Tone.GreaterThanZero = function(){
+			
+			/**
+			 *  @type {Tone.WaveShaper}
+			 *  @private
+			 */
+			this._thresh = this.output = new Tone.WaveShaper(function(val){
+				if (val <= 0){
+					return 0;
+				} else {
+					return 1;
+				}
+			});
+
+			/**
+			 *  scale the first thresholded signal by a large value.
+			 *  this will help with values which are very close to 0
+			 *  @type {Tone.Multiply}
+			 *  @private
+			 */
+			this._scale = this.input = new Tone.Multiply(10000);
+
+			//connections
+			this._scale.connect(this._thresh);
+		};
+
+		Tone.extend(Tone.GreaterThanZero, Tone.SignalBase);
+
+		/**
+		 *  dispose method
+		 *  @returns {Tone.GreaterThanZero} this
+		 */
+		Tone.GreaterThanZero.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._scale.dispose();
+			this._scale = null;
+			this._thresh.dispose();
+			this._thresh = null;
+			return this;
+		};
+
+		return Tone.GreaterThanZero;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 94 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(93)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class [OR](https://en.wikipedia.org/wiki/OR_gate)
+		 *         the inputs together. True if at least one of the inputs is true. 
+		 *
+		 *  @extends {Tone.SignalBase}
+		 *  @constructor
+		 *  @param {number} [inputCount=2] the input count
+		 *  @example
+		 * var or = new Tone.OR(2);
+		 * var sigA = new Tone.Signal(0)connect(or, 0, 0);
+		 * var sigB = new Tone.Signal(1)connect(or, 0, 1);
+		 * //output of or is 1 because at least
+		 * //one of the inputs is equal to 1. 
+		 */
+		Tone.OR = function(inputCount){
+
+			inputCount = this.defaultArg(inputCount, 2);
+			Tone.call(this, inputCount, 0);
+
+			/**
+			 *  a private summing node
+			 *  @type {GainNode}
+			 *  @private
+			 */
+			this._sum = this.context.createGain();
+
+			/**
+			 *  @type {Tone.Equal}
+			 *  @private
+			 */
+			this._gtz = this.output = new Tone.GreaterThanZero();
+
+			//make each of the inputs an alias
+			for (var i = 0; i < inputCount; i++){
+				this.input[i] = this._sum;
+			}
+			this._sum.connect(this._gtz);
+		};
+
+		Tone.extend(Tone.OR, Tone.SignalBase);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.OR} this
+		 */
+		Tone.OR.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._gtz.dispose();
+			this._gtz = null;
+			this._sum.disconnect();
+			this._sum = null;
+			return this;
+		};
+
+		return Tone.OR;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 95 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(91)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class [AND](https://en.wikipedia.org/wiki/Logical_conjunction)
+		 *         returns 1 when all the inputs are equal to 1 and returns 0 otherwise.
+		 *
+		 *  @extends {Tone.SignalBase}
+		 *  @constructor
+		 *  @param {number} [inputCount=2] the number of inputs. NOTE: all inputs are
+		 *                                 connected to the single AND input node
+		 *  @example
+		 * var and = new Tone.AND(2);
+		 * var sigA = new Tone.Signal(0).connect(and, 0, 0);
+		 * var sigB = new Tone.Signal(1).connect(and, 0, 1);
+		 * //the output of and is 0. 
+		 */
+		Tone.AND = function(inputCount){
+
+			inputCount = this.defaultArg(inputCount, 2);
+
+			Tone.call(this, inputCount, 0);
+
+			/**
+			 *  @type {Tone.Equal}
+			 *  @private
+			 */
+			this._equals = this.output = new Tone.Equal(inputCount);
+
+			//make each of the inputs an alias
+			for (var i = 0; i < inputCount; i++){
+				this.input[i] = this._equals;
+			}
+		};
+
+		Tone.extend(Tone.AND, Tone.SignalBase);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.AND} this
+		 */
+		Tone.AND.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._equals.dispose();
+			this._equals = null;
+			return this;
+		};
+
+		return Tone.AND;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 96 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(92)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  Just an alias for Tone.EqualZero, but has the same effect as a NOT operator. 
+		 *          Outputs 1 when input equals 0. 
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var not = new Tone.NOT();
+		 * var sig = new Tone.Signal(1).connect(not);
+		 * //output of not equals 0. 
+		 * sig.value = 0;
+		 * //output of not equals 1.
+		 */
+		Tone.NOT = Tone.EqualZero;
+
+		return Tone.NOT;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 97 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(93), __webpack_require__(87), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  Output 1 if the signal is greater than the value, otherwise outputs 0.
+		 *          can compare two signals or a signal and a number. 
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.Signal}
+		 *  @param {number} [value=0] the value to compare to the incoming signal
+		 *  @example
+		 * var gt = new Tone.GreaterThan(2);
+		 * var sig = new Tone.Signal(4).connect(gt);
+		 * //output of gt is equal 1. 
+		 */
+		Tone.GreaterThan = function(value){
+
+			Tone.call(this, 2, 0);
+			
+			/**
+			 *  subtract the amount from the incoming signal
+			 *  @type {Tone.Subtract}
+			 *  @private
+			 */
+			this._param = this.input[0] = new Tone.Subtract(value);
+			this.input[1] = this._param.input[1];
+
+			/**
+			 *  compare that amount to zero
+			 *  @type {Tone.GreaterThanZero}
+			 *  @private
+			 */
+			this._gtz = this.output = new Tone.GreaterThanZero();
+
+			//connect
+			this._param.connect(this._gtz);
+		};
+
+		Tone.extend(Tone.GreaterThan, Tone.Signal);
+
+		/**
+		 *  dispose method
+		 *  @returns {Tone.GreaterThan} this
+		 */
+		Tone.GreaterThan.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._param.dispose();
+			this._param = null;
+			this._gtz.dispose();
+			this._gtz = null;
+			return this;
+		};
+
+		return Tone.GreaterThan;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 98 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(97), __webpack_require__(88), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  Output 1 if the signal is less than the value, otherwise outputs 0.
+		 *          Can compare two signals or a signal and a number. 
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.Signal}
+		 *  @param {number=} value The value to compare to the incoming signal. 
+		 *                            If no value is provided, it will compare 
+		 *                            <code>input[0]</code> and <code>input[1]</code>
+		 *  @example
+		 * var lt = new Tone.LessThan(2);
+		 * var sig = new Tone.Signal(-1).connect(lt);
+		 * //if (sig < 2) lt outputs 1
+		 */
+		Tone.LessThan = function(value){
+
+			Tone.call(this, 2, 0);
+
+			/**
+			 *  negate the incoming signal
+			 *  @type {Tone.Negate}
+			 *  @private
+			 */
+			this._neg = this.input[0] = new Tone.Negate();
+
+			/**
+			 *  input < value === -input > -value
+			 *  @type {Tone.GreaterThan}
+			 *  @private
+			 */
+			this._gt = this.output = new Tone.GreaterThan();
+
+			/**
+			 *  negate the signal coming from the second input
+			 *  @private
+			 *  @type {Tone.Negate}
+			 */
+			this._rhNeg = new Tone.Negate();
+
+			/**
+			 *  the node where the value is set
+			 *  @private
+			 *  @type {Tone.Signal}
+			 */
+			this._param = this.input[1] = new Tone.Signal(value);
+
+			//connect
+			this._neg.connect(this._gt);
+			this._param.connect(this._rhNeg);	
+			this._rhNeg.connect(this._gt, 0, 1);
+		};
+
+		Tone.extend(Tone.LessThan, Tone.Signal);
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.LessThan} this
+		 */
+		Tone.LessThan.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._neg.dispose();
+			this._neg = null;
+			this._gt.dispose();
+			this._gt = null;
+			this._rhNeg.dispose();
+			this._rhNeg = null;
+			this._param.dispose();
+			this._param = null;
+			return this;
+		};
+
+		return Tone.LessThan;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 99 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(90), __webpack_require__(88), __webpack_require__(98), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Return the absolute value of an incoming signal. 
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var signal = new Tone.Signal(-1);
+		 * var abs = new Tone.Abs();
+		 * signal.connect(abs);
+		 * //the output of abs is 1. 
+		 */
+		Tone.Abs = function(){
+			Tone.call(this, 1, 0);
+
+			/**
+			 *  @type {Tone.LessThan}
+			 *  @private
+			 */
+			this._ltz = new Tone.LessThan(0);
+
+			/**
+			 *  @type {Tone.Select}
+			 *  @private
+			 */
+			this._switch = this.output = new Tone.Select(2);
+			
+			/**
+			 *  @type {Tone.Negate}
+			 *  @private
+			 */
+			this._negate = new Tone.Negate();
+
+			//two signal paths, positive and negative
+			this.input.connect(this._switch, 0, 0);
+			this.input.connect(this._negate);
+			this._negate.connect(this._switch, 0, 1);
+			
+			//the control signal
+			this.input.chain(this._ltz, this._switch.gate);
+		};
+
+		Tone.extend(Tone.Abs, Tone.SignalBase);
+
+		/**
+		 *  dispose method
+		 *  @returns {Tone.Abs} this
+		 */
+		Tone.Abs.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._switch.dispose();
+			this._switch = null;
+			this._ltz.dispose();
+			this._ltz = null;
+			this._negate.dispose();
+			this._negate = null;
+			return this;
+		}; 
+
+		return Tone.Abs;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 100 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(97), __webpack_require__(89), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 * 	@class  Outputs the greater of two signals. If a number is provided in the constructor
+		 * 	        it will use that instead of the signal. 
+		 * 	
+		 *  @constructor
+		 *  @extends {Tone.Signal}
+		 *  @param {number=} max Max value if provided. if not provided, it will use the
+		 *                       signal value from input 1. 
+		 *  @example
+		 * var max = new Tone.Max(2);
+		 * var sig = new Tone.Signal(3).connect(max);
+		 * //max outputs 3
+		 * sig.value = 1;
+		 * //max outputs 2
+		 *  @example
+		 * var max = new Tone.Max();
+		 * var sigA = new Tone.Signal(3);
+		 * var sigB = new Tone.Signal(4);
+		 * sigA.connect(max, 0, 0);
+		 * sigB.connect(max, 0, 1);
+		 * //output of max is 4.
+		 */
+		Tone.Max = function(max){
+
+			Tone.call(this, 2, 0);
+			this.input[0] = this.context.createGain();
+
+			/**
+			 *  the max signal
+			 *  @type {Tone.Signal}
+			 *  @private
+			 */
+			this._param = this.input[1] = new Tone.Signal(max);
+
+			/**
+			 *  @type {Tone.Select}
+			 *  @private
+			 */
+			this._ifThenElse = this.output = new Tone.IfThenElse();
+
+			/**
+			 *  @type {Tone.Select}
+			 *  @private
+			 */
+			this._gt = new Tone.GreaterThan();
+
+			//connections
+			this.input[0].chain(this._gt, this._ifThenElse.if);
+			this.input[0].connect(this._ifThenElse.then);
+			this._param.connect(this._ifThenElse.else);
+			this._param.connect(this._gt, 0, 1);
+		};
+
+		Tone.extend(Tone.Max, Tone.Signal);
+
+		/**
+		 * 	Clean up.
+		 *  @returns {Tone.Max} this
+		 */
+		Tone.Max.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._param.dispose();
+			this._ifThenElse.dispose();
+			this._gt.dispose();
+			this._param = null;
+			this._ifThenElse = null;
+			this._gt = null;
+			return this;
+		};
+
+		return Tone.Max;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 101 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(98), __webpack_require__(89), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 * 	@class  Outputs the lesser of two signals. If a number is given 
+		 * 	        in the constructor, it will use a signal and a number. 
+		 * 	
+		 *  @constructor
+		 *  @extends {Tone.Signal}
+		 *  @param {number} min The minimum to compare to the incoming signal
+		 *  @example
+		 * var min = new Tone.Min(2);
+		 * var sig = new Tone.Signal(3).connect(min);
+		 * //min outputs 2
+		 * sig.value = 1;
+		 * //min outputs 1
+		 * 	 @example
+		 * var min = new Tone.Min();
+		 * var sigA = new Tone.Signal(3);
+		 * var sigB = new Tone.Signal(4);
+		 * sigA.connect(min, 0, 0);
+		 * sigB.connect(min, 0, 1);
+		 * //output of min is 3.
+		 */
+		Tone.Min = function(min){
+
+			Tone.call(this, 2, 0);
+			this.input[0] = this.context.createGain();
+
+			/**
+			 *  @type {Tone.Select}
+			 *  @private
+			 */
+			this._ifThenElse = this.output = new Tone.IfThenElse();
+
+			/**
+			 *  @type {Tone.Select}
+			 *  @private
+			 */
+			this._lt = new Tone.LessThan();
+
+			/**
+			 *  the min signal
+			 *  @type {Tone.Signal}
+			 *  @private
+			 */
+			this._param = this.input[1] = new Tone.Signal(min);
+
+			//connections
+			this.input[0].chain(this._lt, this._ifThenElse.if);
+			this.input[0].connect(this._ifThenElse.then);
+			this._param.connect(this._ifThenElse.else);
+			this._param.connect(this._lt, 0, 1);
+		};
+
+		Tone.extend(Tone.Min, Tone.Signal);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.Min} this
+		 */
+		Tone.Min.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._param.dispose();
+			this._ifThenElse.dispose();
+			this._lt.dispose();
+			this._param = null;
+			this._ifThenElse = null;
+			this._lt = null;
+			return this;
+		};
+
+		return Tone.Min;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 102 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(10), __webpack_require__(67), __webpack_require__(87)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Signal-rate modulo operator. Only works in AudioRange [-1, 1] and for modulus
+		 *         values in the NormalRange. 
+		 *
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @param {NormalRange} modulus The modulus to apply.
+		 *  @example
+		 * var mod = new Tone.Modulo(0.2)
+		 * var sig = new Tone.Signal(0.5).connect(mod);
+		 * //mod outputs 0.1
+		 */
+		Tone.Modulo = function(modulus){
+
+			Tone.call(this, 1, 1);
+
+			/**
+			 *  A waveshaper gets the integer multiple of 
+			 *  the input signal and the modulus.
+			 *  @private
+			 *  @type {Tone.WaveShaper}
+			 */
+			this._shaper = new Tone.WaveShaper(Math.pow(2, 16));
+
+			/**
+			 *  the integer multiple is multiplied by the modulus
+			 *  @type  {Tone.Multiply}
+			 *  @private
+			 */
+			this._multiply = new Tone.Multiply();
+
+			/**
+			 *  and subtracted from the input signal
+			 *  @type  {Tone.Subtract}
+			 *  @private
+			 */
+			this._subtract = this.output = new Tone.Subtract();
+
+			/**
+			 *  the modulus signal
+			 *  @type  {Tone.Signal}
+			 *  @private
+			 */
+			this._modSignal = new Tone.Signal(modulus);
+
+			//connections
+			this.input.fan(this._shaper, this._subtract);
+			this._modSignal.connect(this._multiply, 0, 0);
+			this._shaper.connect(this._multiply, 0, 1);
+			this._multiply.connect(this._subtract, 0, 1);
+			this._setWaveShaper(modulus);
+		};
+
+		Tone.extend(Tone.Modulo, Tone.SignalBase);
+
+		/**
+		 *  @param  {number}  mod  the modulus to apply
+		 *  @private
+		 */
+		Tone.Modulo.prototype._setWaveShaper = function(mod){
+			this._shaper.setMap(function(val){
+				var multiple = Math.floor((val + 0.0001) / mod);
+				return multiple;
+			});
+		};
+
+		/**
+		 * The modulus value.
+		 * @memberOf Tone.Modulo#
+		 * @type {NormalRange}
+		 * @name value
+		 */
+		Object.defineProperty(Tone.Modulo.prototype, "value", {
+			get : function(){
+				return this._modSignal.value;
+			},
+			set : function(mod){
+				this._modSignal.value = mod;
+				this._setWaveShaper(mod);
+			}
+		});
+
+		/**
+		 * clean up
+		 *  @returns {Tone.Modulo} this
+		 */
+		Tone.Modulo.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._shaper.dispose();
+			this._shaper = null;
+			this._multiply.dispose();
+			this._multiply = null;
+			this._subtract.dispose();
+			this._subtract = null;
+			this._modSignal.dispose();
+			this._modSignal = null;
+			return this;
+		};
+
+		return Tone.Modulo;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 103 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class Convert an incoming signal between 0, 1 to an equal power gain scale.
+		 *
+		 *  @extends {Tone.SignalBase}
+		 *  @constructor
+		 *  @example
+		 * var eqPowGain = new Tone.EqualPowerGain();
+		 */
+		Tone.EqualPowerGain = function(){
+
+			/**
+			 *  @type {Tone.WaveShaper}
+			 *  @private
+			 */
+			this._eqPower = this.input = this.output = new Tone.WaveShaper(function(val){
+				if (Math.abs(val) < 0.001){
+					//should output 0 when input is 0
+					return 0;
+				} else {
+					return this.equalPowerScale(val);
+				}
+			}.bind(this), 4096);
+		};
+
+		Tone.extend(Tone.EqualPowerGain, Tone.SignalBase);
+
+		/**
+		 *  clean up
+		 *  @returns {Tone.EqualPowerGain} this
+		 */
+		Tone.EqualPowerGain.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._eqPower.dispose();
+			this._eqPower = null;
+			return this;
+		};
+
+		return Tone.EqualPowerGain;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 104 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *	@class  Tone.Split splits an incoming signal into left and right channels.
+		 *	
+		 *  @constructor
+		 *  @extends {Tone}
+		 *  @example
+		 * var split = new Tone.Split();
+		 * stereoSignal.connect(split);
+		 */
+		Tone.Split = function(){
+
+			Tone.call(this, 0, 2);
+
+			/** 
+			 *  @type {ChannelSplitterNode}
+			 *  @private
+			 */
+			this._splitter = this.input = this.context.createChannelSplitter(2);
+
+			/** 
+			 *  Left channel output. 
+			 *  Alias for <code>output[0]</code>
+			 *  @type {GainNode}
+			 */
+			this.left = this.output[0] = this.context.createGain();
+
+			/**
+			 *  Right channel output.
+			 *  Alias for <code>output[1]</code>
+			 *  @type {GainNode}
+			 */
+			this.right = this.output[1] = this.context.createGain();
+			
+			//connections
+			this._splitter.connect(this.left, 0, 0);
+			this._splitter.connect(this.right, 1, 0);
+		};
+
+		Tone.extend(Tone.Split);
+
+		/**
+		 *  Clean up. 
+		 *  @returns {Tone.Split} this
+		 */
+		Tone.Split.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._splitter.disconnect();
+			this.left.disconnect();
+			this.right.disconnect();
+			this.left = null;
+			this.right = null;
+			this._splitter = null;
+			return this;
+		}; 
+
+		return Tone.Split;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 105 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  Tone.Merge brings two signals into the left and right 
+		 *          channels of a single stereo channel.
+		 *
+		 *  @constructor
+		 *  @extends {Tone}
+		 *  @example
+		 * var merge = new Tone.Merge().toMaster();
+		 * //routing a sine tone in the left channel
+		 * //and noise in the right channel
+		 * var osc = new Tone.Oscillator().connect(merge.left);
+		 * var noise = new Tone.Noise().connect(merge.right);
+		 * //starting our oscillators
+		 * noise.start();
+		 * osc.start();
+		 */
+		Tone.Merge = function(){
+
+			Tone.call(this, 2, 0);
+
+			/**
+			 *  The left input channel.
+			 *  Alias for <code>input[0]</code>
+			 *  @type {GainNode}
+			 */
+			this.left = this.input[0] = this.context.createGain();
+
+			/**
+			 *  The right input channel.
+			 *  Alias for <code>input[1]</code>.
+			 *  @type {GainNode}
+			 */
+			this.right = this.input[1] = this.context.createGain();
+
+			/**
+			 *  the merger node for the two channels
+			 *  @type {ChannelMergerNode}
+			 *  @private
+			 */
+			this._merger = this.output = this.context.createChannelMerger(2);
+
+			//connections
+			this.left.connect(this._merger, 0, 0);
+			this.right.connect(this._merger, 0, 1);
+
+			this.left.channelCount = 1;
+			this.right.channelCount = 1;
+			this.left.channelCountMode = "explicit";
+			this.right.channelCountMode = "explicit";
+		};
+
+		Tone.extend(Tone.Merge);
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.Merge} this
+		 */
+		Tone.Merge.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this.left.disconnect();
+			this.left = null;
+			this.right.disconnect();
+			this.right = null;
+			this._merger.disconnect();
+			this._merger = null;
+			return this;
+		}; 
+
+		return Tone.Merge;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+
+/***/ }),
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -23471,7 +26232,7 @@ webpackJsonp([1],[
 		Removes Microphone
 	 */
 
-	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(80), __webpack_require__(82), __webpack_require__(83)], __WEBPACK_AMD_DEFINE_RESULT__ = function (interfaceStyle, SoundSelection, PlayButton) {
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(107), __webpack_require__(109), __webpack_require__(110)], __WEBPACK_AMD_DEFINE_RESULT__ = function (interfaceStyle, SoundSelection, PlayButton) {
 
 		var Interface = function(container){
 
@@ -23537,13 +26298,13 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 80 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(81);
+	var content = __webpack_require__(108);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(25)(content, {});
@@ -23563,7 +26324,7 @@ webpackJsonp([1],[
 	}
 
 /***/ }),
-/* 81 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(24)();
@@ -23577,7 +26338,7 @@ webpackJsonp([1],[
 
 
 /***/ }),
-/* 82 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -23596,7 +26357,7 @@ webpackJsonp([1],[
 	 * limitations under the License.
 	 */
 
-	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(80)], __WEBPACK_AMD_DEFINE_RESULT__ = function (interfaceStyle) {
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(107)], __WEBPACK_AMD_DEFINE_RESULT__ = function (interfaceStyle) {
 
 		var SoundSelection = function(container){
 
@@ -23676,7 +26437,7 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 83 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -23701,7 +26462,7 @@ webpackJsonp([1],[
 		Removes the prev and next buttons
 	 */
 
-	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(80), __webpack_require__(84), __webpack_require__(5), __webpack_require__(32)], __WEBPACK_AMD_DEFINE_RESULT__ = function (interfaceStyle, Scores, Transport, Loader) {
+	!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(107), __webpack_require__(111), __webpack_require__(5), __webpack_require__(32)], __WEBPACK_AMD_DEFINE_RESULT__ = function (interfaceStyle, Scores, Transport, Loader) {
 
 		var PlayButton = function(container){
 
@@ -23842,7 +26603,7 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 84 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -23866,13 +26627,13 @@ webpackJsonp([1],[
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 85 */
+/* 112 */
 /***/ (function(module, exports) {
 
 	module.exports = {"header":{"tempo":64,"timeSignature":[4,4]},"notes":[{"time":"0i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"12i","midiNote":64,"note":"E4","velocity":1,"duration":"84i"},{"time":"24i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"36i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"48i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"60i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"72i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"84i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"96i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"108i","midiNote":64,"note":"E4","velocity":1,"duration":"84i"},{"time":"120i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"132i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"144i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"156i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"168i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"180i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"192i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"204i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"216i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"228i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"240i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"252i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"264i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"276i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"288i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"300i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"312i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"324i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"336i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"348i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"360i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"372i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"384i","midiNote":59,"note":"B3","velocity":1,"duration":"96i"},{"time":"396i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"408i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"420i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"432i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"444i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"456i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"468i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"480i","midiNote":59,"note":"B3","velocity":1,"duration":"96i"},{"time":"492i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"504i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"516i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"528i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"540i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"552i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"564i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"576i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"588i","midiNote":64,"note":"E4","velocity":1,"duration":"84i"},{"time":"600i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"612i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"624i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"636i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"648i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"660i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"672i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"684i","midiNote":64,"note":"E4","velocity":1,"duration":"84i"},{"time":"696i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"708i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"720i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"732i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"744i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"756i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"768i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"780i","midiNote":64,"note":"E4","velocity":1,"duration":"84i"},{"time":"792i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"804i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"816i","midiNote":81,"note":"A5","velocity":1,"duration":"12i"},{"time":"828i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"840i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"852i","midiNote":81,"note":"A5","velocity":1,"duration":"12i"},{"time":"864i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"876i","midiNote":64,"note":"E4","velocity":1,"duration":"84i"},{"time":"888i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"900i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"912i","midiNote":81,"note":"A5","velocity":1,"duration":"12i"},{"time":"924i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"936i","midiNote":76,"note":"E5","velocity":1,"duration":"12i"},{"time":"948i","midiNote":81,"note":"A5","velocity":1,"duration":"12i"},{"time":"960i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"972i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"984i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"996i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"1008i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1020i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1032i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"1044i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1056i","midiNote":60,"note":"C4","velocity":1,"duration":"96i"},{"time":"1068i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"1080i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1092i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"1104i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1116i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1128i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"1140i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1152i","midiNote":59,"note":"B3","velocity":1,"duration":"96i"},{"time":"1164i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"1176i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1188i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1200i","midiNote":79,"note":"G5","velocity":1,"duration":"12i"},{"time":"1212i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1224i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1236i","midiNote":79,"note":"G5","velocity":1,"duration":"12i"},{"time":"1248i","midiNote":59,"note":"B3","velocity":1,"duration":"96i"},{"time":"1260i","midiNote":62,"note":"D4","velocity":1,"duration":"84i"},{"time":"1272i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1284i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1296i","midiNote":79,"note":"G5","velocity":1,"duration":"12i"},{"time":"1308i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1320i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"1332i","midiNote":79,"note":"G5","velocity":1,"duration":"12i"},{"time":"1344i","midiNote":59,"note":"B3","velocity":1,"duration":"96i"},{"time":"1356i","midiNote":60,"note":"C4","velocity":1,"duration":"84i"},{"time":"1368i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1380i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1392i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1404i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1416i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1428i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1440i","midiNote":59,"note":"B3","velocity":1,"duration":"96i"},{"time":"1452i","midiNote":60,"note":"C4","velocity":1,"duration":"84i"},{"time":"1464i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1476i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1488i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1500i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1512i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1524i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1536i","midiNote":57,"note":"A3","velocity":1,"duration":"96i"},{"time":"1548i","midiNote":60,"note":"C4","velocity":1,"duration":"84i"},{"time":"1560i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1572i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1584i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1596i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1608i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1620i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1632i","midiNote":57,"note":"A3","velocity":1,"duration":"96i"},{"time":"1644i","midiNote":60,"note":"C4","velocity":1,"duration":"84i"},{"time":"1656i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1668i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1680i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1692i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"1704i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1716i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1728i","midiNote":50,"note":"D3","velocity":1,"duration":"96i"},{"time":"1740i","midiNote":57,"note":"A3","velocity":1,"duration":"84i"},{"time":"1752i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"1764i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1776i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1788i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"1800i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1812i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1824i","midiNote":50,"note":"D3","velocity":1,"duration":"96i"},{"time":"1836i","midiNote":57,"note":"A3","velocity":1,"duration":"84i"},{"time":"1848i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"1860i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1872i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1884i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"1896i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"1908i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"1920i","midiNote":55,"note":"G3","velocity":1,"duration":"96i"},{"time":"1932i","midiNote":59,"note":"B3","velocity":1,"duration":"84i"},{"time":"1944i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"1956i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"1968i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"1980i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"1992i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2004i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2016i","midiNote":55,"note":"G3","velocity":1,"duration":"96i"},{"time":"2028i","midiNote":59,"note":"B3","velocity":1,"duration":"84i"},{"time":"2040i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2052i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2064i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2076i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2088i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2100i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2112i","midiNote":55,"note":"G3","velocity":1,"duration":"96i"},{"time":"2124i","midiNote":58,"note":"A#3","velocity":1,"duration":"84i"},{"time":"2136i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"2148i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2160i","midiNote":73,"note":"C#5","velocity":1,"duration":"12i"},{"time":"2172i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"2184i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2196i","midiNote":73,"note":"C#5","velocity":1,"duration":"12i"},{"time":"2208i","midiNote":55,"note":"G3","velocity":1,"duration":"96i"},{"time":"2220i","midiNote":58,"note":"A#3","velocity":1,"duration":"84i"},{"time":"2232i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"2244i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2256i","midiNote":73,"note":"C#5","velocity":1,"duration":"12i"},{"time":"2268i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"2280i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2292i","midiNote":73,"note":"C#5","velocity":1,"duration":"12i"},{"time":"2304i","midiNote":53,"note":"F3","velocity":1,"duration":"96i"},{"time":"2316i","midiNote":57,"note":"A3","velocity":1,"duration":"84i"},{"time":"2328i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2340i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"2352i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"2364i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2376i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"2388i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"2400i","midiNote":53,"note":"F3","velocity":1,"duration":"96i"},{"time":"2412i","midiNote":57,"note":"A3","velocity":1,"duration":"84i"},{"time":"2424i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2436i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"2448i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"2460i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2472i","midiNote":69,"note":"A4","velocity":1,"duration":"12i"},{"time":"2484i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"2496i","midiNote":53,"note":"F3","velocity":1,"duration":"96i"},{"time":"2508i","midiNote":56,"note":"G#3","velocity":1,"duration":"84i"},{"time":"2520i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2532i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"2544i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2556i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2568i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"2580i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2592i","midiNote":53,"note":"F3","velocity":1,"duration":"96i"},{"time":"2604i","midiNote":56,"note":"G#3","velocity":1,"duration":"84i"},{"time":"2616i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2628i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"2640i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2652i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"2664i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"2676i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"2688i","midiNote":52,"note":"E3","velocity":1,"duration":"96i"},{"time":"2700i","midiNote":55,"note":"G3","velocity":1,"duration":"84i"},{"time":"2712i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"2724i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2736i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"2748i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"2760i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2772i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"2784i","midiNote":52,"note":"E3","velocity":1,"duration":"96i"},{"time":"2796i","midiNote":55,"note":"G3","velocity":1,"duration":"84i"},{"time":"2808i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"2820i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2832i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"2844i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"2856i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"2868i","midiNote":72,"note":"C5","velocity":1,"duration":"12i"},{"time":"2880i","midiNote":52,"note":"E3","velocity":1,"duration":"96i"},{"time":"2892i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"2904i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"2916i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"2928i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"2940i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"2952i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"2964i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"2976i","midiNote":52,"note":"E3","velocity":1,"duration":"96i"},{"time":"2988i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"3000i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3012i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3024i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3036i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3048i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3060i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3072i","midiNote":50,"note":"D3","velocity":1,"duration":"96i"},{"time":"3084i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"3096i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3108i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3120i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3132i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3144i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3156i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3168i","midiNote":50,"note":"D3","velocity":1,"duration":"96i"},{"time":"3180i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"3192i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3204i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3216i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3228i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3240i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3252i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3264i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"3276i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"3288i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3300i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"3312i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3324i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3336i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"3348i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3360i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"3372i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"3384i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3396i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"3408i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3420i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3432i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"3444i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"3456i","midiNote":48,"note":"C3","velocity":1,"duration":"96i"},{"time":"3468i","midiNote":52,"note":"E3","velocity":1,"duration":"84i"},{"time":"3480i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3492i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3504i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3516i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3528i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3540i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3552i","midiNote":48,"note":"C3","velocity":1,"duration":"96i"},{"time":"3564i","midiNote":52,"note":"E3","velocity":1,"duration":"84i"},{"time":"3576i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3588i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3600i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3612i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"3624i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3636i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3648i","midiNote":48,"note":"C3","velocity":1,"duration":"96i"},{"time":"3660i","midiNote":55,"note":"G3","velocity":1,"duration":"84i"},{"time":"3672i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"3684i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3696i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3708i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"3720i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3732i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3744i","midiNote":48,"note":"C3","velocity":1,"duration":"96i"},{"time":"3756i","midiNote":55,"note":"G3","velocity":1,"duration":"84i"},{"time":"3768i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"3780i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3792i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3804i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"3816i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3828i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3840i","midiNote":41,"note":"F2","velocity":1,"duration":"96i"},{"time":"3852i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"3864i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3876i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3888i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3900i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3912i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3924i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3936i","midiNote":41,"note":"F2","velocity":1,"duration":"96i"},{"time":"3948i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"3960i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"3972i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"3984i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"3996i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"4008i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4020i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"4032i","midiNote":42,"note":"F#2","velocity":1,"duration":"96i"},{"time":"4044i","midiNote":48,"note":"C3","velocity":1,"duration":"84i"},{"time":"4056i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"4068i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4080i","midiNote":63,"note":"D#4","velocity":1,"duration":"12i"},{"time":"4092i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"4104i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4116i","midiNote":63,"note":"D#4","velocity":1,"duration":"12i"},{"time":"4128i","midiNote":42,"note":"F#2","velocity":1,"duration":"96i"},{"time":"4140i","midiNote":48,"note":"C3","velocity":1,"duration":"84i"},{"time":"4152i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"4164i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4176i","midiNote":63,"note":"D#4","velocity":1,"duration":"12i"},{"time":"4188i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"4200i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4212i","midiNote":63,"note":"D#4","velocity":1,"duration":"12i"},{"time":"4224i","midiNote":44,"note":"G#2","velocity":1,"duration":"96i"},{"time":"4236i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"4248i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4260i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4272i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4284i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4296i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4308i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4320i","midiNote":44,"note":"G#2","velocity":1,"duration":"96i"},{"time":"4332i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"4344i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4356i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4368i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4380i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4392i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4404i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4416i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"4428i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"4440i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4452i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4464i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4476i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4488i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4500i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4512i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"4524i","midiNote":53,"note":"F3","velocity":1,"duration":"84i"},{"time":"4536i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4548i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4560i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4572i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4584i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"4596i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"4608i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"4620i","midiNote":52,"note":"E3","velocity":1,"duration":"84i"},{"time":"4632i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4644i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4656i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"4668i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4680i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4692i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"4704i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"4716i","midiNote":52,"note":"E3","velocity":1,"duration":"84i"},{"time":"4728i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4740i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4752i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"4764i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4776i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4788i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"4800i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"4812i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"4824i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4836i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4848i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"4860i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4872i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4884i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"4896i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"4908i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"4920i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4932i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4944i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"4956i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"4968i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"4980i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"4992i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5004i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"5016i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5028i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5040i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5052i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5064i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5076i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5088i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5100i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"5112i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5124i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5136i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5148i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5160i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5172i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5184i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5196i","midiNote":51,"note":"D#3","velocity":1,"duration":"84i"},{"time":"5208i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"5220i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5232i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"5244i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"5256i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5268i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"5280i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5292i","midiNote":51,"note":"D#3","velocity":1,"duration":"84i"},{"time":"5304i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"5316i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5328i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"5340i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"5352i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5364i","midiNote":66,"note":"F#4","velocity":1,"duration":"12i"},{"time":"5376i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5388i","midiNote":52,"note":"E3","velocity":1,"duration":"84i"},{"time":"5400i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5412i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5424i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"5436i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5448i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5460i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"5472i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5484i","midiNote":52,"note":"E3","velocity":1,"duration":"84i"},{"time":"5496i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5508i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5520i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"5532i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5544i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5556i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"5568i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5580i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"5592i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5604i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5616i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5628i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5640i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5652i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5664i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5676i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"5688i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5700i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5712i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5724i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5736i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"5748i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5760i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5772i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"5784i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5796i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5808i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5820i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5832i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5844i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5856i","midiNote":43,"note":"G2","velocity":1,"duration":"96i"},{"time":"5868i","midiNote":50,"note":"D3","velocity":1,"duration":"84i"},{"time":"5880i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5892i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5904i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5916i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5928i","midiNote":59,"note":"B3","velocity":1,"duration":"12i"},{"time":"5940i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"5952i","midiNote":36,"note":"C2","velocity":1,"duration":"96i"},{"time":"5964i","midiNote":48,"note":"C3","velocity":1,"duration":"84i"},{"time":"5976i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"5988i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"6000i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"6012i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"6024i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"6036i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"6048i","midiNote":36,"note":"C2","velocity":1,"duration":"96i"},{"time":"6060i","midiNote":48,"note":"C3","velocity":1,"duration":"84i"},{"time":"6072i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"6084i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"6096i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"6108i","midiNote":55,"note":"G3","velocity":1,"duration":"12i"},{"time":"6120i","midiNote":58,"note":"A#3","velocity":1,"duration":"12i"},{"time":"6132i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"6144i","midiNote":36,"note":"C2","velocity":1,"duration":"192i"},{"time":"6156i","midiNote":48,"note":"C3","velocity":1,"duration":"180i"},{"time":"6168i","midiNote":53,"note":"F3","velocity":1,"duration":"12i"},{"time":"6180i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"6192i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"6204i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"6216i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"6228i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"6240i","midiNote":60,"note":"C4","velocity":1,"duration":"12i"},{"time":"6252i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"6264i","midiNote":53,"note":"F3","velocity":1,"duration":"12i"},{"time":"6276i","midiNote":57,"note":"A3","velocity":1,"duration":"12i"},{"time":"6288i","midiNote":53,"note":"F3","velocity":1,"duration":"12i"},{"time":"6300i","midiNote":50,"note":"D3","velocity":1,"duration":"12i"},{"time":"6312i","midiNote":53,"note":"F3","velocity":1,"duration":"12i"},{"time":"6324i","midiNote":50,"note":"D3","velocity":1,"duration":"12i"},{"time":"6336i","midiNote":36,"note":"C2","velocity":1,"duration":"192i"},{"time":"6348i","midiNote":47,"note":"B2","velocity":1,"duration":"180i"},{"time":"6360i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"6372i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"6384i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"6396i","midiNote":77,"note":"F5","velocity":1,"duration":"12i"},{"time":"6408i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"6420i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"6432i","midiNote":74,"note":"D5","velocity":1,"duration":"12i"},{"time":"6444i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"6456i","midiNote":67,"note":"G4","velocity":1,"duration":"12i"},{"time":"6468i","midiNote":71,"note":"B4","velocity":1,"duration":"12i"},{"time":"6480i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"6492i","midiNote":65,"note":"F4","velocity":1,"duration":"12i"},{"time":"6504i","midiNote":64,"note":"E4","velocity":1,"duration":"12i"},{"time":"6516i","midiNote":62,"note":"D4","velocity":1,"duration":"12i"},{"time":"6528i","midiNote":36,"note":"C2","velocity":1,"duration":"192i"},{"time":"6528i","midiNote":48,"note":"C3","velocity":1,"duration":"192i"},{"time":"6528i","midiNote":64,"note":"E4","velocity":1,"duration":"192i"},{"time":"6528i","midiNote":67,"note":"G4","velocity":1,"duration":"192i"},{"time":"6528i","midiNote":72,"note":"C5","velocity":1,"duration":"192i"}]}
 
 /***/ }),
-/* 86 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -24067,13 +26828,13 @@ webpackJsonp([1],[
 	}))
 
 /***/ }),
-/* 87 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(88);
+	var content = __webpack_require__(115);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(25)(content, {});
@@ -24093,7 +26854,7 @@ webpackJsonp([1],[
 	}
 
 /***/ }),
-/* 88 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(24)();
@@ -24107,7 +26868,7 @@ webpackJsonp([1],[
 
 
 /***/ }),
-/* 89 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -24163,10 +26924,10 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 90 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(91), __webpack_require__(93), __webpack_require__(32), __webpack_require__(5)], __WEBPACK_AMD_DEFINE_RESULT__ = function (overlayStyle, MidiConvert, Loader, Transport) {
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(118), __webpack_require__(120), __webpack_require__(32), __webpack_require__(5)], __WEBPACK_AMD_DEFINE_RESULT__ = function (overlayStyle, MidiConvert, Loader, Transport) {
 	        const MIDI_UPLOAD_MSG_ERROR = 'Only MIDI files will work here.';
 	        const MIDI_UPLOAD_MSG = 'Drop your MIDI file here.';
 
@@ -24274,13 +27035,13 @@ webpackJsonp([1],[
 	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 91 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(92);
+	var content = __webpack_require__(119);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
 	var update = __webpack_require__(25)(content, {});
@@ -24300,7 +27061,7 @@ webpackJsonp([1],[
 	}
 
 /***/ }),
-/* 92 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(24)();
@@ -24314,14 +27075,14 @@ webpackJsonp([1],[
 
 
 /***/ }),
-/* 93 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	!function(t,e){ true?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.MidiConvert=e():t.MidiConvert=e()}(this,function(){return function(t){function e(r){if(n[r])return n[r].exports;var i=n[r]={i:r,l:!1,exports:{}};return t[r].call(i.exports,i,i.exports,e),i.l=!0,i.exports}var n={};return e.m=t,e.c=n,e.i=function(t){return t},e.d=function(t,n,r){e.o(t,n)||Object.defineProperty(t,n,{configurable:!1,enumerable:!0,get:r})},e.n=function(t){var n=t&&t.__esModule?function(){return t.default}:function(){return t};return e.d(n,"a",n),n},e.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},e.p="",e(e.s=7)}([function(t,e,n){"use strict";n.d(e,"a",function(){return r}),n.d(e,"b",function(){return i}),n.d(e,"c",function(){return a});var r=["acoustic grand piano","bright acoustic piano","electric grand piano","honky-tonk piano","electric piano 1","electric piano 2","harpsichord","clavi","celesta","glockenspiel","music box","vibraphone","marimba","xylophone","tubular bells","dulcimer","drawbar organ","percussive organ","rock organ","church organ","reed organ","accordion","harmonica","tango accordion","acoustic guitar (nylon)","acoustic guitar (steel)","electric guitar (jazz)","electric guitar (clean)","electric guitar (muted)","overdriven guitar","distortion guitar","guitar harmonics","acoustic bass","electric bass (finger)","electric bass (pick)","fretless bass","slap bass 1","slap bass 2","synth bass 1","synth bass 2","violin","viola","cello","contrabass","tremolo strings","pizzicato strings","orchestral harp","timpani","string ensemble 1","string ensemble 2","synthstrings 1","synthstrings 2","choir aahs","voice oohs","synth voice","orchestra hit","trumpet","trombone","tuba","muted trumpet","french horn","brass section","synthbrass 1","synthbrass 2","soprano sax","alto sax","tenor sax","baritone sax","oboe","english horn","bassoon","clarinet","piccolo","flute","recorder","pan flute","blown bottle","shakuhachi","whistle","ocarina","lead 1 (square)","lead 2 (sawtooth)","lead 3 (calliope)","lead 4 (chiff)","lead 5 (charang)","lead 6 (voice)","lead 7 (fifths)","lead 8 (bass + lead)","pad 1 (new age)","pad 2 (warm)","pad 3 (polysynth)","pad 4 (choir)","pad 5 (bowed)","pad 6 (metallic)","pad 7 (halo)","pad 8 (sweep)","fx 1 (rain)","fx 2 (soundtrack)","fx 3 (crystal)","fx 4 (atmosphere)","fx 5 (brightness)","fx 6 (goblins)","fx 7 (echoes)","fx 8 (sci-fi)","sitar","banjo","shamisen","koto","kalimba","bag pipe","fiddle","shanai","tinkle bell","agogo","steel drums","woodblock","taiko drum","melodic tom","synth drum","reverse cymbal","guitar fret noise","breath noise","seashore","bird tweet","telephone ring","helicopter","applause","gunshot"],i=["piano","chromatic percussion","organ","guitar","bass","strings","ensemble","brass","reed","pipe","synth lead","synth pad","synth effects","ethnic","percussive","sound effects"],a={0:"standard kit",8:"room kit",16:"power kit",24:"electronic kit",25:"tr-808 kit",32:"jazz kit",40:"brush kit",48:"orchestra kit",56:"sound fx kit"}},function(t,e,n){"use strict";function r(t){return t.replace(/\u0000/g,"")}function i(t,e){return 60/e.bpm*(t/e.PPQ)}function a(t){return"number"==typeof t}function o(t){return"string"==typeof t}function s(t){return["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][t%12]+(Math.floor(t/12)-1)}e.b=r,e.a=i,e.c=a,n.d(e,"d",function(){return u}),e.e=s,n.d(e,"f",function(){return c});var u=function(){var t=/^([a-g]{1}(?:b|#|x|bb)?)(-?[0-9]+)/i;return function(e){return o(e)&&t.test(e)}}(),c=function(){var t=/^([a-g]{1}(?:b|#|x|bb)?)(-?[0-9]+)/i,e={cbb:-2,cb:-1,c:0,"c#":1,cx:2,dbb:0,db:1,d:2,"d#":3,dx:4,ebb:2,eb:3,e:4,"e#":5,ex:6,fbb:3,fb:4,f:5,"f#":6,fx:7,gbb:5,gb:6,g:7,"g#":8,gx:9,abb:7,ab:8,a:9,"a#":10,ax:11,bbb:9,bb:10,b:11,"b#":12,bx:13};return function(n){var r=t.exec(n),i=r[1],a=r[2];return e[i.toLowerCase()]+12*(parseInt(a)+1)}}()},function(t,e,n){"use strict";function r(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}n.d(e,"a",function(){return h});var i=n(11),a=(n.n(i),n(10)),o=(n.n(a),n(1)),s=n(9),u=n(5),c=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),h=function(){function t(){r(this,t),this.header={bpm:120,timeSignature:[4,4],PPQ:480},this.tracks=[]}return c(t,null,[{key:"fromJSON",value:function(e){var n=new t;return n.header=e.header,e.tracks.forEach(function(t){var e=s.a.fromJSON(t);n.tracks.push(e)}),n}}]),c(t,[{key:"load",value:function(t){var e=this,n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:null,r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"GET";return new Promise(function(i,a){var o=new XMLHttpRequest;o.open(r,t),o.responseType="arraybuffer",o.addEventListener("load",function(){4===o.readyState&&200===o.status?i(e.decode(o.response)):a(o.status)}),o.addEventListener("error",a),o.send(n)}).catch(function(t){console.log(t)})}},{key:"decode",value:function(t){var e=this;if(t instanceof ArrayBuffer){var r=new Uint8Array(t);t=String.fromCharCode.apply(null,r)}var a=i(t);return this.header=n.i(u.a)(a),this.tracks=[],a.tracks.forEach(function(t,n){var r=new s.a;r.id=n,e.tracks.push(r);var i=0;t.forEach(function(t){i+=o.a(t.deltaTime,e.header),"meta"===t.type&&"trackName"===t.subtype?r.name=o.b(t.text):"noteOn"===t.subtype?(r.noteOn(t.noteNumber,i,t.velocity/127),-1===r.channelNumber&&(r.channelNumber=t.channel)):"noteOff"===t.subtype?r.noteOff(t.noteNumber,i):"controller"===t.subtype&&t.controllerType?r.cc(t.controllerType,i,t.value/127):"meta"===t.type&&"instrumentName"===t.subtype?r.instrument=t.text:"channel"===t.type&&"programChange"===t.subtype&&(r.patch(t.programNumber),r.channelNumber=t.channel)}),e.header.name||r.length||!r.name||(e.header.name=r.name)}),this}},{key:"encode",value:function(){var t=this,e=new a.File({ticks:this.header.PPQ}),n=this.tracks.filter(function(t){return!t.length})[0];if(this.header.name&&(!n||n.name!==this.header.name)){e.addTrack().addEvent(new a.MetaEvent({time:0,type:a.MetaEvent.TRACK_NAME,data:this.header.name}))}return this.tracks.forEach(function(n){var r=e.addTrack();r.setTempo(t.bpm),n.name&&r.addEvent(new a.MetaEvent({time:0,type:a.MetaEvent.TRACK_NAME,data:n.name})),n.encode(r,t.header)}),e.toBytes()}},{key:"toArray",value:function(){for(var t=this.encode(),e=new Array(t.length),n=0;n<t.length;n++)e[n]=t.charCodeAt(n);return e}},{key:"toJSON",value:function(){var t={header:this.header,startTime:this.startTime,duration:this.duration,tracks:(this.tracks||[]).map(function(t){return t.toJSON()})};return t.header.name||(t.header.name=""),t}},{key:"track",value:function(t){var e=new s.a(t);return this.tracks.push(e),e}},{key:"get",value:function(t){return o.c(t)?this.tracks[t]:this.tracks.find(function(e){return e.name===t})}},{key:"slice",value:function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:this.duration,r=new t;return r.header=this.header,r.tracks=this.tracks.map(function(t){return t.slice(e,n)}),r}},{key:"startTime",get:function(){var t=this.tracks.map(function(t){return t.startTime});return t.length?Math.min.apply(Math,t)||0:0}},{key:"bpm",get:function(){return this.header.bpm},set:function(t){var e=this.header.bpm;this.header.bpm=t;var n=e/t;this.tracks.forEach(function(t){return t.scale(n)})}},{key:"timeSignature",get:function(){return this.header.timeSignature},set:function(t){this.header.timeSignature=t}},{key:"duration",get:function(){var t=this.tracks.map(function(t){return t.duration});return t.length?Math.max.apply(Math,t)||0:0}}]),t}()},function(t,e,n){"use strict";function r(t,e){var n=0,r=t.length,i=r;if(r>0&&t[r-1].time<=e)return r-1;for(;n<i;){var a=Math.floor(n+(i-n)/2),o=t[a],s=t[a+1];if(o.time===e){for(var u=a;u<t.length;u++){t[u].time===e&&(a=u)}return a}if(o.time<e&&s.time>e)return a;o.time>e?i=a:o.time<e&&(n=a+1)}return-1}function i(t,e){if(t.length){var n=r(t,e.time);t.splice(n+1,0,e)}else t.push(e)}n.d(e,"a",function(){return i})},function(t,e,n){"use strict";function r(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}n.d(e,"a",function(){return o});var i=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),a={1:"modulationWheel",2:"breath",4:"footController",5:"portamentoTime",7:"volume",8:"balance",10:"pan",64:"sustain",65:"portamentoTime",66:"sostenuto",67:"softPedal",68:"legatoFootswitch",84:"portamentoContro"},o=function(){function t(e,n,i){r(this,t),this.number=e,this.time=n,this.value=i}return i(t,[{key:"name",get:function(){if(a.hasOwnProperty(this.number))return a[this.number]}}]),t}()},function(t,e,n){"use strict";function r(t){for(var e={PPQ:t.header.ticksPerBeat},n=0;n<t.tracks.length;n++)for(var r=t.tracks[n],i=0;i<r.length;i++){var a=r[i];"meta"===a.type&&("timeSignature"===a.subtype?e.timeSignature=[a.numerator,a.denominator]:"setTempo"===a.subtype&&(e.bpm||(e.bpm=6e7/a.microsecondsPerBeat)))}return e.bpm=e.bpm||120,e}n.d(e,"a",function(){return r})},function(t,e,n){"use strict";function r(t,e){for(var n=0;n<t.length;n++){var r=t[n],i=e[n];if(r.length>i)return!0}return!1}function i(t,e,n){for(var r=0,i=1/0,a=0;a<t.length;a++){var o=t[a],s=e[a];o[s]&&o[s].time<i&&(r=a,i=o[s].time)}n[r](t[r][e[r]]),e[r]+=1}function a(){for(var t=arguments.length,e=Array(t),n=0;n<t;n++)e[n]=arguments[n];for(var a=e.filter(function(t,e){return e%2==0}),o=new Uint32Array(a.length),s=e.filter(function(t,e){return e%2==1});r(a,o);)i(a,o,s)}n.d(e,"a",function(){return a})},function(t,e,n){"use strict";function r(t){return(new s.a).decode(t)}function i(t,e){var n=(new s.a).load(t);return e&&n.then(e),n}function a(){return new s.a}function o(t){return s.a.fromJSON(t)}Object.defineProperty(e,"__esModule",{value:!0}),e.parse=r,e.load=i,e.create=a,e.fromJSON=o;var s=n(2),u=n(0);n.d(e,"instrumentByPatchID",function(){return u.a}),n.d(e,"instrumentFamilyByID",function(){return u.b}),n.d(e,"drumKitByPatchID",function(){return u.c})},function(t,e,n){"use strict";function r(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}n.d(e,"a",function(){return o});var i=n(1),a=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),o=function(){function t(e,n){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:0,o=arguments.length>3&&void 0!==arguments[3]?arguments[3]:1;if(r(this,t),i.c(e))this.midi=e;else{if(!i.d(e))throw new Error("the midi value must either be in Pitch Notation (e.g. C#4) or a midi value");this.name=e}this.time=n,this.duration=a,this.velocity=o}return a(t,null,[{key:"fromJSON",value:function(e){return new t(e.midi,e.time,e.duration,e.velocity)}}]),a(t,[{key:"match",value:function(t){return i.c(t)?this.midi===t:i.d(t)?this.name.toLowerCase()===t.toLowerCase():void 0}},{key:"toJSON",value:function(){return{name:this.name,midi:this.midi,time:this.time,velocity:this.velocity,duration:this.duration}}},{key:"name",get:function(){return i.e(this.midi)},set:function(t){this.midi=i.f(t)}},{key:"noteOn",get:function(){return this.time},set:function(t){this.time=t}},{key:"noteOff",get:function(){return this.time+this.duration},set:function(t){this.duration=t-this.time}}]),t}()},function(t,e,n){"use strict";function r(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}n.d(e,"a",function(){return h});var i=n(3),a=n(4),o=n(6),s=n(8),u=n(0),c=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),h=function(){function t(e){var n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:-1,i=arguments.length>2&&void 0!==arguments[2]?arguments[2]:-1;r(this,t),this.name=e,this.channelNumber=i,this.notes=[],this.controlChanges={},this.instrumentNumber=n}return c(t,null,[{key:"fromJSON",value:function(e){var n=new t(e.name,e.instrumentNumber,e.channelNumber);return n.id=e.id,e.notes&&e.notes.forEach(function(t){var e=s.a.fromJSON(t);n.notes.push(e)}),e.controlChanges&&(n.controlChanges=e.controlChanges),n}}]),c(t,[{key:"note",value:function(t,e){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:0,a=arguments.length>3&&void 0!==arguments[3]?arguments[3]:1,o=new s.a(t,e,r,a);return n.i(i.a)(this.notes,o),this}},{key:"noteOn",value:function(t,e){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:1,a=new s.a(t,e,0,r);return n.i(i.a)(this.notes,a),this}},{key:"noteOff",value:function(t,e){for(var n=0;n<this.notes.length;n++){var r=this.notes[n];if(r.match(t)&&0===r.duration){r.noteOff=e;break}}return this}},{key:"cc",value:function(t,e,r){this.controlChanges.hasOwnProperty(t)||(this.controlChanges[t]=[]);var o=new a.a(t,e,r);return n.i(i.a)(this.controlChanges[t],o),this}},{key:"patch",value:function(t){return this.instrumentNumber=t,this}},{key:"channel",value:function(t){return this.channelNumber=t,this}},{key:"scale",value:function(t){return this.notes.forEach(function(e){e.time*=t,e.duration*=t}),this}},{key:"slice",value:function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,n=arguments.length>1&&void 0!==arguments[1]?arguments[1]:this.duration,r=Math.max(this.notes.findIndex(function(t){return t.time>=e}),0),i=this.notes.findIndex(function(t){return t.noteOff>=n})+1,a=new t(this.name);return a.notes=this.notes.slice(r,i),a.notes.forEach(function(t){return t.time=t.time-e}),a}},{key:"encode",value:function(t,e){function r(t){var e=Math.floor(i*t),n=Math.max(e-a,0);return a=e,n}var i=e.PPQ/(60/e.bpm),a=0,s=Math.max(0,this.channelNumber);-1!==this.instrumentNumber&&t.instrument(s,this.instrumentNumber),n.i(o.a)(this.noteOns.sort(function(t,e){return t.time-e.time}),function(e){t.addNoteOn(s,e.name,r(e.time),Math.floor(127*e.velocity))},this.noteOffs.sort(function(t,e){return t.time-e.time}),function(e){t.addNoteOff(s,e.name,r(e.time))})}},{key:"toJSON",value:function(){var t={startTime:this.startTime,duration:this.duration,length:this.length,notes:[],controlChanges:{}};return void 0!==this.id&&(t.id=this.id),t.name=this.name,-1!==this.instrumentNumber&&(t.instrumentNumber=this.instrumentNumber,t.instrument=this.instrument,t.instrumentFamily=this.instrumentFamily),-1!==this.channelNumber&&(t.channelNumber=this.channelNumber,t.isPercussion=this.isPercussion),this.notes.length&&(t.notes=this.notes.map(function(t){return t.toJSON()})),Object.keys(this.controlChanges).length&&(t.controlChanges=this.controlChanges),t}},{key:"noteOns",get:function(){var t=[];return this.notes.forEach(function(e){t.push({time:e.noteOn,midi:e.midi,name:e.name,velocity:e.velocity})}),t}},{key:"noteOffs",get:function(){var t=[];return this.notes.forEach(function(e){t.push({time:e.noteOff,midi:e.midi,name:e.name})}),t}},{key:"length",get:function(){return this.notes.length}},{key:"startTime",get:function(){if(this.notes.length){return this.notes[0].noteOn}return 0}},{key:"duration",get:function(){if(this.notes.length){return this.notes[this.notes.length-1].noteOff}return 0}},{key:"instrument",get:function(){return this.isPercussion?u.c[this.instrumentNumber]:u.a[this.instrumentNumber]},set:function(t){var e=u.a.indexOf(t);-1!==e&&(this.instrumentNumber=e)}},{key:"isPercussion",get:function(){return[9,10].includes(this.channelNumber)}},{key:"instrumentFamily",get:function(){return this.isPercussion?"drums":u.b[Math.floor(this.instrumentNumber/8)]}}]),t}()},function(t,e,n){(function(t){var n={};!function(t){var e=t.DEFAULT_VOLUME=90,n=(t.DEFAULT_DURATION=128,t.DEFAULT_CHANNEL=0,{midi_letter_pitches:{a:21,b:23,c:12,d:14,e:16,f:17,g:19},midiPitchFromNote:function(t){var e=/([a-g])(#+|b+)?([0-9]+)$/i.exec(t),r=e[1].toLowerCase(),i=e[2]||"";return 12*parseInt(e[3],10)+n.midi_letter_pitches[r]+("#"==i.substr(0,1)?1:-1)*i.length},ensureMidiPitch:function(t){return"number"!=typeof t&&/[^0-9]/.test(t)?n.midiPitchFromNote(t):parseInt(t,10)},midi_pitches_letter:{12:"c",13:"c#",14:"d",15:"d#",16:"e",17:"f",18:"f#",19:"g",20:"g#",21:"a",22:"a#",23:"b"},midi_flattened_notes:{"a#":"bb","c#":"db","d#":"eb","f#":"gb","g#":"ab"},noteFromMidiPitch:function(t,e){var r,i=0,a=t,e=e||!1;return t>23&&(i=Math.floor(t/12)-1,a=t-12*i),r=n.midi_pitches_letter[a],e&&r.indexOf("#")>0&&(r=n.midi_flattened_notes[r]),r+i},mpqnFromBpm:function(t){var e=Math.floor(6e7/t),n=[];do{n.unshift(255&e),e>>=8}while(e);for(;n.length<3;)n.push(0);return n},bpmFromMpqn:function(t){var e=t;if(void 0!==t[0]){e=0;for(var n=0,r=t.length-1;r>=0;++n,--r)e|=t[n]<<r}return Math.floor(6e7/t)},codes2Str:function(t){return String.fromCharCode.apply(null,t)},str2Bytes:function(t,e){if(e)for(;t.length/2<e;)t="0"+t;for(var n=[],r=t.length-1;r>=0;r-=2){var i=0===r?t[r]:t[r-1]+t[r];n.unshift(parseInt(i,16))}return n},translateTickTime:function(t){for(var e=127&t;t>>=7;)e<<=8,e|=127&t|128;for(var n=[];;){if(n.push(255&e),!(128&e))break;e>>=8}return n}}),r=function(t){if(!this)return new r(t);!t||null===t.type&&void 0===t.type||null===t.channel&&void 0===t.channel||null===t.param1&&void 0===t.param1||(this.setTime(t.time),this.setType(t.type),this.setChannel(t.channel),this.setParam1(t.param1),this.setParam2(t.param2))};r.NOTE_OFF=128,r.NOTE_ON=144,r.AFTER_TOUCH=160,r.CONTROLLER=176,r.PROGRAM_CHANGE=192,r.CHANNEL_AFTERTOUCH=208,r.PITCH_BEND=224,r.prototype.setTime=function(t){this.time=n.translateTickTime(t||0)},r.prototype.setType=function(t){if(t<r.NOTE_OFF||t>r.PITCH_BEND)throw new Error("Trying to set an unknown event: "+t);this.type=t},r.prototype.setChannel=function(t){if(t<0||t>15)throw new Error("Channel is out of bounds.");this.channel=t},r.prototype.setParam1=function(t){this.param1=t},r.prototype.setParam2=function(t){this.param2=t},r.prototype.toBytes=function(){var t=[],e=this.type|15&this.channel;return t.push.apply(t,this.time),t.push(e),t.push(this.param1),void 0!==this.param2&&null!==this.param2&&t.push(this.param2),t};var i=function(t){if(!this)return new i(t);this.setTime(t.time),this.setType(t.type),this.setData(t.data)};i.SEQUENCE=0,i.TEXT=1,i.COPYRIGHT=2,i.TRACK_NAME=3,i.INSTRUMENT=4,i.LYRIC=5,i.MARKER=6,i.CUE_POINT=7,i.CHANNEL_PREFIX=32,i.END_OF_TRACK=47,i.TEMPO=81,i.SMPTE=84,i.TIME_SIG=88,i.KEY_SIG=89,i.SEQ_EVENT=127,i.prototype.setTime=function(t){this.time=n.translateTickTime(t||0)},i.prototype.setType=function(t){this.type=t},i.prototype.setData=function(t){this.data=t},i.prototype.toBytes=function(){if(!this.type)throw new Error("Type for meta-event not specified.");var t=[];if(t.push.apply(t,this.time),t.push(255,this.type),Array.isArray(this.data))t.push(this.data.length),t.push.apply(t,this.data);else if("number"==typeof this.data)t.push(1,this.data);else if(null!==this.data&&void 0!==this.data){t.push(this.data.length);var e=this.data.split("").map(function(t){return t.charCodeAt(0)});t.push.apply(t,e)}else t.push(0);return t};var a=function(t){if(!this)return new a(t);var e=t||{};this.events=e.events||[]};a.START_BYTES=[77,84,114,107],a.END_BYTES=[0,255,47,0],a.prototype.addEvent=function(t){return this.events.push(t),this},a.prototype.addNoteOn=a.prototype.noteOn=function(t,i,a,o){return this.events.push(new r({type:r.NOTE_ON,channel:t,param1:n.ensureMidiPitch(i),param2:o||e,time:a||0})),this},a.prototype.addNoteOff=a.prototype.noteOff=function(t,i,a,o){return this.events.push(new r({type:r.NOTE_OFF,channel:t,param1:n.ensureMidiPitch(i),param2:o||e,time:a||0})),this},a.prototype.addNote=a.prototype.note=function(t,e,n,r,i){return this.noteOn(t,e,r,i),n&&this.noteOff(t,e,n,i),this},a.prototype.addChord=a.prototype.chord=function(t,e,n,r){if(!Array.isArray(e)&&!e.length)throw new Error("Chord must be an array of pitches");return e.forEach(function(e){this.noteOn(t,e,0,r)},this),e.forEach(function(e,r){0===r?this.noteOff(t,e,n):this.noteOff(t,e)},this),this},a.prototype.setInstrument=a.prototype.instrument=function(t,e,n){return this.events.push(new r({type:r.PROGRAM_CHANGE,channel:t,param1:e,time:n||0})),this},a.prototype.setTempo=a.prototype.tempo=function(t,e){return this.events.push(new i({type:i.TEMPO,data:n.mpqnFromBpm(t),time:e||0})),this},a.prototype.toBytes=function(){var t=0,e=[],r=a.START_BYTES,i=a.END_BYTES,o=function(n){var r=n.toBytes();t+=r.length,e.push.apply(e,r)};this.events.forEach(o),t+=i.length;var s=n.str2Bytes(t.toString(16),4);return r.concat(s,e,i)};var o=function(t){if(!this)return new o(t);var e=t||{};if(e.ticks){if("number"!=typeof e.ticks)throw new Error("Ticks per beat must be a number!");if(e.ticks<=0||e.ticks>=32768||e.ticks%1!=0)throw new Error("Ticks per beat must be an integer between 1 and 32767!")}this.ticks=e.ticks||128,this.tracks=e.tracks||[]};o.HDR_CHUNKID="MThd",o.HDR_CHUNK_SIZE="\0\0\0",o.HDR_TYPE0="\0\0",o.HDR_TYPE1="\0",o.prototype.addTrack=function(t){return t?(this.tracks.push(t),this):(t=new a,this.tracks.push(t),t)},o.prototype.toBytes=function(){var t=this.tracks.length.toString(16),e=o.HDR_CHUNKID+o.HDR_CHUNK_SIZE;return parseInt(t,16)>1?e+=o.HDR_TYPE1:e+=o.HDR_TYPE0,e+=n.codes2Str(n.str2Bytes(t,2)),e+=String.fromCharCode(this.ticks/256,this.ticks%256),this.tracks.forEach(function(t){e+=n.codes2Str(t.toBytes())}),e},t.Util=n,t.File=o,t.Track=a,t.Event=r,t.MetaEvent=i}(n),void 0!==t&&null!==t?t.exports=n:void 0!==e&&null!==e?e=n:this.Midi=n}).call(e,n(12)(t))},function(t,e){function n(t){function e(t){var e=t.read(4),n=t.readInt32();return{id:e,length:n,data:t.read(n)}}var n;stream=r(t);var i=e(stream);if("MThd"!=i.id||6!=i.length)throw"Bad .mid file - header not found";var a=r(i.data),o=a.readInt16(),s=a.readInt16(),u=a.readInt16();if(32768&u)throw"Expressing time division in SMTPE frames is not supported yet";ticksPerBeat=u;for(var c={formatType:o,trackCount:s,ticksPerBeat:ticksPerBeat},h=[],f=0;f<c.trackCount;f++){h[f]=[];var d=e(stream);if("MTrk"!=d.id)throw"Unexpected chunk - expected MTrk, got "+d.id;for(var l=r(d.data);!l.eof();){var p=function(t){var e={};e.deltaTime=t.readVarInt();var r=t.readInt8();if(240==(240&r)){if(255==r){e.type="meta";var i=t.readInt8(),a=t.readVarInt();switch(i){case 0:if(e.subtype="sequenceNumber",2!=a)throw"Expected length for sequenceNumber event is 2, got "+a;return e.number=t.readInt16(),e;case 1:return e.subtype="text",e.text=t.read(a),e;case 2:return e.subtype="copyrightNotice",e.text=t.read(a),e;case 3:return e.subtype="trackName",e.text=t.read(a),e;case 4:return e.subtype="instrumentName",e.text=t.read(a),e;case 5:return e.subtype="lyrics",e.text=t.read(a),e;case 6:return e.subtype="marker",e.text=t.read(a),e;case 7:return e.subtype="cuePoint",e.text=t.read(a),e;case 32:if(e.subtype="midiChannelPrefix",1!=a)throw"Expected length for midiChannelPrefix event is 1, got "+a;return e.channel=t.readInt8(),e;case 47:if(e.subtype="endOfTrack",0!=a)throw"Expected length for endOfTrack event is 0, got "+a;return e;case 81:if(e.subtype="setTempo",3!=a)throw"Expected length for setTempo event is 3, got "+a;return e.microsecondsPerBeat=(t.readInt8()<<16)+(t.readInt8()<<8)+t.readInt8(),e;case 84:if(e.subtype="smpteOffset",5!=a)throw"Expected length for smpteOffset event is 5, got "+a;var o=t.readInt8();return e.frameRate={0:24,32:25,64:29,96:30}[96&o],e.hour=31&o,e.min=t.readInt8(),e.sec=t.readInt8(),e.frame=t.readInt8(),e.subframe=t.readInt8(),e;case 88:if(e.subtype="timeSignature",4!=a)throw"Expected length for timeSignature event is 4, got "+a;return e.numerator=t.readInt8(),e.denominator=Math.pow(2,t.readInt8()),e.metronome=t.readInt8(),e.thirtyseconds=t.readInt8(),e;case 89:if(e.subtype="keySignature",2!=a)throw"Expected length for keySignature event is 2, got "+a;return e.key=t.readInt8(!0),e.scale=t.readInt8(),e;case 127:return e.subtype="sequencerSpecific",e.data=t.read(a),e;default:return e.subtype="unknown",e.data=t.read(a),e}return e.data=t.read(a),e}if(240==r){e.type="sysEx";var a=t.readVarInt();return e.data=t.read(a),e}if(247==r){e.type="dividedSysEx";var a=t.readVarInt();return e.data=t.read(a),e}throw"Unrecognised MIDI event type byte: "+r}var s;0==(128&r)?(s=r,r=n):(s=t.readInt8(),n=r);var u=r>>4;switch(e.channel=15&r,e.type="channel",u){case 8:return e.subtype="noteOff",e.noteNumber=s,e.velocity=t.readInt8(),e;case 9:return e.noteNumber=s,e.velocity=t.readInt8(),0==e.velocity?e.subtype="noteOff":e.subtype="noteOn",e;case 10:return e.subtype="noteAftertouch",e.noteNumber=s,e.amount=t.readInt8(),e;case 11:return e.subtype="controller",e.controllerType=s,e.value=t.readInt8(),e;case 12:return e.subtype="programChange",e.programNumber=s,e;case 13:return e.subtype="channelAftertouch",e.amount=s,e;case 14:return e.subtype="pitchBend",e.value=s+(t.readInt8()<<7),e;default:throw"Unrecognised MIDI event type: "+u}}(l);h[f].push(p)}}return{header:c,tracks:h}}function r(t){function e(e){var n=t.substr(s,e);return s+=e,n}function n(){var e=(t.charCodeAt(s)<<24)+(t.charCodeAt(s+1)<<16)+(t.charCodeAt(s+2)<<8)+t.charCodeAt(s+3);return s+=4,e}function r(){var e=(t.charCodeAt(s)<<8)+t.charCodeAt(s+1);return s+=2,e}function i(e){var n=t.charCodeAt(s);return e&&n>127&&(n-=256),s+=1,n}function a(){return s>=t.length}function o(){for(var t=0;;){var e=i();if(!(128&e))return t+e;t+=127&e,t<<=7}}var s=0;return{eof:a,read:e,readInt32:n,readInt16:r,readInt8:i,readVarInt:o}}t.exports=function(t){return n(t)}},function(t,e){t.exports=function(t){return t.webpackPolyfill||(t.deprecate=function(){},t.paths=[],t.children||(t.children=[]),Object.defineProperty(t,"loaded",{enumerable:!0,get:function(){return t.l}}),Object.defineProperty(t,"id",{enumerable:!0,get:function(){return t.i}}),t.webpackPolyfill=1),t}}])});
 	//# sourceMappingURL=MidiConvert.js.map
 
 /***/ }),
-/* 94 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	!function(t,e){ true?module.exports=e():"function"==typeof define&&define.amd?define([],e):"object"==typeof exports?exports.Midi=e():t.Midi=e()}("undefined"!=typeof self?self:this,function(){return function(t){var e={};function r(n){if(e[n])return e[n].exports;var i=e[n]={i:n,l:!1,exports:{}};return t[n].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=t,r.c=e,r.d=function(t,e,n){r.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:n})},r.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},r.t=function(t,e){if(1&e&&(t=r(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var i in t)r.d(n,i,function(e){return t[e]}.bind(null,i));return n},r.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return r.d(e,"a",e),e},r.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},r.p="",r(r.s=1)}([function(t,e,r){var n,i,a;i=[e,r(2),r(1)],void 0===(a="function"==typeof(n=function(t,e,r){"use strict";function n(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}Object.defineProperty(t,"__esModule",{value:!0}),t.Header=void 0;var i=new WeakMap,a=function(){function t(e){var r=this;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),i.set(this,480),this.tempos=[],this.timeSignatures=[],this.name="",this.meta=[],e&&(i.set(this,e.header.ticksPerBeat),e.tracks[0].forEach(function(t){t.meta&&("timeSignature"===t.type?r.timeSignatures.push({ticks:t.absoluteTime,timeSignature:[t.numerator,t.denominator]}):"setTempo"===t.type?r.tempos.push({ticks:t.absoluteTime,bpm:6e7/t.microsecondsPerBeat}):"trackName"===t.type?r.name=t.text:"endOfTrack"!==t.type&&r.meta.push({type:t.type,text:t.text,ticks:t.absoluteTime}))}),this.update())}return r=t,(a=[{key:"update",value:function(){var t=this,e=0,r=0;this.tempos.sort(function(t,e){return t.ticks-e.ticks}),this.tempos.forEach(function(n,i){var a=i>0?t.tempos[i-1].bpm:t.tempos[0].bpm,o=n.ticks/t.ppq-r,s=60/a*o;n.time=s+e,e=n.time,r+=o}),this.timeSignatures.sort(function(t,e){return t.ticks-e.ticks}),this.timeSignatures.forEach(function(e,r){var n=r>0?t.timeSignatures[r-1]:t.timeSignatures[0],i=(e.ticks-n.ticks)/t.ppq,a=i/n.timeSignature[0]/(n.timeSignature[1]/4);n.measures=n.measures||0,e.measures=a+n.measures})}},{key:"ticksToSeconds",value:function(t){var r=(0,e.search)(this.tempos,t);if(-1!==r){var n=this.tempos[r],i=n.time,a=(t-n.ticks)/this.ppq;return i+60/n.bpm*a}var o=t/this.ppq;return.5*o}},{key:"ticksToMeasures",value:function(t){var r=(0,e.search)(this.timeSignatures,t);if(-1!==r){var n=this.timeSignatures[r],i=(t-n.ticks)/this.ppq;return n.measures+i/(n.timeSignature[0]/n.timeSignature[1])/4}return t/this.ppq/4}},{key:"secondsToTicks",value:function(t){var r=(0,e.search)(this.tempos,t,"time");if(-1!==r){var n=this.tempos[r],i=n.time,a=t-i,o=a/(60/n.bpm);return Math.round(n.ticks+o*this.ppq)}var s=t/.5;return Math.round(s*this.ppq)}},{key:"toJSON",value:function(){return{name:this.name,ppq:this.ppq,meta:this.meta,tempos:this.tempos.map(function(t){return{ticks:t.ticks,bpm:t.bpm}}),timeSignatures:this.timeSignatures}}},{key:"fromJSON",value:function(t){this.name=t.name,this.tempos=t.tempos.map(function(t){return Object.assign({},t)}),this.timeSignatures=t.timeSignatures.map(function(t){return Object.assign({},t)}),this.meta=t.meta.map(function(t){return Object.assign({},t)}),i.set(this,t.ppq),this.update()}},{key:"ppq",get:function(){return i.get(this)}}])&&n(r.prototype,a),o&&n(r,o),t;var r,a,o}();t.Header=a})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e,r(3),r(0),r(4),r(12)],void 0===(a="function"==typeof(n=function(t,e,r,n,i){"use strict";function a(t){return function(t){if(Array.isArray(t)){for(var e=0,r=new Array(t.length);e<t.length;e++)r[e]=t[e];return r}}(t)||function(t){if(Symbol.iterator in Object(t)||"[object Arguments]"===Object.prototype.toString.call(t))return Array.from(t)}(t)||function(){throw new TypeError("Invalid attempt to spread non-iterable instance")}()}function o(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}function s(t,e,r){return e&&o(t.prototype,e),r&&o(t,r),t}Object.defineProperty(t,"__esModule",{value:!0}),t.Midi=void 0;var c=function(){function t(i){var a=this;!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t);var o=null;i&&(i instanceof ArrayBuffer&&(i=new Uint8Array(i)),(o=(0,e.parseMidi)(i)).tracks.forEach(function(t){var e=0;t.forEach(function(t){e+=t.deltaTime,t.absoluteTime=e})})),this.header=new r.Header(o),this.tracks=[],i&&(this.tracks=o.tracks.map(function(t){return new n.Track(t,a.header)}),1===o.header.format&&0===this.tracks[0].duration&&this.tracks.shift())}return s(t,null,[{key:"fromUrl",value:function(e){return fetch(e).then(function(t){if(t.ok)return t.arrayBuffer();throw new Error("could not load ".concat(e))}).then(function(e){return new t(e)})}}]),s(t,[{key:"addTrack",value:function(){var t=new n.Track(void 0,this.header);return this.tracks.push(t),t}},{key:"toArray",value:function(){return(0,i.encode)(this)}},{key:"toJSON",value:function(){return{header:this.header.toJSON(),tracks:this.tracks.map(function(t){return t.toJSON()})}}},{key:"fromJSON",value:function(t){var e=this;this.header=new r.Header,this.header.fromJSON(t.header),this.tracks=t.tracks.map(function(t){var r=new n.Track(void 0,e.header);return r.fromJSON(t),r})}},{key:"clone",value:function(){var e=new t;return e.fromJSON(this.toJSON()),e}},{key:"name",get:function(){return this.header.name},set:function(t){this.header.name=t}},{key:"duration",get:function(){var t=this.tracks.map(function(t){return t.duration});return Math.max.apply(Math,a(t))}},{key:"durationTicks",get:function(){var t=this.tracks.map(function(t){return t.durationTicks});return Math.max.apply(Math,a(t))}}]),t}();t.Midi=c})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e],void 0===(a="function"==typeof(n=function(t){"use strict";function e(t,e){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"ticks",n=0,i=t.length,a=i;if(i>0&&t[i-1][r]<=e)return i-1;for(;n<a;){var o=Math.floor(n+(a-n)/2),s=t[o],c=t[o+1];if(s[r]===e){for(var u=o;u<t.length;u++){var f=t[u];f[r]===e&&(o=u)}return o}if(s[r]<e&&c[r]>e)return o;s[r]>e?a=o:s[r]<e&&(n=o+1)}return-1}Object.defineProperty(t,"__esModule",{value:!0}),t.insert=function(t,r){var n=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"ticks";if(t.length){var i=e(t,r[n],n);t.splice(i+1,0,r)}else t.push(r)},t.search=e})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){e.parseMidi=r(6),e.writeMidi=r(7)},function(t,e,r){var n,i,a;i=[e,r(8),r(5),r(2),r(9),r(11),r(0)],void 0===(a="function"==typeof(n=function(t,e,r,n,i,a,o){"use strict";function s(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}Object.defineProperty(t,"__esModule",{value:!0}),t.Track=void 0;var c=new WeakMap,u=function(){function t(e,r){var n=this;if(function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),c.set(this,r),this.name="",e){var o=e.find(function(t){return"trackName"===t.type});this.name=o?o.text:""}if(this.instrument=new i.Instrument(e,this),this.notes=[],this.channel=0,this.controlChanges=(0,a.ControlChanges)(),e){for(var s=e.filter(function(t){return"noteOn"===t.type}),u=e.filter(function(t){return"noteOff"===t.type}),f=function(){var t=s.shift(),e=u.findIndex(function(e){return e.noteNumber===t.noteNumber});if(-1!==e){var r=u.splice(e,1)[0];n.addNote({midi:t.noteNumber,ticks:t.absoluteTime,velocity:t.velocity/127,durationTicks:r.absoluteTime-t.absoluteTime,noteOffVelocity:r.velocity/127})}};s.length;)f();var h=e.filter(function(t){return"controller"===t.type});h.forEach(function(t){n.addCC({number:t.controllerType,value:t.value/127,ticks:t.absoluteTime})})}}return o=t,(u=[{key:"addNote",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},r=c.get(this),i=new e.Note({midi:0,ticks:0,velocity:1},{ticks:0,velocity:0},r);return Object.assign(i,t),(0,n.insert)(this.notes,i,"ticks"),this}},{key:"addCC",value:function(t){var e=c.get(this),i=new r.ControlChange({controllerType:t.number},e);return delete t.number,Object.assign(i,t),Array.isArray(this.controlChanges[i.number])||(this.controlChanges[i.number]=[]),(0,n.insert)(this.controlChanges[i.number],i,"ticks"),this}},{key:"fromJSON",value:function(t){var e=this;for(var r in this.name=t.name,this.channel=t.channel,this.instrument=new i.Instrument(void 0,this),this.instrument.fromJSON(t.instrument),t.controlChanges)t.controlChanges[r].forEach(function(t){e.addCC({number:t.number,value:t.value,ticks:t.ticks})});t.notes.forEach(function(t){e.addNote({ticks:t.ticks,durationTicks:t.durationTicks,velocity:t.velocity,midi:t.midi})})}},{key:"toJSON",value:function(){for(var t={},e=0;e<127;e++)this.controlChanges.hasOwnProperty(e)&&(t[e]=this.controlChanges[e].map(function(t){return t.toJSON()}));return{name:this.name,channel:this.channel,instrument:this.instrument.toJSON(),notes:this.notes.map(function(t){return t.toJSON()}),controlChanges:t}}},{key:"duration",get:function(){var t=this.notes[this.notes.length-1];return t?t.time+t.duration:0}},{key:"durationTicks",get:function(){var t=this.notes[this.notes.length-1];return t?t.ticks+t.durationTicks:0}}])&&s(o.prototype,u),f&&s(o,f),t;var o,u,f}();t.Track=u})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e,r(0)],void 0===(a="function"==typeof(n=function(t,e){"use strict";function r(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}Object.defineProperty(t,"__esModule",{value:!0}),t.ControlChange=t.controlChangeIds=t.controlChangeNames=void 0;var n={1:"modulationWheel",2:"breath",4:"footController",5:"portamentoTime",7:"volume",8:"balance",10:"pan",64:"sustain",65:"portamentoTime",66:"sostenuto",67:"softPedal",68:"legatoFootswitch",84:"portamentoControl"};t.controlChangeNames=n;var i=Object.keys(n).reduce(function(t,e){return t[n[e]]=e,t},{});t.controlChangeIds=i;var a=new WeakMap,o=new WeakMap,s=function(){function t(e,r){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),a.set(this,r),o.set(this,e.controllerType),this.ticks=e.absoluteTime,this.value=e.value}return e=t,(i=[{key:"toJSON",value:function(){return{number:this.number,value:this.value,time:this.time,ticks:this.ticks}}},{key:"number",get:function(){return o.get(this)}},{key:"name",get:function(){return n[this.number]?n[this.number]:null}},{key:"time",get:function(){var t=a.get(this);return t.ticksToSeconds(this.ticks)},set:function(t){var e=a.get(this);this.ticks=e.secondsToTicks(t)}}])&&r(e.prototype,i),s&&r(e,s),t;var e,i,s}();t.ControlChange=s})?n.apply(e,i):n)||(t.exports=a)},function(t,e){function r(t){for(var e,r=new n(t),i=[];!r.eof();){var a=o();i.push(a)}return i;function o(){var t={};t.deltaTime=r.readVarInt();var n=r.readUInt8();if(240==(240&n)){if(255!==n){if(240==n){t.type="sysEx";a=r.readVarInt();return t.data=r.readBytes(a),t}if(247==n){t.type="endSysEx";a=r.readVarInt();return t.data=r.readBytes(a),t}throw"Unrecognised MIDI event type byte: "+n}t.meta=!0;var i=r.readUInt8(),a=r.readVarInt();switch(i){case 0:if(t.type="sequenceNumber",2!==a)throw"Expected length for sequenceNumber event is 2, got "+a;return t.number=stream.readUInt16(),t;case 1:return t.type="text",t.text=r.readString(a),t;case 2:return t.type="copyrightNotice",t.text=r.readString(a),t;case 3:return t.type="trackName",t.text=r.readString(a),t;case 4:return t.type="instrumentName",t.text=r.readString(a),t;case 5:return t.type="lyrics",t.text=r.readString(a),t;case 6:return t.type="marker",t.text=r.readString(a),t;case 7:return t.type="cuePoint",t.text=r.readString(a),t;case 32:if(t.type="channelPrefix",1!=a)throw"Expected length for channelPrefix event is 1, got "+a;return t.channel=r.readUInt8(),t;case 33:if(t.type="portPrefix",1!=a)throw"Expected length for portPrefix event is 1, got "+a;return t.port=r.readUInt8(),t;case 47:if(t.type="endOfTrack",0!=a)throw"Expected length for endOfTrack event is 0, got "+a;return t;case 81:if(t.type="setTempo",3!=a)throw"Expected length for setTempo event is 3, got "+a;return t.microsecondsPerBeat=r.readUInt24(),t;case 84:if(t.type="smpteOffset",5!=a)throw"Expected length for smpteOffset event is 5, got "+a;var o=r.readUInt8();return t.frameRate={0:24,32:25,64:29,96:30}[96&o],t.hour=31&o,t.min=r.readUInt8(),t.sec=r.readUInt8(),t.frame=r.readUInt8(),t.subFrame=r.readUInt8(),t;case 88:if(t.type="timeSignature",4!=a)throw"Expected length for timeSignature event is 4, got "+a;return t.numerator=r.readUInt8(),t.denominator=1<<r.readUInt8(),t.metronome=r.readUInt8(),t.thirtyseconds=r.readUInt8(),t;case 89:if(t.type="keySignature",2!=a)throw"Expected length for keySignature event is 2, got "+a;return t.key=r.readInt8(),t.scale=r.readUInt8(),t;case 127:return t.type="sequencerSpecific",t.data=r.readBytes(a),t;default:return t.type="unknownMeta",t.data=r.readBytes(a),t.metatypeByte=i,t}}else{var s;if(0==(128&n)){if(null===e)throw"Running status byte encountered before status byte";s=n,n=e,t.running=!0}else s=r.readUInt8(),e=n;var c=n>>4;switch(t.channel=15&n,c){case 8:return t.type="noteOff",t.noteNumber=s,t.velocity=r.readUInt8(),t;case 9:var u=r.readUInt8();return t.type=0===u?"noteOff":"noteOn",t.noteNumber=s,t.velocity=u,0===u&&(t.byte9=!0),t;case 10:return t.type="noteAftertouch",t.noteNumber=s,t.amount=r.readUInt8(),t;case 11:return t.type="controller",t.controllerType=s,t.value=r.readUInt8(),t;case 12:return t.type="programChange",t.programNumber=s,t;case 13:return t.type="channelAftertouch",t.amount=s,t;case 14:return t.type="pitchBend",t.value=s+(r.readUInt8()<<7)-8192,t;default:throw"Unrecognised MIDI event type: "+c}}}}function n(t){this.buffer=t,this.bufferLen=this.buffer.length,this.pos=0}n.prototype.eof=function(){return this.pos>=this.bufferLen},n.prototype.readUInt8=function(){var t=this.buffer[this.pos];return this.pos+=1,t},n.prototype.readInt8=function(){var t=this.readUInt8();return 128&t?t-256:t},n.prototype.readUInt16=function(){return(this.readUInt8()<<8)+this.readUInt8()},n.prototype.readInt16=function(){var t=this.readUInt16();return 32768&t?t-65536:t},n.prototype.readUInt24=function(){return(this.readUInt8()<<16)+(this.readUInt8()<<8)+this.readUInt8()},n.prototype.readInt24=function(){var t=this.readUInt24();return 8388608&t?t-16777216:t},n.prototype.readUInt32=function(){return(this.readUInt8()<<24)+(this.readUInt8()<<16)+(this.readUInt8()<<8)+this.readUInt8()},n.prototype.readBytes=function(t){var e=this.buffer.slice(this.pos,this.pos+t);return this.pos+=t,e},n.prototype.readString=function(t){var e=this.readBytes(t);return String.fromCharCode.apply(null,e)},n.prototype.readVarInt=function(){for(var t=0;!this.eof();){var e=this.readUInt8();if(!(128&e))return t+e;t+=127&e,t<<=7}return t},n.prototype.readChunk=function(){var t=this.readString(4),e=this.readUInt32();return{id:t,length:e,data:this.readBytes(e)}},t.exports=function(t){var e=new n(t),i=e.readChunk();if("MThd"!=i.id)throw"Bad MIDI file.  Expected 'MHdr', got: '"+i.id+"'";for(var a=function(t){var e=new n(t),r=e.readUInt16(),i=e.readUInt16(),a={format:r,numTracks:i},o=e.readUInt16();return 32768&o?(a.framesPerSecond=256-(o>>8),a.ticksPerFrame=255&o):a.ticksPerBeat=o,a}(i.data),o=[],s=0;!e.eof()&&s<a.numTracks;s++){var c=e.readChunk();if("MTrk"!=c.id)throw"Bad MIDI file.  Expected 'MTrk', got: '"+c.id+"'";var u=r(c.data);o.push(u)}return{header:a,tracks:o}}},function(t,e){function r(t,e,r){var a,o=new i,s=e.length,c=null;for(a=0;a<s;a++)!1!==r.running&&(r.running||e[a].running)||(c=null),c=n(o,e[a],c,r.useByte9ForNoteOff);t.writeChunk("MTrk",o.buffer)}function n(t,e,r,n){var i=e.type,a=e.deltaTime,o=e.text||"",s=e.data||[],c=null;switch(t.writeVarInt(a),i){case"sequenceNumber":t.writeUInt8(255),t.writeUInt8(0),t.writeVarInt(2),t.writeUInt16(e.number);break;case"text":t.writeUInt8(255),t.writeUInt8(1),t.writeVarInt(o.length),t.writeString(o);break;case"copyrightNotice":t.writeUInt8(255),t.writeUInt8(2),t.writeVarInt(o.length),t.writeString(o);break;case"trackName":t.writeUInt8(255),t.writeUInt8(3),t.writeVarInt(o.length),t.writeString(o);break;case"instrumentName":t.writeUInt8(255),t.writeUInt8(4),t.writeVarInt(o.length),t.writeString(o);break;case"lyrics":t.writeUInt8(255),t.writeUInt8(5),t.writeVarInt(o.length),t.writeString(o);break;case"marker":t.writeUInt8(255),t.writeUInt8(6),t.writeVarInt(o.length),t.writeString(o);break;case"cuePoint":t.writeUInt8(255),t.writeUInt8(7),t.writeVarInt(o.length),t.writeString(o);break;case"channelPrefix":t.writeUInt8(255),t.writeUInt8(32),t.writeVarInt(1),t.writeUInt8(e.channel);break;case"portPrefix":t.writeUInt8(255),t.writeUInt8(33),t.writeVarInt(1),t.writeUInt8(e.port);break;case"endOfTrack":t.writeUInt8(255),t.writeUInt8(47),t.writeVarInt(0);break;case"setTempo":t.writeUInt8(255),t.writeUInt8(81),t.writeVarInt(3),t.writeUInt24(e.microsecondsPerBeat);break;case"smpteOffset":t.writeUInt8(255),t.writeUInt8(84),t.writeVarInt(5);var u=31&e.hour|{24:0,25:32,29:64,30:96}[e.frameRate];t.writeUInt8(u),t.writeUInt8(e.min),t.writeUInt8(e.sec),t.writeUInt8(e.frame),t.writeUInt8(e.subFrame);break;case"timeSignature":t.writeUInt8(255),t.writeUInt8(88),t.writeVarInt(4),t.writeUInt8(e.numerator);var f=255&Math.floor(Math.log(e.denominator)/Math.LN2);t.writeUInt8(f),t.writeUInt8(e.metronome),t.writeUInt8(e.thirtyseconds||8);break;case"keySignature":t.writeUInt8(255),t.writeUInt8(89),t.writeVarInt(2),t.writeInt8(e.key),t.writeUInt8(e.scale);break;case"sequencerSpecific":t.writeUInt8(255),t.writeUInt8(127),t.writeVarInt(s.length),t.writeBytes(s);break;case"unknownMeta":null!=e.metatypeByte&&(t.writeUInt8(255),t.writeUInt8(e.metatypeByte),t.writeVarInt(s.length),t.writeBytes(s));break;case"sysEx":t.writeUInt8(240),t.writeVarInt(s.length),t.writeBytes(s);break;case"endSysEx":t.writeUInt8(247),t.writeVarInt(s.length),t.writeBytes(s);break;case"noteOff":(c=(!1!==n&&e.byte9||n&&0==e.velocity?144:128)|e.channel)!==r&&t.writeUInt8(c),t.writeUInt8(e.noteNumber),t.writeUInt8(e.velocity);break;case"noteOn":(c=144|e.channel)!==r&&t.writeUInt8(c),t.writeUInt8(e.noteNumber),t.writeUInt8(e.velocity);break;case"noteAftertouch":(c=160|e.channel)!==r&&t.writeUInt8(c),t.writeUInt8(e.noteNumber),t.writeUInt8(e.amount);break;case"controller":(c=176|e.channel)!==r&&t.writeUInt8(c),t.writeUInt8(e.controllerType),t.writeUInt8(e.value);break;case"programChange":(c=192|e.channel)!==r&&t.writeUInt8(c),t.writeUInt8(e.programNumber);break;case"channelAftertouch":(c=208|e.channel)!==r&&t.writeUInt8(c),t.writeUInt8(e.amount);break;case"pitchBend":(c=224|e.channel)!==r&&t.writeUInt8(c);var h=8192+e.value,l=127&h,p=h>>7&127;t.writeUInt8(l),t.writeUInt8(p);break;default:throw"Unrecognized event type: "+i}return c}function i(){this.buffer=[]}i.prototype.writeUInt8=function(t){this.buffer.push(255&t)},i.prototype.writeInt8=i.prototype.writeUInt8,i.prototype.writeUInt16=function(t){var e=t>>8&255,r=255&t;this.writeUInt8(e),this.writeUInt8(r)},i.prototype.writeInt16=i.prototype.writeUInt16,i.prototype.writeUInt24=function(t){var e=t>>16&255,r=t>>8&255,n=255&t;this.writeUInt8(e),this.writeUInt8(r),this.writeUInt8(n)},i.prototype.writeInt24=i.prototype.writeUInt24,i.prototype.writeUInt32=function(t){var e=t>>24&255,r=t>>16&255,n=t>>8&255,i=255&t;this.writeUInt8(e),this.writeUInt8(r),this.writeUInt8(n),this.writeUInt8(i)},i.prototype.writeInt32=i.prototype.writeUInt32,i.prototype.writeBytes=function(t){this.buffer=this.buffer.concat(Array.prototype.slice.call(t,0))},i.prototype.writeString=function(t){var e,r=t.length,n=[];for(e=0;e<r;e++)n.push(t.codePointAt(e));this.writeBytes(n)},i.prototype.writeVarInt=function(t){if(t<0)throw"Cannot write negative variable-length integer";if(t<=127)this.writeUInt8(t);else{var e=t,r=[];for(r.push(127&e),e>>=7;e;){var n=127&e|128;r.push(n),e>>=7}this.writeBytes(r.reverse())}},i.prototype.writeChunk=function(t,e){this.writeString(t),this.writeUInt32(e.length),this.writeBytes(e)},t.exports=function(t,e){if("object"!=typeof t)throw"Invalid MIDI data";e=e||{};var n,a=t.header||{},o=t.tracks||[],s=o.length,c=new i;for(function(t,e,r){var n=null==e.format?1:e.format,a=128;e.timeDivision?a=e.timeDivision:e.ticksPerFrame&&e.framesPerSecond?a=-(255&e.framesPerSecond)<<8|255&ticksPerFrame:e.ticksPerBeat&&(a=32767&e.ticksPerBeat);var o=new i;o.writeUInt16(n),o.writeUInt16(r),o.writeUInt16(a),t.writeChunk("MThd",o.buffer)}(c,a,s),n=0;n<s;n++)r(c,o[n],e);return c.buffer}},function(t,e,r){var n,i,a;i=[e,r(0),r(2)],void 0===(a="function"==typeof(n=function(t,e,r){"use strict";function n(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}function i(t){var e=t%12;return["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"][e]}Object.defineProperty(t,"__esModule",{value:!0}),t.Note=void 0;var a,o,s=(a=/^([a-g]{1}(?:b|#|x|bb)?)(-?[0-9]+)/i,o={cbb:-2,cb:-1,c:0,"c#":1,cx:2,dbb:0,db:1,d:2,"d#":3,dx:4,ebb:2,eb:3,e:4,"e#":5,ex:6,fbb:3,fb:4,f:5,"f#":6,fx:7,gbb:5,gb:6,g:7,"g#":8,gx:9,abb:7,ab:8,a:9,"a#":10,ax:11,bbb:9,bb:10,b:11,"b#":12,bx:13},function(t){var e=a.exec(t),r=e[1],n=e[2],i=o[r.toLowerCase()];return i+12*(parseInt(n)+1)}),c=new WeakMap,u=function(){function t(e,r,n){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),c.set(this,n),this.midi=e.midi,this.velocity=e.velocity,this.noteOffVelocity=r.velocity,this.ticks=e.ticks,this.durationTicks=r.ticks-e.ticks}return e=t,(r=[{key:"toJSON",value:function(){return{time:this.time,midi:this.midi,name:this.name,velocity:this.velocity,duration:this.duration,ticks:this.ticks,durationTicks:this.durationTicks}}},{key:"name",get:function(){return t=this.midi,e=Math.floor(t/12)-1,i(t)+e.toString();var t,e},set:function(t){this.midi=s(t)}},{key:"octave",get:function(){return Math.floor(this.midi/12)-1},set:function(t){var e=t-this.octave;this.midi+=12*e}},{key:"pitch",get:function(){return i(this.midi)},set:function(t){this.midi=12*(this.octave+1)+["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"].indexOf(t)}},{key:"duration",get:function(){var t=c.get(this);return t.ticksToSeconds(this.ticks+this.durationTicks)-t.ticksToSeconds(this.ticks)},set:function(t){var e=c.get(this),r=e.secondsToTicks(this.time+t);this.durationTicks=r-this.ticks}},{key:"time",get:function(){var t=c.get(this);return t.ticksToSeconds(this.ticks)},set:function(t){var e=c.get(this);this.ticks=e.secondsToTicks(t)}},{key:"bars",get:function(){var t=c.get(this);return t.ticksToMeasures(this.ticks)}}])&&n(e.prototype,r),a&&n(e,a),t;var e,r,a}();t.Note=u})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e,r(10),r(4)],void 0===(a="function"==typeof(n=function(t,e,r){"use strict";function n(t,e){for(var r=0;r<e.length;r++){var n=e[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(t,n.key,n)}}Object.defineProperty(t,"__esModule",{value:!0}),t.Instrument=void 0;var i=new WeakMap,a=function(){function t(e,r){if(function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),i.set(this,r),this.number=0,e){var n=e.find(function(t){return"programChange"===t.type});n&&(this.number=n.programNumber)}}return r=t,(a=[{key:"toJSON",value:function(){return{number:this.number,name:this.name,family:this.family}}},{key:"fromJSON",value:function(t){this.number=t.number}},{key:"name",get:function(){return this.percussion?e.drumKitByPatchID[this.number]:e.instrumentByPatchID[this.number]},set:function(t){var r=e.instrumentByPatchID.indexOf(t);-1!==r&&(this.number=r)}},{key:"family",get:function(){return this.percussion?"drums":e.instrumentFamilyByID[Math.floor(this.number/8)]}},{key:"percussion",get:function(){var t=i.get(this);return[9,10].includes(t.channel)}}])&&n(r.prototype,a),o&&n(r,o),t;var r,a,o}();t.Instrument=a})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e],void 0===(a="function"==typeof(n=function(t){"use strict";Object.defineProperty(t,"__esModule",{value:!0}),t.drumKitByPatchID=t.instrumentFamilyByID=t.instrumentByPatchID=void 0,t.instrumentByPatchID=["acoustic grand piano","bright acoustic piano","electric grand piano","honky-tonk piano","electric piano 1","electric piano 2","harpsichord","clavi","celesta","glockenspiel","music box","vibraphone","marimba","xylophone","tubular bells","dulcimer","drawbar organ","percussive organ","rock organ","church organ","reed organ","accordion","harmonica","tango accordion","acoustic guitar (nylon)","acoustic guitar (steel)","electric guitar (jazz)","electric guitar (clean)","electric guitar (muted)","overdriven guitar","distortion guitar","guitar harmonics","acoustic bass","electric bass (finger)","electric bass (pick)","fretless bass","slap bass 1","slap bass 2","synth bass 1","synth bass 2","violin","viola","cello","contrabass","tremolo strings","pizzicato strings","orchestral harp","timpani","string ensemble 1","string ensemble 2","synthstrings 1","synthstrings 2","choir aahs","voice oohs","synth voice","orchestra hit","trumpet","trombone","tuba","muted trumpet","french horn","brass section","synthbrass 1","synthbrass 2","soprano sax","alto sax","tenor sax","baritone sax","oboe","english horn","bassoon","clarinet","piccolo","flute","recorder","pan flute","blown bottle","shakuhachi","whistle","ocarina","lead 1 (square)","lead 2 (sawtooth)","lead 3 (calliope)","lead 4 (chiff)","lead 5 (charang)","lead 6 (voice)","lead 7 (fifths)","lead 8 (bass + lead)","pad 1 (new age)","pad 2 (warm)","pad 3 (polysynth)","pad 4 (choir)","pad 5 (bowed)","pad 6 (metallic)","pad 7 (halo)","pad 8 (sweep)","fx 1 (rain)","fx 2 (soundtrack)","fx 3 (crystal)","fx 4 (atmosphere)","fx 5 (brightness)","fx 6 (goblins)","fx 7 (echoes)","fx 8 (sci-fi)","sitar","banjo","shamisen","koto","kalimba","bag pipe","fiddle","shanai","tinkle bell","agogo","steel drums","woodblock","taiko drum","melodic tom","synth drum","reverse cymbal","guitar fret noise","breath noise","seashore","bird tweet","telephone ring","helicopter","applause","gunshot"],t.instrumentFamilyByID=["piano","chromatic percussion","organ","guitar","bass","strings","ensemble","brass","reed","pipe","synth lead","synth pad","synth effects","world","percussive","sound effects"],t.drumKitByPatchID={0:"standard kit",8:"room kit",16:"power kit",24:"electronic kit",25:"tr-808 kit",32:"jazz kit",40:"brush kit",48:"orchestra kit",56:"sound fx kit"}})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e,r(5)],void 0===(a="function"==typeof(n=function(t,e){"use strict";Object.defineProperty(t,"__esModule",{value:!0}),t.ControlChanges=function(){return new Proxy({},{get:function(t,r){return t[r]?t[r]:e.controlChangeIds.hasOwnProperty(r)?t[e.controlChangeIds[r]]:void 0},set:function(t,r,n){return e.controlChangeIds.hasOwnProperty(r)?t[e.controlChangeIds[r]]=n:t[r]=n,!0}})}})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){var n,i,a;i=[e,r(3),r(13),r(1)],void 0===(a="function"==typeof(n=function(t,e,r,n){"use strict";function i(t){return function(t){if(Array.isArray(t)){for(var e=0,r=new Array(t.length);e<t.length;e++)r[e]=t[e];return r}}(t)||function(t){if(Symbol.iterator in Object(t)||"[object Arguments]"===Object.prototype.toString.call(t))return Array.from(t)}(t)||function(){throw new TypeError("Invalid attempt to spread non-iterable instance")}()}var a;Object.defineProperty(t,"__esModule",{value:!0}),t.encode=function(t){var n={header:{ticksPerBeat:t.header.ppq,format:1,numTracks:t.tracks.length+1},tracks:[[{ticks:0,meta:!0,type:"trackName",text:t.header.name}].concat(i(t.header.meta.map(function(t){return{ticks:t.ticks,meta:!0,type:t.type,text:t.text}})),i(t.header.tempos.map(function(t){return{type:"setTempo",microsecondsPerBeat:Math.floor(6e7/t.bpm),ticks:t.ticks,meta:!0}})),i(t.header.timeSignatures.map(function(t){return{type:"timeSignature",meta:!0,ticks:t.ticks,numerator:t.timeSignature[0],denominator:t.timeSignature[1],metronome:24,thirtyseconds:8}})))].concat(i(t.tracks.map(function(t){for(var e=[],n=0;n<127;n++)t.controlChanges.hasOwnProperty(n)&&e.push(t.controlChanges[n].map(function(e){return{type:"controller",controllerType:e.number,value:Math.floor(127*e.value),channel:t.channel,ticks:e.ticks}}));return[{type:"trackName",text:t.name,meta:!0,ticks:0},{type:"programChange",ticks:0,channel:t.channel,programNumber:t.instrument.number}].concat(i((0,r.default)(t.notes.map(function(e){return[{type:"noteOn",channel:t.channel,noteNumber:e.midi,ticks:e.ticks,velocity:Math.floor(127*e.velocity)},{type:"noteOff",channel:t.channel,noteNumber:e.midi,ticks:e.ticks+e.durationTicks,velocity:Math.floor(127*e.noteOffVelocity)}]}))),i((0,r.default)(e)))})))};return n.tracks=n.tracks.map(function(t){t=t.sort(function(t,e){return t.ticks-e.ticks});var e=0;return t.forEach(function(t){t.deltaTime=t.ticks-e,e=t.ticks,delete t.ticks}),t.push({deltaTime:0,meta:!0,type:"endOfTrack"}),t}),new Uint8Array((0,e.writeMidi)(n))},r=(a=r)&&a.__esModule?a:{default:a}})?n.apply(e,i):n)||(t.exports=a)},function(t,e,r){"use strict";function n(t){return function t(e,r){for(var n=0;n<e.length;n++){var i=e[n];Array.isArray(i)?t(i,r):r.push(i)}return r}(t,[])}function i(t,e){if("number"!=typeof e)throw new TypeError("Expected the depth to be a number");return function t(e,r,n){n--;for(var i=0;i<e.length;i++){var a=e[i];n>-1&&Array.isArray(a)?t(a,r,n):r.push(a)}return r}(t,[],e)}t.exports=function(t){if(!Array.isArray(t))throw new TypeError("Expected value to be an array");return n(t)},t.exports.from=n,t.exports.depth=function(t,e){if(!Array.isArray(t))throw new TypeError("Expected value to be an array");return i(t,e)},t.exports.fromDepth=i}]).Midi});

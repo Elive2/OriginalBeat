@@ -190,8 +190,8 @@
 	// }
 
 
-	__webpack_require__.e/* require */(1, function(__webpack_require__) { var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(1), __webpack_require__(2), __webpack_require__(29), __webpack_require__(79), __webpack_require__(5),
-	        __webpack_require__(85), __webpack_require__(86), __webpack_require__(87), __webpack_require__(6), __webpack_require__(89), __webpack_require__(90), __webpack_require__(94)]; (function (domReady, Roll, Player, Interface, Transport, preludeInC,
+	__webpack_require__.e/* require */(1, function(__webpack_require__) { var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(1), __webpack_require__(2), __webpack_require__(29), __webpack_require__(106), __webpack_require__(5),
+	        __webpack_require__(112), __webpack_require__(113), __webpack_require__(114), __webpack_require__(6), __webpack_require__(116), __webpack_require__(117), __webpack_require__(121)]; (function (domReady, Roll, Player, Interface, Transport, preludeInC,
 	              StartAudioContext, mainStyle, Tone, Orientation, Overlay, Midi) {
 
 	        window.addEventListener("message", receiveMessage, false);
