@@ -148,8 +148,8 @@ def input_midi(request):
 
     fs = FileSystemStorage()
 
-    if(fs.exists(request.user.username + '_' + myfile.name)):
-                fs.delete(request.user.username + '_' + myfile.name)
+    if(fs.exists(uploaded_file_path)):
+                fs.delete(uploaded_file_path)
                 print("deleted file")
 
     mf = midi.translate.streamToMidiFile(midi_stream)

@@ -14,26 +14,43 @@
  * limitations under the License.
  */
 
-define(["Tone/core/Tone", "Tone/source/Oscillator", "Tone/instrument/PolySynth", "Tone/instrument/SimpleSynth"], 
-function (Tone, Oscillator, PolySynth, SimpleSynth) {
+define(["Tone/core/Tone", "Tone/source/Oscillator", "Tone/instrument/PolySynth", "Tone/instrument/FMSynth", "Tone/effect/JCReverb"],
+function (Tone, Oscillator, PolySynth, FMSynth,JCReverb) {
+
+
 
 	var Synth = function(){
 
-		this.synth = new PolySynth(8, SimpleSynth).set({
+		this.synth = new PolySynth(8, FMSynth).set({
 			"volume" : -8,
 			"oscillator" : {
-				"type" : "sine6"
-			}, 
-			"envelope" : {
-				"attack" :  0.015,
-				"decay" :  0.25,
-				"sustain" :  0.08,
-				"release" :  0.5,
+				"type" : "sine1"
 			},
+			"envelope" : {
+				"attack" :  0.01,
+				"decay" :  2,
+				"sustain" :  1,
+				"release" :  4,
+			},
+
+
+
+
+
+
+
+
 		}).toMaster();
 
+
+
 		this.synth.stealVoices = true;
+
+
 	};
+
+
+
 
 	Synth.prototype.triggerAttackRelease = function(note, duration, time, vel){
 		duration = Math.max(duration, 0.2);
