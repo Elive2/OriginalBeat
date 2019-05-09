@@ -189,7 +189,7 @@ class PianoInput extends React.Component {
 
   handleClose = () => {
     this.setState({ open: false });
-    this.state.recording.events = []
+    this.onClickClear()
   };
 
   handleSave = () => {
@@ -228,6 +228,7 @@ class PianoInput extends React.Component {
     this.setState({
       modal: !prevState
     });
+    this.onClickClear()
   }
 
   toggleDropdown = (prevState) => {

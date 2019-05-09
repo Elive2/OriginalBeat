@@ -30,8 +30,6 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from music21 import stream, note, midi, duration
 
-
-
 # TODO: This Shouldn't be hard coded
 if(os.environ['PROJ_DIR']):
     sys.path.append(os.environ['PROJ_DIR'])
@@ -86,6 +84,11 @@ def midi_upload(request):
                 fs.delete(request.user.username + '_' + myfile.name)
                 print("deleted file")
 
+            form_dict = dict(request.POST)
+            print('SELECTE')
+            model = str(form_dict['select'][0])
+            print(model)
+
             filename = fs.save(request.user.username + '_' + myfile.name, myfile)
             print("saved file")
             uploaded_file_url = fs.url(filename)
@@ -93,7 +96,7 @@ def midi_upload(request):
             midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
             midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
             midi_drums_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
-            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, 'KeyChord2')
+            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, model)
             print("created engine")
 
             return render(request, 'OriginalBeat/project.html')
@@ -142,6 +145,13 @@ def input_midi(request):
         midi_stream.append(new_note)
 
     uploaded_file_path = os.path.join(os.path.join(USR_FILE_PATH,'uploads'), request.user.username + '.mid')
+
+    fs = FileSystemStorage()
+
+    if(fs.exists(request.user.username + '_' + myfile.name)):
+                fs.delete(request.user.username + '_' + myfile.name)
+                print("deleted file")
+
     mf = midi.translate.streamToMidiFile(midi_stream)
     mf.open(uploaded_file_path, 'wb')
     mf.write()
