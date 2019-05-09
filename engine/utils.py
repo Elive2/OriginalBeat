@@ -47,9 +47,11 @@ def findKey(filename):
     mid = mido.MidiFile(filename)
 
     #first check if there is a meta message with the key signature
-    for msg in mid:
-        if msg.type == 'key_signature':
-            return msg.key
+    # for msg in mid:
+    #     if msg.type == 'key_signature':
+    #         print("FOUND A KEY SIGNATURE")
+    #         print(msg.key)
+    #         return msg.key
 
     mf = music21.midi.MidiFile()
     mf.open(filename)
@@ -58,6 +60,9 @@ def findKey(filename):
 
     #this seems to be fairly slow on large midifiles
     key = music21.analysis.discrete.analyzeStream(s, 'Krumhansl')
+
+    print("USING ALGORITHM")
+    print(key)
 
     #can get lots of cool stuff from the key, ie, relative major
     #scales, tonic and even transpose
