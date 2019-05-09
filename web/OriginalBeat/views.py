@@ -93,7 +93,7 @@ def midi_upload(request):
             midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
             midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
             midi_drums_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
-            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, None)
+            engine = BeatEngine.BeatEngine(fs.location + '/' + uploaded_file_url, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, 'KeyChord2')
             print("created engine")
 
             return render(request, 'OriginalBeat/project.html')
@@ -127,7 +127,12 @@ def midi_harmony(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def input_midi(request):
-    midi_json = json.loads(request.body)
+    body = json.loads(request.body)
+    print(body)
+    midi_json = body['midi']
+    model = str(body['model'])
+    print("MODELLLLL")
+    print(model)
 
     midi_stream = stream.Stream()
     for input_note in midi_json:
@@ -147,7 +152,7 @@ def input_midi(request):
     midi_melody_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_melody.mid')
     midi_harmony_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_harmony.mid')
     midi_drums_output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
-    engine = BeatEngine.BeatEngine(uploaded_file_path, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, None)
+    engine = BeatEngine.BeatEngine(uploaded_file_path, midi_output_location, midi_melody_output_location, midi_harmony_output_location, midi_drums_output_location, model)
     print("created engine")
 
     return render(request, 'OriginalBeat/project.html')
