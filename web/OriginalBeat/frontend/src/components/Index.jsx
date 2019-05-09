@@ -23,11 +23,11 @@ class Index extends React.Component{
 						</Row>
 						<Row>
 							<Col>
-								<h4 class = "font-effect-anaglyph" >Original Beat!</h4>
+								<img src={'/static/logo-lg.png'} id="logo-lg"/>
 							</Col>
 						</Row>
 						<Row>
-							<Col>
+							<Col sm="12" md={{ size: 6, offset: 3 }}>
 								<Jumbotron>
 									<Row>
 										<Col>

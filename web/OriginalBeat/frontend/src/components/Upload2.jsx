@@ -19,7 +19,7 @@ class Upload2 extends React.Component{
 				<Header pageSelected={'Home'}/>
 					<Row>
 						<div className = "title">
-							<h4>Original Beat</h4>
+							<img src={'/static/logo-lg.png'} id="logo-lg"/>
 						</div>
 					</Row>
 					<Row>

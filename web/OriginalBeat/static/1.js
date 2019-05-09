@@ -24364,10 +24364,10 @@ webpackJsonp([1],[
 /* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(66), __webpack_require__(87), __webpack_require__(67), 
-		__webpack_require__(89), __webpack_require__(94), __webpack_require__(95), __webpack_require__(96), 
-		__webpack_require__(97), __webpack_require__(98), __webpack_require__(91), __webpack_require__(92), 
-		__webpack_require__(93), __webpack_require__(99), __webpack_require__(88), __webpack_require__(100), 
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(66), __webpack_require__(90), __webpack_require__(67), 
+		__webpack_require__(92), __webpack_require__(94), __webpack_require__(95), __webpack_require__(96), 
+		__webpack_require__(97), __webpack_require__(98), __webpack_require__(87), __webpack_require__(88), 
+		__webpack_require__(89), __webpack_require__(99), __webpack_require__(91), __webpack_require__(100), 
 		__webpack_require__(101), __webpack_require__(102), __webpack_require__(62), __webpack_require__(73)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
@@ -24878,7 +24878,217 @@ webpackJsonp([1],[
 /* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(66), __webpack_require__(88), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(88), __webpack_require__(90), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  Output 1 if the signal is equal to the value, otherwise outputs 0. 
+		 *          Can accept two signals if connected to inputs 0 and 1.
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @param {number=} value The number to compare the incoming signal to
+		 *  @example
+		 * var eq = new Tone.Equal(3);
+		 * var sig = new Tone.Signal(3).connect(eq);
+		 * //the output of eq is 1. 
+		 */
+		Tone.Equal = function(value){
+
+			Tone.call(this, 2, 0);
+
+			/**
+			 *  subtract the value from the incoming signal
+			 *  
+			 *  @type {Tone.Add}
+			 *  @private
+			 */
+			this._sub = this.input[0] = new Tone.Subtract(value);
+
+			/**
+			 *  @type {Tone.EqualZero}
+			 *  @private
+			 */
+			this._equals = this.output = new Tone.EqualZero();
+
+			this._sub.connect(this._equals);
+			this.input[1] = this._sub.input[1];
+		};
+
+		Tone.extend(Tone.Equal, Tone.SignalBase);
+
+		/**
+		 * The value to compare to the incoming signal.
+		 * @memberOf Tone.Equal#
+		 * @type {number}
+		 * @name value
+		 */
+		Object.defineProperty(Tone.Equal.prototype, "value", {
+			get : function(){
+				return this._sub.value;
+			},
+			set : function(value){
+				this._sub.value = value;
+			}
+		});
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.Equal} this
+		 */
+		Tone.Equal.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._equals.dispose();
+			this._equals = null;
+			this._sub.dispose();
+			this._sub = null;
+			return this;
+		};
+
+		return Tone.Equal;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 88 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(89), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  EqualZero outputs 1 when the input is equal to 
+		 *          0 and outputs 0 otherwise. 
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var eq0 = new Tone.EqualZero();
+		 * var sig = new Tone.Signal(0).connect(eq0);
+		 * //the output of eq0 is 1. 
+		 */
+		Tone.EqualZero = function(){
+
+			/**
+			 *  scale the incoming signal by a large factor
+			 *  @private
+			 *  @type {Tone.Multiply}
+			 */
+			this._scale = this.input = new Tone.Multiply(10000);
+			
+			/**
+			 *  @type {Tone.WaveShaper}
+			 *  @private
+			 */
+			this._thresh = new Tone.WaveShaper(function(val){
+				if (val === 0){
+					return 1;
+				} else {
+					return 0;
+				}
+			}, 128);
+
+			/**
+			 *  threshold the output so that it's 0 or 1
+			 *  @type {Tone.GreaterThanZero}
+			 *  @private
+			 */
+			this._gtz = this.output = new Tone.GreaterThanZero();
+
+			//connections
+			this._scale.chain(this._thresh, this._gtz);
+		};
+
+		Tone.extend(Tone.EqualZero, Tone.SignalBase);
+
+		/**
+		 *  Clean up.
+		 *  @returns {Tone.EqualZero} this
+		 */
+		Tone.EqualZero.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._gtz.dispose();
+			this._gtz = null;
+			this._scale.dispose();
+			this._scale = null;
+			this._thresh.dispose();
+			this._thresh = null;
+			return this;
+		};
+
+		return Tone.EqualZero;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 89 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(67), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+
+		"use strict";
+
+		/**
+		 *  @class  GreaterThanZero outputs 1 when the input is strictly greater than zero
+		 *  
+		 *  @constructor
+		 *  @extends {Tone.SignalBase}
+		 *  @example
+		 * var gt0 = new Tone.GreaterThanZero();
+		 * var sig = new Tone.Signal(0.01).connect(gt0);
+		 * //the output of gt0 is 1. 
+		 * sig.value = 0;
+		 * //the output of gt0 is 0. 
+		 */
+		Tone.GreaterThanZero = function(){
+			
+			/**
+			 *  @type {Tone.WaveShaper}
+			 *  @private
+			 */
+			this._thresh = this.output = new Tone.WaveShaper(function(val){
+				if (val <= 0){
+					return 0;
+				} else {
+					return 1;
+				}
+			});
+
+			/**
+			 *  scale the first thresholded signal by a large value.
+			 *  this will help with values which are very close to 0
+			 *  @type {Tone.Multiply}
+			 *  @private
+			 */
+			this._scale = this.input = new Tone.Multiply(10000);
+
+			//connections
+			this._scale.connect(this._thresh);
+		};
+
+		Tone.extend(Tone.GreaterThanZero, Tone.SignalBase);
+
+		/**
+		 *  dispose method
+		 *  @returns {Tone.GreaterThanZero} this
+		 */
+		Tone.GreaterThanZero.prototype.dispose = function(){
+			Tone.prototype.dispose.call(this);
+			this._scale.dispose();
+			this._scale = null;
+			this._thresh.dispose();
+			this._thresh = null;
+			return this;
+		};
+
+		return Tone.GreaterThanZero;
+	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 90 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(66), __webpack_require__(91), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -24953,7 +25163,7 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 88 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(67), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
@@ -24996,10 +25206,10 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 89 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(90), __webpack_require__(91)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(93), __webpack_require__(87)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25057,10 +25267,10 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 90 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(91), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(87), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25184,220 +25394,10 @@ webpackJsonp([1],[
 	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 /***/ }),
-/* 91 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(92), __webpack_require__(87), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
-
-		"use strict";
-
-		/**
-		 *  @class  Output 1 if the signal is equal to the value, otherwise outputs 0. 
-		 *          Can accept two signals if connected to inputs 0 and 1.
-		 *  
-		 *  @constructor
-		 *  @extends {Tone.SignalBase}
-		 *  @param {number=} value The number to compare the incoming signal to
-		 *  @example
-		 * var eq = new Tone.Equal(3);
-		 * var sig = new Tone.Signal(3).connect(eq);
-		 * //the output of eq is 1. 
-		 */
-		Tone.Equal = function(value){
-
-			Tone.call(this, 2, 0);
-
-			/**
-			 *  subtract the value from the incoming signal
-			 *  
-			 *  @type {Tone.Add}
-			 *  @private
-			 */
-			this._sub = this.input[0] = new Tone.Subtract(value);
-
-			/**
-			 *  @type {Tone.EqualZero}
-			 *  @private
-			 */
-			this._equals = this.output = new Tone.EqualZero();
-
-			this._sub.connect(this._equals);
-			this.input[1] = this._sub.input[1];
-		};
-
-		Tone.extend(Tone.Equal, Tone.SignalBase);
-
-		/**
-		 * The value to compare to the incoming signal.
-		 * @memberOf Tone.Equal#
-		 * @type {number}
-		 * @name value
-		 */
-		Object.defineProperty(Tone.Equal.prototype, "value", {
-			get : function(){
-				return this._sub.value;
-			},
-			set : function(value){
-				this._sub.value = value;
-			}
-		});
-
-		/**
-		 *  Clean up.
-		 *  @returns {Tone.Equal} this
-		 */
-		Tone.Equal.prototype.dispose = function(){
-			Tone.prototype.dispose.call(this);
-			this._equals.dispose();
-			this._equals = null;
-			this._sub.dispose();
-			this._sub = null;
-			return this;
-		};
-
-		return Tone.Equal;
-	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-
-/***/ }),
-/* 92 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(93), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
-
-		"use strict";
-
-		/**
-		 *  @class  EqualZero outputs 1 when the input is equal to 
-		 *          0 and outputs 0 otherwise. 
-		 *  
-		 *  @constructor
-		 *  @extends {Tone.SignalBase}
-		 *  @example
-		 * var eq0 = new Tone.EqualZero();
-		 * var sig = new Tone.Signal(0).connect(eq0);
-		 * //the output of eq0 is 1. 
-		 */
-		Tone.EqualZero = function(){
-
-			/**
-			 *  scale the incoming signal by a large factor
-			 *  @private
-			 *  @type {Tone.Multiply}
-			 */
-			this._scale = this.input = new Tone.Multiply(10000);
-			
-			/**
-			 *  @type {Tone.WaveShaper}
-			 *  @private
-			 */
-			this._thresh = new Tone.WaveShaper(function(val){
-				if (val === 0){
-					return 1;
-				} else {
-					return 0;
-				}
-			}, 128);
-
-			/**
-			 *  threshold the output so that it's 0 or 1
-			 *  @type {Tone.GreaterThanZero}
-			 *  @private
-			 */
-			this._gtz = this.output = new Tone.GreaterThanZero();
-
-			//connections
-			this._scale.chain(this._thresh, this._gtz);
-		};
-
-		Tone.extend(Tone.EqualZero, Tone.SignalBase);
-
-		/**
-		 *  Clean up.
-		 *  @returns {Tone.EqualZero} this
-		 */
-		Tone.EqualZero.prototype.dispose = function(){
-			Tone.prototype.dispose.call(this);
-			this._gtz.dispose();
-			this._gtz = null;
-			this._scale.dispose();
-			this._scale = null;
-			this._thresh.dispose();
-			this._thresh = null;
-			return this;
-		};
-
-		return Tone.EqualZero;
-	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-
-/***/ }),
-/* 93 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(9), __webpack_require__(67), __webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
-
-		"use strict";
-
-		/**
-		 *  @class  GreaterThanZero outputs 1 when the input is strictly greater than zero
-		 *  
-		 *  @constructor
-		 *  @extends {Tone.SignalBase}
-		 *  @example
-		 * var gt0 = new Tone.GreaterThanZero();
-		 * var sig = new Tone.Signal(0.01).connect(gt0);
-		 * //the output of gt0 is 1. 
-		 * sig.value = 0;
-		 * //the output of gt0 is 0. 
-		 */
-		Tone.GreaterThanZero = function(){
-			
-			/**
-			 *  @type {Tone.WaveShaper}
-			 *  @private
-			 */
-			this._thresh = this.output = new Tone.WaveShaper(function(val){
-				if (val <= 0){
-					return 0;
-				} else {
-					return 1;
-				}
-			});
-
-			/**
-			 *  scale the first thresholded signal by a large value.
-			 *  this will help with values which are very close to 0
-			 *  @type {Tone.Multiply}
-			 *  @private
-			 */
-			this._scale = this.input = new Tone.Multiply(10000);
-
-			//connections
-			this._scale.connect(this._thresh);
-		};
-
-		Tone.extend(Tone.GreaterThanZero, Tone.SignalBase);
-
-		/**
-		 *  dispose method
-		 *  @returns {Tone.GreaterThanZero} this
-		 */
-		Tone.GreaterThanZero.prototype.dispose = function(){
-			Tone.prototype.dispose.call(this);
-			this._scale.dispose();
-			this._scale = null;
-			this._thresh.dispose();
-			this._thresh = null;
-			return this;
-		};
-
-		return Tone.GreaterThanZero;
-	}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-
-/***/ }),
 /* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(93)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(89)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25462,7 +25462,7 @@ webpackJsonp([1],[
 /* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(91)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(87)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25518,7 +25518,7 @@ webpackJsonp([1],[
 /* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(92)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(88)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25544,7 +25544,7 @@ webpackJsonp([1],[
 /* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(93), __webpack_require__(87), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(89), __webpack_require__(90), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25605,7 +25605,7 @@ webpackJsonp([1],[
 /* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(97), __webpack_require__(88), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(97), __webpack_require__(91), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25687,7 +25687,7 @@ webpackJsonp([1],[
 /* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(90), __webpack_require__(88), __webpack_require__(98), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(93), __webpack_require__(91), __webpack_require__(98), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25756,7 +25756,7 @@ webpackJsonp([1],[
 /* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(97), __webpack_require__(89), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(97), __webpack_require__(92), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25837,7 +25837,7 @@ webpackJsonp([1],[
 /* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(98), __webpack_require__(89), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(98), __webpack_require__(92), __webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
@@ -25917,7 +25917,7 @@ webpackJsonp([1],[
 /* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(10), __webpack_require__(67), __webpack_require__(87)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(6), __webpack_require__(10), __webpack_require__(67), __webpack_require__(90)], __WEBPACK_AMD_DEFINE_RESULT__ = function(Tone){
 
 		"use strict";
 
