@@ -57,3 +57,11 @@ python3 manage.py runserver
 ```
 
 and visit http://127.0.0.1:8000/OriginalBeat/
+
+4. **_deprecated_** To do a production build for our old DigitalOcean server navigate to /web and run
+
+```
+npm run prod
+```
+
+
