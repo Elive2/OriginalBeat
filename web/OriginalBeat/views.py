@@ -31,10 +31,11 @@ import json
 from music21 import stream, note, midi, duration
 
 # TODO: This Shouldn't be hard coded
-if(os.environ['PROJ_DIR']):
+if('PROJ_DIR' in os.environ):
     sys.path.append(os.environ['PROJ_DIR'])
 else:
     print("PLEASE SET THE ENVIRONMENT VARIABLE 'PROJ_DIR' to the root of OriginalBeat")
+    sys.exit()
 USR_FILE_PATH = os.path.join(os.path.join(settings.BASE_DIR , 'OriginalBeat'),'userfiles')
 from engine import BeatEngine
 
@@ -171,6 +172,7 @@ def input_midi(request):
 def midi_drums(request):
     if request.user.is_authenticated:
         output_location = os.path.join(os.path.join(USR_FILE_PATH,'outputs'), request.user.username + '_drums.mid')
+        print(output_location + "********")
         return FileResponse(open(output_location, 'rb'))
     else:
         return HttpResponseRedirect('/accounts/login/')
