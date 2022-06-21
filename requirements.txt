@@ -10,7 +10,7 @@ mido==1.2.9
 mingus==0.5.1
 music21==5.5.0
 networkx==2.2
-numpy==1.16.0
+numpy==1.22.0
 pomegranate==0.11.0
 pretty-midi==0.2.8
 pytz==2018.9
