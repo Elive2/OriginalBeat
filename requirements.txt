@@ -4,7 +4,7 @@ decorator==4.3.2
 Django==2.1.7
 django-webpack-loader==0.6.0
 idna==2.8
-joblib==0.13.2
+joblib==1.2.0
 markovify==0.7.1
 mido==1.2.9
 mingus==0.5.1
