@@ -41,7 +41,7 @@
     "@progress/kendo-theme-default": "^3.5.1",
     "@tonejs/midi": "^2.0.0",
     "axios": "^0.18.0",
-    "bv-react-data-report": "^1.1.0",
+    "bv-react-data-report": "^2.0.1",
     "material-ui-icons": "^1.0.0-beta.36",
     "ncp": "^2.0.0",
     "path": "^0.12.7",
